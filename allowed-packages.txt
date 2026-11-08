@@ -1,0 +1,3 @@
+# Allowed remote Swift packages — one repository URL per line (exactly as written in .package(url:)).
+# Do not add entries without approval (CLAUDE.md rule #5). Checked by scripts/check-dependencies.sh.
+# Currently no third-party packages are allowed.

@@ -1,0 +1,2 @@
+# Info.plist keys that must exist with a non-empty value. Checked by scripts/check-info-plist.sh.
+NSPhotoLibraryUsageDescription
