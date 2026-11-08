@@ -1,0 +1,25 @@
+included:
+  - SimilarPhotos
+  - Packages
+
+excluded:
+  - Packages/Domain/.build
+  - Packages/Data/.build
+  - Packages/Presentation/.build
+
+custom_rules:
+  no_network_apis:
+    name: "Zero network"
+    regex: '\b(URLSession|URLRequest|NWConnection|WKWebView)\b'
+    message: "Networking APIs are forbidden (CLAUDE.md rule #1)."
+    severity: error
+  no_network_frameworks:
+    name: "Zero network frameworks"
+    regex: '^\s*(@\w+\s+)*import\s+(Network|WebKit)\b'
+    message: "Network and WebKit frameworks are forbidden (CLAUDE.md rule #1)."
+    severity: error
+  no_icloud_downloads:
+    name: "No iCloud downloads"
+    regex: 'isNetworkAccessAllowed\s*=\s*true'
+    message: "iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
+    severity: error

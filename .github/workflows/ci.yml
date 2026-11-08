@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  XCODE_VERSION: "16.4"
+  SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 16"
+
+jobs:
+  lint:
+    name: Lint & architecture guards
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Domain import boundary
+        run: bash scripts/check-domain-imports.sh
+
+      - name: Composition root boundary
+        run: bash scripts/check-concrete-construction.sh
+
+      - name: Allowed dependencies
+        run: bash scripts/check-dependencies.sh
+
+      - name: Info.plist usage keys
+        run: bash scripts/check-info-plist.sh SimilarPhotos/Info.plist
+
+      - name: Info.plist check rejects a missing usage key (self-test)
+        run: |
+          if bash scripts/check-info-plist.sh scripts/fixtures/Info-missing-key.plist; then
+            echo "::error::check-info-plist.sh accepted a plist without NSPhotoLibraryUsageDescription"
+            exit 1
+          fi
+          echo "Negative fixture rejected as expected"
+
+      - name: SwiftLint
+        run: |
+          command -v swiftlint >/dev/null || brew install swiftlint
+          swiftlint --strict --reporter github-actions-logging
+
+  test:
+    name: Build & test
+    needs: lint
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
+
+      - name: Package tests (Domain, Data)
+        run: |
+          swift test --package-path Packages/Domain -Xswiftc -warnings-as-errors
+          swift test --package-path Packages/Data -Xswiftc -warnings-as-errors
+
+      - name: Generate Xcode project
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          xcodegen generate
+
+      - name: xcodebuild test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project SimilarPhotos.xcodeproj \
+            -scheme SimilarPhotos \
+            -destination "$SIMULATOR_DESTINATION" \
+            -resultBundlePath TestResults.xcresult \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            GCC_TREAT_WARNINGS_AS_ERRORS=YES \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult
+          if-no-files-found: ignore

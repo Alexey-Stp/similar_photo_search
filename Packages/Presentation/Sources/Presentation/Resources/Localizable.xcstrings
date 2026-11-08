@@ -1,0 +1,76 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "home.empty.message" : {
+      "comment" : "Home screen placeholder description.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan your library to find similar photos." } }
+      }
+    },
+    "home.empty.title" : {
+      "comment" : "Home screen placeholder title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No similar photos yet" } }
+      }
+    },
+    "home.title" : {
+      "comment" : "Home screen navigation title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar Photos" } }
+      }
+    },
+    "onboarding.continue" : {
+      "comment" : "Onboarding button that asks for photo access.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } }
+      }
+    },
+    "onboarding.continue.hint" : {
+      "comment" : "VoiceOver hint for the onboarding continue button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Asks for access to your photo library." } }
+      }
+    },
+    "onboarding.message" : {
+      "comment" : "Onboarding explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Find near-duplicate photos and free up space. Everything stays on your device." } }
+      }
+    },
+    "onboarding.title" : {
+      "comment" : "Onboarding title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clean up similar photos" } }
+      }
+    },
+    "permissionDenied.message" : {
+      "comment" : "Explains why photo access is needed after it was denied.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "SimilarPhotos needs access to your photos to find duplicates. You can allow access in Settings." } }
+      }
+    },
+    "permissionDenied.openSettings" : {
+      "comment" : "Button that opens the app's page in Settings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Settings" } }
+      }
+    },
+    "permissionDenied.title" : {
+      "comment" : "Title shown when photo access is denied.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo access is off" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

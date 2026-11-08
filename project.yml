@@ -1,0 +1,59 @@
+name: SimilarPhotos
+
+options:
+  bundleIdPrefix: com.similarphotos
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+configs:
+  Debug: debug
+  Release: release
+
+packages:
+  Domain:
+    path: Packages/Domain
+  Data:
+    path: Packages/Data
+  Presentation:
+    path: Packages/Presentation
+
+targets:
+  SimilarPhotos:
+    type: application
+    platform: iOS
+    configFiles:
+      Debug: Config/Debug.xcconfig
+      Release: Config/Release.xcconfig
+    sources:
+      - path: SimilarPhotos
+        excludes:
+          - Info.plist
+          - PrivacyInfo.xcprivacy
+      - path: SimilarPhotos/PrivacyInfo.xcprivacy
+        buildPhase: resources
+    dependencies:
+      - package: Domain
+        product: Domain
+      - package: Data
+        product: DataLayer
+      - package: Presentation
+        product: Presentation
+
+schemes:
+  SimilarPhotos:
+    build:
+      targets:
+        SimilarPhotos: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - package: Domain/DomainTests
+        - package: Data/DataTests
+        - package: Presentation/PresentationTests
+    archive:
+      config: Release
