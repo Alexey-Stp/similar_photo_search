@@ -1,0 +1,5 @@
+# Keep LF everywhere: bash scripts and Xcode files break with CRLF.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.heic binary
