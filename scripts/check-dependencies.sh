@@ -7,20 +7,25 @@
 #     Packages/*/Package.resolved and the Xcode project/workspace swiftpm folders (present after
 #     `xcodegen generate` + `xcodebuild -resolvePackageDependencies`).
 # URLs are compared case-insensitively, ignoring a trailing ".git" or "/".
-# Usage: scripts/check-dependencies.sh [root]   (root defaults to the repository; used by the CI self-test)
+# Usage: scripts/check-dependencies.sh [root]   (root defaults to the repository; used by the CI self-tests)
+# ALLOWED_PACKAGES_FILE overrides the allow-list path (CI self-test only).
 set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 root="$(cd "${1:-$repo}" && pwd)"
-allowed_file="$repo/allowed-packages.txt"
+allowed_file="${ALLOWED_PACKAGES_FILE:-$repo/allowed-packages.txt}"
+allowed_file="$(cd "$(dirname "$allowed_file")" && pwd)/$(basename "$allowed_file")"
 cd "$root"
 shopt -s nullglob
 
+# Normalizes package URLs read line by line from stdin so equivalent spellings compare equal:
+# lower-case, no trailing "/" and no trailing ".git".
 normalize() {
     tr '[:upper:]' '[:lower:]' | sed -E 's#/+$##; s#\.git$##'
 }
 
-allowed="$(grep -vE '^[[:space:]]*(#|$)' "$allowed_file" | tr -d '[:space:]' | normalize || true)"
+# One URL per line: drop comments and blank lines, strip whitespace inside each line (keep the line breaks).
+allowed="$(grep -vE '^[[:space:]]*(#|$)' "$allowed_file" | sed -E 's/[[:space:]]+//g' | normalize || true)"
 
 manifests=(Packages/*/Package.swift)
 resolved=(Packages/*/Package.resolved

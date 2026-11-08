@@ -32,69 +32,58 @@ jobs:
       - name: Info.plist usage keys
         run: bash scripts/check-info-plist.sh SimilarPhotos/Info.plist
 
-      - name: Info.plist check rejects a missing usage key (self-test)
-        run: |
-          if bash scripts/check-info-plist.sh scripts/fixtures/Info-missing-key.plist; then
-            echo "::error::check-info-plist.sh accepted a plist without NSPhotoLibraryUsageDescription"
-            exit 1
-          fi
-          echo "Negative fixture rejected as expected"
-
-      - name: Info.plist check rejects network keys (self-test)
-        run: |
-          for fixture in scripts/fixtures/Info-ats-exception.plist scripts/fixtures/Info-background-fetch.plist; do
-            if bash scripts/check-info-plist.sh "$fixture"; then
-              echo "::error::check-info-plist.sh accepted $fixture"
-              exit 1
-            fi
-          done
-          echo "Negative fixtures rejected as expected"
+      - name: Entitlements (no networking entitlements anywhere)
+        run: bash scripts/check-entitlements.sh
 
       - name: Privacy manifest
         run: bash scripts/check-privacy-manifest.sh
 
-      - name: Privacy manifest check rejects bad manifests (self-test)
+      # Self-tests: every guard must reject its negative fixture *with the intended diagnostic*
+      # (scripts/expect-failure.sh), so an unrelated error cannot make a self-test pass.
+      - name: Info.plist check self-tests
         run: |
-          for fixture in scripts/fixtures/PrivacyInfo-*.xcprivacy; do
-            if bash scripts/check-privacy-manifest.sh "$fixture"; then
-              echo "::error::check-privacy-manifest.sh accepted $fixture"
-              exit 1
-            fi
-          done
-          echo "Negative fixtures rejected as expected"
+          f=scripts/fixtures
+          bash scripts/expect-failure.sh --expect "missing required key NSPhotoLibraryUsageDescription" \
+            -- bash scripts/check-info-plist.sh "$f/Info-missing-key.plist"
+          bash scripts/expect-failure.sh --expect "must not contain NSAppTransportSecurity" \
+            --absent "missing required key" -- bash scripts/check-info-plist.sh "$f/Info-ats-exception.plist"
+          bash scripts/expect-failure.sh --expect "must not contain fetch in UIBackgroundModes" \
+            --absent "missing required key" -- bash scripts/check-info-plist.sh "$f/Info-background-fetch.plist"
 
-      - name: Dependency check rejects a non-allowed Package.resolved entry (self-test)
+      - name: Entitlements check self-test (entitlements outside the app folder)
         run: |
-          if bash scripts/check-dependencies.sh scripts/fixtures/resolved-forbidden; then
-            echo "::error::check-dependencies.sh accepted a Package.resolved with a non-allowed package"
-            exit 1
-          fi
-          echo "Negative fixture rejected as expected"
+          bash scripts/expect-failure.sh --expect "Config/App.entitlements grants a networking entitlement" \
+            -- bash scripts/check-entitlements.sh scripts/fixtures/entitlements-forbidden
+
+      - name: Privacy manifest check self-tests
+        run: |
+          f=scripts/fixtures
+          bash scripts/expect-failure.sh --expect "NSPrivacyTracking must be false" \
+            -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-tracking.xcprivacy"
+          bash scripts/expect-failure.sh --expect "NSPrivacyCollectedDataTypes must be an empty array" \
+            -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-collects-data.xcprivacy"
+          bash scripts/expect-failure.sh --expect "sources use a NSPrivacyAccessedAPICategoryUserDefaults API" \
+            -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-missing-userdefaults.xcprivacy"
+          # A malformed entry is reported, and the valid UserDefaults entry after it is still found.
+          bash scripts/expect-failure.sh --expect "NSPrivacyAccessedAPITypes[0] is malformed" \
+            --absent "sources use a NSPrivacyAccessedAPICategoryUserDefaults API" \
+            -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-malformed-entry.xcprivacy"
+
+      - name: Dependency check self-tests
+        run: |
+          bash scripts/expect-failure.sh --expect "analytics-sdk.git is not in allowed-packages.txt" \
+            -- bash scripts/check-dependencies.sh scripts/fixtures/resolved-forbidden
+          # Positive: a multi-entry allow-list keeps its entries distinct and accepts both packages.
+          ALLOWED_PACKAGES_FILE=scripts/fixtures/resolved-allowed/allowed-packages.txt \
+            bash scripts/check-dependencies.sh scripts/fixtures/resolved-allowed
 
       - name: SwiftLint
         run: |
           command -v swiftlint >/dev/null || brew install swiftlint
           swiftlint --strict --reporter github-actions-logging
 
-      - name: SwiftLint zero-network rules fire (self-test)
-        run: |
-          set +e
-          output="$(swiftlint lint --strict --no-cache --config .swiftlint.yml scripts/fixtures/NetworkViolations.swift 2>&1)"
-          code=$?
-          set -e
-          echo "$output"
-          if [[ $code -eq 0 ]]; then
-            echo "::error::SwiftLint accepted scripts/fixtures/NetworkViolations.swift"
-            exit 1
-          fi
-          missing=0
-          for rule in no_network_apis no_network_frameworks no_icloud_downloads no_remote_url_literals; do
-            if ! grep -q "($rule)" <<< "$output"; then
-              echo "::error::SwiftLint rule $rule did not fire on the fixture"
-              missing=1
-            fi
-          done
-          exit $missing
+      - name: SwiftLint zero-network rules self-test (line by line)
+        run: bash scripts/check-swiftlint-fixture.sh
 
   test:
     name: Build & test

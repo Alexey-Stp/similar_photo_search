@@ -1,0 +1,3 @@
+# Self-test allow-list with several entries (check-dependencies.sh must keep them distinct).
+https://github.com/example/first-package.git
+  https://github.com/Example/Second-Package

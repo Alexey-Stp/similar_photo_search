@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Checks the app's Info.plist and entitlements. Fails if:
 #   - a key listed in scripts/required-plist-keys.txt is missing or its value is empty;
-#   - a key (or array value) listed in scripts/forbidden-plist-keys.txt is present (zero-network, SPS-5);
-#   - an *.entitlements file next to the plist grants a networking entitlement.
+#   - a key (or array value) listed in scripts/forbidden-plist-keys.txt is present (zero-network, SPS-5).
+# Networking entitlements are checked separately by scripts/check-entitlements.sh.
 # Usage: scripts/check-info-plist.sh SimilarPhotos/Info.plist   (macOS only: uses plutil)
 set -euo pipefail
 
@@ -16,7 +16,7 @@ if [[ ! -f "$plist" ]]; then
     exit 1
 fi
 
-# Prints the entries of a key list file: comments and blank lines removed, whitespace trimmed.
+# Prints the entries of a key list file ($1), one per line: comments and blank lines removed, whitespace trimmed.
 entries() {
     while IFS= read -r line || [[ -n "$line" ]]; do
         line="$(echo "${line%%#*}" | tr -d '[:space:]')"
@@ -49,14 +49,6 @@ while IFS= read -r entry; do
         status=1
     fi
 done < <(entries "$forbidden_file")
-
-shopt -s nullglob
-for entitlements in "$(dirname "$plist")"/*.entitlements; do
-    if grep -nE 'com\.apple\.(developer\.networking|security\.network)' "$entitlements" >&2; then
-        echo "error: $entitlements grants a networking entitlement (zero-network policy)" >&2
-        status=1
-    fi
-done
 
 if [[ $status -eq 0 ]]; then
     echo "Info.plist OK: $plist"

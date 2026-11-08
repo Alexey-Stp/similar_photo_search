@@ -7,8 +7,9 @@ excluded:
   - Packages/Data/.build
   - Packages/Presentation/.build
 
-# Zero-network guard rails (CLAUDE.md rule #1, SPS-5). scripts/fixtures/NetworkViolations.swift must trigger
-# every rule below; CI checks that, so update the fixture when you change a regex.
+# Zero-network guard rails (CLAUDE.md rule #1, SPS-5). Each line of scripts/fixtures/NetworkViolations.swift
+# declares which of these rules must fire on it (`// expect: <rule>` or `// expect: none`);
+# scripts/check-swiftlint-fixture.sh verifies that line by line in CI. Update the fixture when you change a regex.
 custom_rules:
   no_network_apis:
     name: "Zero network"
@@ -17,14 +18,18 @@ custom_rules:
     severity: error
   no_network_frameworks:
     name: "Zero network frameworks"
-    regex: '^\s*(@\w+\s+)*import\s+(Network|WebKit|SafariServices|CFNetwork|CloudKit|MultipeerConnectivity)\b'
+    # [ \t] instead of \s so a match never starts on a previous blank line (wrong line in the report).
+    regex: '^[ \t]*(@\w+[ \t]+)*import[ \t]+(Network|WebKit|SafariServices|CFNetwork|CloudKit|MultipeerConnectivity)\b'
     message: "Network, WebKit, SafariServices, CFNetwork, CloudKit and MultipeerConnectivity are forbidden (CLAUDE.md rule #1)."
     severity: error
   no_icloud_downloads:
     name: "No iCloud downloads"
-    # Any assignment other than the literal `false` (true, YES, a variable, !false...). Comparisons (==) are fine.
-    regex: 'isNetworkAccessAllowed\s*+=(?!=)\s*+(?!false\b)'
-    message: "Set isNetworkAccessAllowed = false (literal). iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
+    # 1) Any assignment whose right-hand side is not exactly the literal `false` (followed only by end of line,
+    #    `;`, `}` or a comment): true, YES, a variable, !false, `false || allow`... Comparisons (==, !=) are fine.
+    # 2) Any key path to the property (`\.isNetworkAccessAllowed`, `\PHImageRequestOptions.isNetworkAccessAllowed`),
+    #    because key-path writes (`options[keyPath: ...] = true`) would bypass rule 1.
+    regex: 'isNetworkAccessAllowed[ \t]*+=(?!=)[ \t]*+(?!false[ \t]*+(?:\r?\n|$|;|//|/\*|\}))|\\[\w.]*\.isNetworkAccessAllowed\b'
+    message: "Set isNetworkAccessAllowed = false (literal, no key paths). iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
     severity: error
   no_remote_url_literals:
     name: "No remote URLs"

@@ -9,26 +9,49 @@ Run it before every release, and again whenever scanning (SPC-14), deletion (SPC
 
 ## 1. Airplane Mode parity
 
-Device: a physical iPhone with a library that has some iCloud-only originals ("Optimize iPhone Storage" on).
+Device: a physical iPhone with iCloud Photos on and "Optimize iPhone Storage" selected, so the library has some iCloud-only originals.
 
-1. Delete the app. Turn on Airplane Mode **and** turn Wi-Fi and Bluetooth off.
-2. Install a Release build (TestFlight or Xcode with the Release configuration) and complete onboarding and the permission prompt.
-3. Run a full scan, review the groups and delete a few photos.
+**Before the first run**
+
+- Put a few photos you know are iCloud-only (opening them in Photos while offline fails to load the full image) into an album named `QA iCloud-only`. These are the reference for local-original availability.
+- Both runs must start from the **same library state**. Either restore everything the first run deleted (Photos → Recently Deleted → Recover) before the second run, or use a dedicated test device and reset it to the same fixture library before each run.
+
+**Offline run**
+
+1. While the device is **online**, delete the app and install a Release build (TestFlight or Xcode with the Release configuration). **Do not open it yet.**
+2. Turn on Airplane Mode **and** turn Wi-Fi and Bluetooth off. Only then launch the app.
+3. Complete onboarding and the permission prompt, run a full scan, review the groups and delete a few photos.
 4. Note the results: groups found, photos scanned, skipped counts (iCloud-only, no date), deleted count.
-5. Turn networking back on, delete the app and repeat steps 2–4 on the same library.
+5. Check that the photos in `QA iCloud-only` are still iCloud-only.
 
-**Pass:** both runs behave the same. Nothing hangs or shows a network error, and the counts match (iCloud-only photos are skipped in both runs).
+**Online run**
+
+6. Turn networking back on and restore the library state (see above).
+7. Pause iCloud Photos syncing for the duration of the run (Photos → your account → Pause, or Low Power Mode), so availability doesn't change while the app scans.
+8. Delete the app, reinstall the same build, launch it and repeat steps 3–5.
+
+**Pass**
+
+- Both runs behave the same: nothing hangs or shows a network error.
+- Groups found, photos scanned and the no-date skip count match.
+- The iCloud-only skip counts are compared **only if** local-original availability was the same in both runs, meaning the `QA iCloud-only` photos were iCloud-only before and after each run. If availability changed between runs (iOS downloaded or offloaded originals), record the skip-count comparison as **inconclusive** and repeat it, rather than marking it as a pass or a fail.
+- After either run, the `QA iCloud-only` photos are still iCloud-only. If one became local, the app (or a request on its behalf) downloaded it, and the check **fails**.
 
 ## 2. No outbound connections
 
 1. Connect the device to a Mac. In Xcode, choose **Product → Profile** (Release) and pick the **Network** template (Network Connections instrument).
 2. Record from launch through onboarding, a full scan, opening a comparison view and one deletion.
 3. Filter the trace by the `SimilarPhotos` process.
+4. Repeat the recording with a **debuggable (Debug) build** and add the **HTTP Traffic** instrument. It also shows background `URLSession` transfers that a system daemon runs on the app's behalf. HTTP Traffic only works for debuggable builds.
 
-**Pass:** zero connections, sockets or DNS lookups by `SimilarPhotos`.
-Traffic from system daemons (`cloudd`, `photoanalysisd`, `nsurlsessiond` for iCloud Photos sync) is outside the app's control and does not count.
+**Pass:** zero connections, sockets or DNS lookups by `SimilarPhotos`, and no HTTP transactions attributed to the app in HTTP Traffic.
 
-Optional cross-check: route the device through a proxy such as Charles or Proxyman and confirm that no request comes from the app's bundle ID.
+What counts:
+
+- **Independent iCloud Photos sync** (`cloudd`, `photoanalysisd`, `nsurlsessiond` uploading or downloading on its own schedule) is outside the app's control and does **not** count.
+- **Transfers requested by the app count even when a system daemon performs them.** Examples: a background `URLSession` run by `nsurlsessiond`, or a PhotoKit request with network access that makes `cloudd` download an original. Evidence: HTTP Traffic attributes the transaction to the app, or an iCloud-only reference photo becomes local after the app touched it (check 1).
+
+Optional cross-check with a proxy (Charles, Proxyman): a device-wide HTTP proxy usually can't tell which app made a request. Requests without the app's bundle ID or user agent are **not** proof that the app sent nothing. Treat the proxy as a hint only. A pass needs **process-attributed** evidence: the Network Connections and HTTP Traffic instruments filtered by the `SimilarPhotos` process.
 
 ## 3. Privacy report
 
