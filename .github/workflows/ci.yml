@@ -14,8 +14,29 @@ env:
   SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 16"
 
 jobs:
+  # Docs-only changes (.claude/, docs/, root *.md) skip the macOS jobs below.
+  # Skipped jobs count as passed, so required status checks never wait on them.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether the change needs a build
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: bash scripts/ci-needs-build.sh "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
   lint:
     name: Lint & architecture guards
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +68,8 @@ jobs:
 
   test:
     name: Build & test
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.code == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
