@@ -6,8 +6,8 @@ import SwiftUI
 /// `.environment(\.viewModelFactory, container)`, so Presentation never sees concrete Data types.
 @MainActor
 public protocol ViewModelFactory: AnyObject, Sendable {
-    /// Creates the view model of the root screen.
-    func makeRootViewModel() -> RootViewModel
+    /// Creates the view model that owns photo access state and top-level routing.
+    func makePermissionViewModel() -> PermissionViewModel
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

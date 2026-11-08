@@ -1,2 +1,4 @@
 # Info.plist keys that must exist with a non-empty value. Checked by scripts/check-info-plist.sh.
 NSPhotoLibraryUsageDescription
+# Suppresses the automatic iOS re-prompt under limited access; the app shows its own banner (SPC-3).
+PHPhotoLibraryPreventAutomaticLimitedAccessAlert

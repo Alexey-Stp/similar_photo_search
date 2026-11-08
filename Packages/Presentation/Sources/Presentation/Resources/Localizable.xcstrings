@@ -22,6 +22,48 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar Photos" } }
       }
     },
+    "limitedBanner.manage" : {
+      "comment" : "Limited-access banner button that opens the system picker to change which photos are shared.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Manage" } }
+      }
+    },
+    "limitedBanner.manage.hint" : {
+      "comment" : "VoiceOver hint for the limited-access banner Manage button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose which photos SimilarPhotos can see." } }
+      }
+    },
+    "limitedBanner.message %lld" : {
+      "comment" : "Limited-access banner text. The argument is the number of photos the user shared with the app.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "You've shared %lld photo. Results may be incomplete." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "You've shared %lld photos. Results may be incomplete." } }
+            }
+          }
+        }
+      }
+    },
+    "limitedBanner.settings" : {
+      "comment" : "Limited-access banner button that opens the app's page in Settings.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } }
+      }
+    },
+    "limitedBanner.settings.hint" : {
+      "comment" : "VoiceOver hint for the limited-access banner Settings button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens Settings, where you can allow access to all photos." } }
+      }
+    },
     "onboarding.continue" : {
       "comment" : "Onboarding button that asks for photo access.",
       "extractionState" : "manual",
@@ -64,11 +106,32 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Settings" } }
       }
     },
+    "permissionDenied.openSettings.hint" : {
+      "comment" : "VoiceOver hint for the Open Settings button on the access denied screen.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens Settings, where you can allow access to your photos." } }
+      }
+    },
     "permissionDenied.title" : {
       "comment" : "Title shown when photo access is denied.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo access is off" } }
+      }
+    },
+    "restricted.message" : {
+      "comment" : "Explains that photo access is blocked by parental controls or device management and cannot be changed by the user.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Access to photos is blocked on this device, for example by Screen Time or a management profile. Ask the person who manages this device to allow it." } }
+      }
+    },
+    "restricted.title" : {
+      "comment" : "Title shown when photo access is restricted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo access is restricted" } }
       }
     }
   },
