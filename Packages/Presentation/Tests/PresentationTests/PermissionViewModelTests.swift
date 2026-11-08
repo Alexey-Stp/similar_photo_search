@@ -93,6 +93,49 @@ struct PermissionViewModelTests {
         #expect(viewModel.isLimited == false)
     }
 
+    @Test func olderLimitedRefreshDoesNotOverwriteNewerResult() async {
+        let service = MockPhotoPermissionService(status: .limited, photoCount: 5)
+        await service.holdNextPhotoCount()
+        let viewModel = makeViewModel(service)
+
+        // The older refresh reads "limited" and then waits for its photo count.
+        let olderRefresh = Task { await viewModel.refresh() }
+        while await !service.isHoldingPhotoCount {
+            await Task.yield()
+        }
+
+        // A newer refresh finishes first, after access changed to full.
+        await service.setStatus(.authorized)
+        await viewModel.refresh()
+        #expect(viewModel.status == .authorized)
+
+        // The older result arrives late and must be ignored.
+        await service.releaseHeldPhotoCount()
+        await olderRefresh.value
+        #expect(viewModel.status == .authorized)
+        #expect(viewModel.accessiblePhotoCount == nil)
+        #expect(viewModel.isLimited == false)
+    }
+
+    @Test func olderLimitedRefreshDoesNotOverwriteNewerDenied() async {
+        let service = MockPhotoPermissionService(status: .limited, photoCount: 5)
+        await service.holdNextPhotoCount()
+        let viewModel = makeViewModel(service)
+
+        let olderRefresh = Task { await viewModel.refresh() }
+        while await !service.isHoldingPhotoCount {
+            await Task.yield()
+        }
+
+        await service.setStatus(.denied)
+        await viewModel.refresh()
+
+        await service.releaseHeldPhotoCount()
+        await olderRefresh.value
+        #expect(viewModel.route == .permissionDenied)
+        #expect(viewModel.accessiblePhotoCount == nil)
+    }
+
     @Test func presentLimitedPickerRefreshesCount() async {
         let service = MockPhotoPermissionService(status: .limited, photoCount: 3, photoCountAfterPicker: 30)
         let viewModel = makeViewModel(service)

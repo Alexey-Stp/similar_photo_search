@@ -22,6 +22,8 @@ public final class PermissionViewModel {
 
     private let permissions: any PhotoPermissionService
     private let openSettingsAction: @MainActor () -> Void
+    /// Incremented by every refresh or request, so a slower, older one cannot overwrite a newer result.
+    private var latestRequestID = 0
 
     /// Creates the view model.
     /// - Parameters:
@@ -38,12 +40,14 @@ public final class PermissionViewModel {
     /// Re-reads the status without prompting. Call on launch and whenever the scene becomes active,
     /// so a change made in Settings shows up without restarting the app.
     public func refresh() async {
-        await apply(await permissions.currentStatus())
+        let requestID = beginRequest()
+        await apply(await permissions.currentStatus(), requestID: requestID)
     }
 
     /// Shows the system access prompt (if the user was not asked before) and applies the result.
     public func requestAccess() async {
-        await apply(await permissions.requestAccess())
+        let requestID = beginRequest()
+        await apply(await permissions.requestAccess(), requestID: requestID)
     }
 
     /// Lets the user change which photos are shared, then reloads the status and the photo count.
@@ -57,9 +61,16 @@ public final class PermissionViewModel {
         openSettingsAction()
     }
 
-    private func apply(_ newStatus: PhotoLibraryAuthorization) async {
+    private func beginRequest() -> Int {
+        latestRequestID += 1
+        return latestRequestID
+    }
+
+    private func apply(_ newStatus: PhotoLibraryAuthorization, requestID: Int) async {
         // Load the count first, so status and count change together and the banner never shows a stale number.
         let count = newStatus == .limited ? await permissions.accessiblePhotoCount() : nil
+        // A newer refresh or request started while this one was waiting: keep its status and count.
+        guard requestID == latestRequestID else { return }
         status = newStatus
         accessiblePhotoCount = count
     }

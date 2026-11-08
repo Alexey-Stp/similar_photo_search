@@ -6,9 +6,13 @@ struct PreviewPermissionService: PhotoPermissionService {
     let status: PhotoLibraryAuthorization
     let photoCount: Int
 
+    /// Returns the fixed status.
     func currentStatus() async -> PhotoLibraryAuthorization { status }
+    /// Returns the fixed status; previews never prompt.
     func requestAccess() async -> PhotoLibraryAuthorization { status }
+    /// Returns the fixed photo count.
     func accessiblePhotoCount() async -> Int { photoCount }
+    /// Does nothing; previews can't show the system picker.
     func presentLimitedPicker() async {}
 }
 

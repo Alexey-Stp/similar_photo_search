@@ -19,6 +19,16 @@ public actor MockPhotoPermissionService: PhotoPermissionService {
     /// Number of `presentLimitedPicker()` calls.
     public private(set) var presentLimitedPickerCallCount = 0
 
+    /// Whether the next `accessiblePhotoCount()` call should wait until `releaseHeldPhotoCount()`.
+    private var holdsNextPhotoCount = false
+    /// The suspended `accessiblePhotoCount()` call, if one is being held.
+    private var heldPhotoCount: CheckedContinuation<Void, Never>?
+
+    /// Whether an `accessiblePhotoCount()` call is currently suspended by `holdNextPhotoCount()`.
+    public var isHoldingPhotoCount: Bool {
+        heldPhotoCount != nil
+    }
+
     /// Creates the mock.
     public init(
         status: PhotoLibraryAuthorization = .notDetermined,
@@ -37,10 +47,24 @@ public actor MockPhotoPermissionService: PhotoPermissionService {
         status = newStatus
     }
 
+    /// Makes the next `accessiblePhotoCount()` call suspend until `releaseHeldPhotoCount()`,
+    /// so tests can control the order in which overlapping requests finish.
+    public func holdNextPhotoCount() {
+        holdsNextPhotoCount = true
+    }
+
+    /// Resumes the held `accessiblePhotoCount()` call, if any.
+    public func releaseHeldPhotoCount() {
+        heldPhotoCount?.resume()
+        heldPhotoCount = nil
+    }
+
+    /// Returns `status`.
     public func currentStatus() -> PhotoLibraryAuthorization {
         status
     }
 
+    /// Switches a not-determined status to `statusAfterRequest` and returns the status.
     public func requestAccess() -> PhotoLibraryAuthorization {
         requestAccessCallCount += 1
         if status == .notDetermined {
@@ -49,11 +73,18 @@ public actor MockPhotoPermissionService: PhotoPermissionService {
         return status
     }
 
-    public func accessiblePhotoCount() -> Int {
+    /// Returns `photoCount` as it was at the time of the call, waiting first if a hold is set.
+    public func accessiblePhotoCount() async -> Int {
         photoCountCallCount += 1
-        return photoCount
+        let count = photoCount
+        if holdsNextPhotoCount {
+            holdsNextPhotoCount = false
+            await withCheckedContinuation { heldPhotoCount = $0 }
+        }
+        return count
     }
 
+    /// Records the call and switches `photoCount` to `photoCountAfterPicker`, if set.
     public func presentLimitedPicker() {
         presentLimitedPickerCallCount += 1
         if let photoCountAfterPicker {

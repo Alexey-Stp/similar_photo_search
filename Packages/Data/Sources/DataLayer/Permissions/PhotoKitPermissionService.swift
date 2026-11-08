@@ -15,20 +15,25 @@ public final class PhotoKitPermissionService: PhotoPermissionService {
     /// Creates the service.
     public init() {}
 
+    /// Reads `PHPhotoLibrary.authorizationStatus(for: .readWrite)` without prompting.
     public func currentStatus() async -> PhotoLibraryAuthorization {
         Self.map(PHPhotoLibrary.authorizationStatus(for: .readWrite))
     }
 
+    /// Shows the system prompt for `.readWrite` access if the user has not been asked yet.
     public func requestAccess() async -> PhotoLibraryAuthorization {
         Self.map(await PHPhotoLibrary.requestAuthorization(for: .readWrite))
     }
 
+    /// Counts the images the app can see. Under limited access this is the user's selection.
     public func accessiblePhotoCount() async -> Int {
         // The fetch result is lazy: counting does not load assets or pixel data.
         // Hidden assets are excluded by default.
         PHAsset.fetchAssets(with: .image, options: nil).count
     }
 
+    /// Shows the system limited-library picker and returns when it is dismissed.
+    /// Returns immediately if access is not limited or there is nothing to present from.
     public func presentLimitedPicker() async {
         #if canImport(UIKit)
         await Self.presentLimitedPickerOnMainActor()
@@ -56,6 +61,12 @@ public final class PhotoKitPermissionService: PhotoPermissionService {
     #if canImport(UIKit)
     @MainActor
     private static func presentLimitedPickerOnMainActor() async {
+        // The picker only applies to limited access. If access changed (for example in Settings),
+        // PhotoKit may never call the completion handler, so don't wait on it.
+        guard PHPhotoLibrary.authorizationStatus(for: .readWrite) == .limited else {
+            logger.info("Skipping the limited library picker: access is no longer limited")
+            return
+        }
         guard let presenter = topViewController() else {
             logger.error("Cannot show the limited library picker: no presenting view controller")
             return
