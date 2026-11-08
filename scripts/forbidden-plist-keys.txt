@@ -7,6 +7,6 @@ NSAppTransportSecurity
 NSLocalNetworkUsageDescription
 NSBonjourServices
 # Background modes that exist to fetch from or be woken by a server.
-# `processing` stays allowed: BGProcessingTask resumes on-device analysis (SPC-14).
+# `processing` stays allowed: BGProcessingTask resumes on-device analysis (SPS-14).
 UIBackgroundModes=fetch
 UIBackgroundModes=remote-notification
