@@ -33,8 +33,8 @@ Device: a physical iPhone with iCloud Photos on and "Optimize iPhone Storage" se
 **Pass**
 
 - Both runs behave the same: nothing hangs or shows a network error.
-- Groups found, photos scanned and the no-date skip count match.
-- The iCloud-only skip counts are compared **only if** local-original availability was the same in both runs, meaning the `QA iCloud-only` photos were iCloud-only before and after each run. If availability changed between runs (iOS downloaded or offloaded originals), record the skip-count comparison as **inconclusive** and repeat it, rather than marking it as a pass or a fail.
+- The no-date skip count matches. It doesn't depend on where originals are stored.
+- Groups found, photos scanned and the iCloud-only skip count are compared **only if** local-original availability was the same in both runs, meaning the `QA iCloud-only` photos were iCloud-only before and after each run. All three depend on which originals are on the device: an iCloud-only photo is skipped, so it is neither scanned nor grouped. If availability changed between runs (iOS downloaded or offloaded originals), record these comparisons as **inconclusive** and repeat both runs with the same availability, rather than marking them as a pass or a fail.
 - After either run, the `QA iCloud-only` photos are still iCloud-only. If one became local, the app (or a request on its behalf) downloaded it, and the check **fails**.
 
 ## 2. No outbound connections

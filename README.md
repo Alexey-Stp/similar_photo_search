@@ -70,7 +70,7 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs these on every pu
 | Required Info.plist usage keys present; no network keys (ATS, local network, Bonjour, background fetch/push) | [scripts/check-info-plist.sh](scripts/check-info-plist.sh) |
 | No networking entitlements in any `*.entitlements` file or configured entitlements path | [scripts/check-entitlements.sh](scripts/check-entitlements.sh) |
 | Privacy manifest: no tracking, no collected data, every entry well-formed, and every required-reason API used in the Swift/C/Objective-C sources is declared | [scripts/check-privacy-manifest.sh](scripts/check-privacy-manifest.sh) + [scripts/required-reason-apis.txt](scripts/required-reason-apis.txt) |
-| No networking APIs or frameworks, no remote URL literals, `isNetworkAccessAllowed` only ever assigned the literal `false` (no key paths) | SwiftLint custom rules in [.swiftlint.yml](.swiftlint.yml) |
+| No networking APIs or frameworks, no remote URL literals. `isNetworkAccessAllowed` may only be written as `= false`, followed by nothing but end of line, `;`, `}` or a `//` comment. Anything after a block comment, `toggle()`, `inout` (`&`) and key paths are rejected. | SwiftLint custom rules in [.swiftlint.yml](.swiftlint.yml) |
 
 **Self-tests.** The zero-network and privacy guards (Info.plist, entitlements, privacy manifest, dependencies, SwiftLint rules) also run against fixtures in [scripts/fixtures/](scripts/fixtures/):
 

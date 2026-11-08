@@ -24,12 +24,15 @@ custom_rules:
     severity: error
   no_icloud_downloads:
     name: "No iCloud downloads"
-    # 1) Any assignment whose right-hand side is not exactly the literal `false` (followed only by end of line,
-    #    `;`, `}` or a comment): true, YES, a variable, !false, `false || allow`... Comparisons (==, !=) are fine.
-    # 2) Any key path to the property (`\.isNetworkAccessAllowed`, `\PHImageRequestOptions.isNetworkAccessAllowed`),
+    # 1) Any assignment whose right-hand side is not exactly the literal `false`, followed only by end of line,
+    #    `;`, `}` or a `//` comment: true, YES, a variable, !false, `false || allow`, `false /* x */ || allow`...
+    #    Comparisons (==, !=) are fine.
+    # 2) Any member access on the property, e.g. `options.isNetworkAccessAllowed.toggle()`.
+    # 3) Passing it inout: `flip(&options.isNetworkAccessAllowed)` (but not `a && options.isNetworkAccessAllowed`).
+    # 4) Any key path to the property (`\.isNetworkAccessAllowed`, `\PHImageRequestOptions.isNetworkAccessAllowed`),
     #    because key-path writes (`options[keyPath: ...] = true`) would bypass rule 1.
-    regex: 'isNetworkAccessAllowed[ \t]*+=(?!=)[ \t]*+(?!false[ \t]*+(?:\r?\n|$|;|//|/\*|\}))|\\[\w.]*\.isNetworkAccessAllowed\b'
-    message: "Set isNetworkAccessAllowed = false (literal, no key paths). iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
+    regex: 'isNetworkAccessAllowed[ \t]*+=(?!=)[ \t]*+(?!false[ \t]*+(?:\r?\n|$|;|//|\}))|isNetworkAccessAllowed[ \t]*+\.|(?<!&)&(?![&=])[\w.]*\bisNetworkAccessAllowed\b|\\[\w.]*\.isNetworkAccessAllowed\b'
+    message: "Only `isNetworkAccessAllowed = false` (literal, no block comment after it) is allowed: no other values, toggle(), inout or key paths. iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
     severity: error
   no_remote_url_literals:
     name: "No remote URLs"

@@ -3,7 +3,8 @@
 #   - the manifest is not a valid plist;
 #   - NSPrivacyTracking is not false, or NSPrivacyTrackingDomains / NSPrivacyCollectedDataTypes are not empty
 #     (the App Store label must honestly read "Data Not Collected");
-#   - a NSPrivacyAccessedAPITypes entry is malformed or has no reasons (every entry is checked);
+#   - a NSPrivacyAccessedAPITypes entry is malformed, has no reasons, or uses a reason code that is not
+#     approved for its category (every entry is checked);
 #   - the sources (Swift, C, Objective-C) use a required-reason API (scripts/required-reason-apis.txt) whose
 #     category is not declared.
 # Usage: scripts/check-privacy-manifest.sh [path/to/PrivacyInfo.xcprivacy]   (macOS: uses plutil; needs perl)
@@ -44,6 +45,26 @@ for key in NSPrivacyTrackingDomains NSPrivacyCollectedDataTypes; do
     fi
 done
 
+# Prints the field ($2: 1 = category, 2 = approved reasons, 3 = regex) of every data row in the table.
+table_field() {
+    local line category rest
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
+        category="${line%%|*}"
+        rest="${line#*|}"
+        case "$1" in
+            1) echo "$category" ;;
+            2) echo "${rest%%|*}" ;;
+            3) echo "${rest#*|}" ;;
+        esac | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//'
+    done < "$table"
+}
+
+# Prints the approved reason codes (space-separated) for the category in $1; prints nothing if unknown.
+approved_reasons() {
+    paste -d '|' <(table_field 1) <(table_field 2) | awk -F'|' -v c="$1" '$1 == c { print $2 }'
+}
+
 # --- Declared required-reason categories --------------------------------------------------------
 # Walk every entry that exists. A malformed entry is reported and skipped; it does not stop the scan,
 # so valid declarations after it are still found.
@@ -57,9 +78,19 @@ while plutil -extract "NSPrivacyAccessedAPITypes.$i" xml1 -o - "$manifest" >/dev
     if [[ ! "$category" =~ ^NSPrivacyAccessedAPICategory[A-Za-z]+$ ]]; then
         fail "NSPrivacyAccessedAPITypes[$i] is malformed: NSPrivacyAccessedAPIType is missing or not a category name (got: '${category}')"
     else
-        reasons="$(plutil -extract "NSPrivacyAccessedAPITypes.$i.NSPrivacyAccessedAPITypeReasons" xml1 -o - "$manifest" 2>/dev/null || true)"
-        if ! grep -q '<string>[^<]' <<< "$reasons"; then
+        reasons_xml="$(plutil -extract "NSPrivacyAccessedAPITypes.$i.NSPrivacyAccessedAPITypeReasons" xml1 -o - "$manifest" 2>/dev/null || true)"
+        reasons="$(grep -oE '<string>[^<]*</string>' <<< "$reasons_xml" | sed -E 's#</?string>##g' || true)"
+        approved="$(approved_reasons "$category")"
+        if [[ -z "$approved" ]]; then
+            fail "NSPrivacyAccessedAPITypes[$i]: $category is not a known required-reason category (see scripts/required-reason-apis.txt)"
+        elif [[ -z "$reasons" ]]; then
             fail "NSPrivacyAccessedAPITypes[$i] ($category) has no NSPrivacyAccessedAPITypeReasons"
+        else
+            while IFS= read -r reason; do
+                if [[ " $approved " != *" $reason "* ]]; then
+                    fail "NSPrivacyAccessedAPITypes[$i] ($category): '$reason' is not an approved reason code (approved: $approved)"
+                fi
+            done <<< "$reasons"
         fi
         declared+=("$category")
     fi
@@ -84,10 +115,7 @@ done < <(find SimilarPhotos Packages/*/Sources -not -path '*/.build/*' \
               \( -name '*.swift' -o -name '*.c' -o -name '*.h' -o -name '*.m' -o -name '*.mm' -o -name '*.cpp' \) \
               -type f -print0 2>/dev/null)
 
-while IFS= read -r line || [[ -n "$line" ]]; do
-    [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
-    category="$(echo "${line%%|*}" | tr -d '[:space:]')"
-    pattern="$(echo "${line#*|}" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+while IFS='|' read -r category pattern; do
     [[ ${#sources[@]} -eq 0 ]] && break
 
     hits="$(RE="$pattern" perl -ne 'print "  $ARGV:$.: $_" if /$ENV{RE}/; close ARGV if eof' "${sources[@]}")"
@@ -95,7 +123,7 @@ while IFS= read -r line || [[ -n "$line" ]]; do
         fail "sources use a $category API but the manifest does not declare it. Add an NSPrivacyAccessedAPITypes entry with the right reason code:"
         echo "$hits" >&2
     fi
-done < "$table"
+done < <(paste -d '|' <(table_field 1) <(table_field 3))
 
 if [[ $status -eq 0 ]]; then
     echo "Privacy manifest OK: $manifest (declared: ${declared[*]:-none})"

@@ -14,6 +14,10 @@ set -euo pipefail
 repo="$(cd "$(dirname "$0")/.." && pwd)"
 root="$(cd "${1:-$repo}" && pwd)"
 allowed_file="${ALLOWED_PACKAGES_FILE:-$repo/allowed-packages.txt}"
+if [[ ! -f "$allowed_file" || ! -r "$allowed_file" ]]; then
+    echo "error: allow-list $allowed_file is missing or unreadable" >&2
+    exit 1
+fi
 allowed_file="$(cd "$(dirname "$allowed_file")" && pwd)/$(basename "$allowed_file")"
 cd "$root"
 shopt -s nullglob
@@ -25,7 +29,9 @@ normalize() {
 }
 
 # One URL per line: drop comments and blank lines, strip whitespace inside each line (keep the line breaks).
-allowed="$(grep -vE '^[[:space:]]*(#|$)' "$allowed_file" | sed -E 's/[[:space:]]+//g' | normalize || true)"
+# grep exits 1 when every line is a comment (a valid, empty allow-list); any other failure aborts.
+entries="$(grep -vE '^[[:space:]]*(#|$)' "$allowed_file")" || [[ $? -eq 1 ]]
+allowed="$(sed -E 's/[[:space:]]+//g' <<< "$entries" | normalize)"
 
 manifests=(Packages/*/Package.swift)
 resolved=(Packages/*/Package.resolved

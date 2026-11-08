@@ -1,10 +1,13 @@
-# Required-reason API categories and the source patterns (Perl regex) that mean the category is in use.
-# Format: <NSPrivacyAccessedAPIType> | <Perl regex>
-# If a pattern matches anything under SimilarPhotos/ or Packages/*/Sources, the category must be declared
-# in SimilarPhotos/PrivacyInfo.xcprivacy with at least one reason. Checked by scripts/check-privacy-manifest.sh.
-# Reference: https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api
-NSPrivacyAccessedAPICategoryUserDefaults | \bUserDefaults\b|@AppStorage\b
-NSPrivacyAccessedAPICategoryFileTimestamp | \.(creationDate|contentModificationDate|contentAccessDate|attributeModificationDate)Key\b|FileAttributeKey\.(creationDate|modificationDate)|\.attributesOfItem\(|\b(stat|fstat|lstat|fstatat|getattrlist|fgetattrlist|getattrlistat)\(
-NSPrivacyAccessedAPICategorySystemBootTime | \bsystemUptime\b|\bmach_absolute_time\b
-NSPrivacyAccessedAPICategoryDiskSpace | \bvolume(Available|Total)Capacity\w*Key\b|\bsystem(Free)?Size\b|\b(statfs|statvfs|fstatfs|fstatvfs)\(|\.attributesOfFileSystem\(
-NSPrivacyAccessedAPICategoryActiveKeyboards | \bactiveInputModes\b
+# Required-reason API categories: Apple's approved reason codes, and the source patterns (Perl regex) that mean
+# the category is in use.
+# Format: <NSPrivacyAccessedAPIType> | <approved reason codes, space-separated> | <Perl regex>
+# Checked by scripts/check-privacy-manifest.sh:
+#   - every reason declared in SimilarPhotos/PrivacyInfo.xcprivacy must be an approved code for its category;
+#   - if a pattern matches anything under SimilarPhotos/ or Packages/*/Sources, the category must be declared.
+# Reference (update the codes from here when Apple adds new ones):
+# https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api
+NSPrivacyAccessedAPICategoryUserDefaults | CA92.1 1C8F.1 C56D.1 AC6B.1 | \bUserDefaults\b|@AppStorage\b
+NSPrivacyAccessedAPICategoryFileTimestamp | DDA9.1 C617.1 3B52.1 0A2A.1 | \.(creationDate|contentModificationDate|contentAccessDate|attributeModificationDate)Key\b|FileAttributeKey\.(creationDate|modificationDate)|\.attributesOfItem\(|\b(stat|fstat|lstat|fstatat|getattrlist|fgetattrlist|getattrlistat)\(
+NSPrivacyAccessedAPICategorySystemBootTime | 35F9.1 8FFB.1 3D61.1 | \bsystemUptime\b|\bmach_absolute_time\b
+NSPrivacyAccessedAPICategoryDiskSpace | 85F4.1 E174.1 7D9E.1 B728.1 | \bvolume(Available|Total)Capacity\w*Key\b|\bsystem(Free)?Size\b|\b(statfs|statvfs|fstatfs|fstatvfs)\(|\.attributesOfFileSystem\(
+NSPrivacyAccessedAPICategoryActiveKeyboards | 3EC4.1 54BD.1 | \bactiveInputModes\b

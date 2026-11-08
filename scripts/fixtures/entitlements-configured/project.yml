@@ -1,0 +1,17 @@
+# Self-test fixture for scripts/check-entitlements.sh: the target's entitlements file is configured with
+# $(SRCROOT), has a space in its name and a non-.entitlements extension, and `path:` comes after more than
+# three lines of the mapping. The `path:` under `settings:` must not be read as an entitlements path.
+name: Fixture
+targets:
+  Fixture:
+    type: application
+    entitlements:
+      # Signing entitlements.
+      properties:
+        com.apple.security.application-groups: []
+        com.apple.developer.icloud-container-identifiers: []
+        com.apple.developer.ubiquity-kvstore-identifier: ""
+      path: $(SRCROOT)/Signing/App Entitlements.plist
+    settings:
+      base:
+        path: does/not/exist.plist

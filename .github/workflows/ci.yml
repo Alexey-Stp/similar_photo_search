@@ -50,10 +50,17 @@ jobs:
           bash scripts/expect-failure.sh --expect "must not contain fetch in UIBackgroundModes" \
             --absent "missing required key" -- bash scripts/check-info-plist.sh "$f/Info-background-fetch.plist"
 
-      - name: Entitlements check self-test (entitlements outside the app folder)
+      - name: Entitlements check self-tests
         run: |
+          f=scripts/fixtures
+          # A *.entitlements file outside the app folder.
           bash scripts/expect-failure.sh --expect "Config/App.entitlements grants a networking entitlement" \
-            -- bash scripts/check-entitlements.sh scripts/fixtures/entitlements-forbidden
+            -- bash scripts/check-entitlements.sh "$f/entitlements-forbidden"
+          # A configured path with $(SRCROOT), a space and a non-.entitlements extension, deep in the mapping.
+          bash scripts/expect-failure.sh --expect "Signing/App Entitlements.plist grants a networking entitlement" \
+            -- bash scripts/check-entitlements.sh "$f/entitlements-configured"
+          # Positive: networking keys that only appear in an XML comment are ignored.
+          bash scripts/check-entitlements.sh "$f/entitlements-commented"
 
       - name: Privacy manifest check self-tests
         run: |
@@ -64,6 +71,8 @@ jobs:
             -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-collects-data.xcprivacy"
           bash scripts/expect-failure.sh --expect "sources use a NSPrivacyAccessedAPICategoryUserDefaults API" \
             -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-missing-userdefaults.xcprivacy"
+          bash scripts/expect-failure.sh --expect "'XXXX.1' is not an approved reason code" \
+            -- bash scripts/check-privacy-manifest.sh "$f/PrivacyInfo-bad-reason.xcprivacy"
           # A malformed entry is reported, and the valid UserDefaults entry after it is still found.
           bash scripts/expect-failure.sh --expect "NSPrivacyAccessedAPITypes[0] is malformed" \
             --absent "sources use a NSPrivacyAccessedAPICategoryUserDefaults API" \
@@ -76,6 +85,9 @@ jobs:
           # Positive: a multi-entry allow-list keeps its entries distinct and accepts both packages.
           ALLOWED_PACKAGES_FILE=scripts/fixtures/resolved-allowed/allowed-packages.txt \
             bash scripts/check-dependencies.sh scripts/fixtures/resolved-allowed
+          # A missing allow-list aborts instead of being treated as empty.
+          ALLOWED_PACKAGES_FILE=scripts/fixtures/does-not-exist.txt \
+            bash scripts/expect-failure.sh --expect "is missing or unreadable" -- bash scripts/check-dependencies.sh
 
       - name: SwiftLint
         run: |
