@@ -21,7 +21,7 @@
 		<!--
 		  UserDefaults, reason CA92.1: read and write information that is only accessible to
 		  the app itself. Used via @AppStorage for app preferences: hasCompletedOnboarding (SPS-4),
-		  and later the scan scope (SPC-8) and session gap (SPC-26). Nothing is shared with other
+		  the scan scope (SPS-8, JSON under "scanScope") and later the session gap (SPS-26). Nothing is shared with other
 		  apps or app groups.
 
 		  Not declared on purpose, because the app does not use these APIs:
