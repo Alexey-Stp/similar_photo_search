@@ -1,0 +1,12 @@
+# Info.plist keys that must NOT be present (zero-network policy, CLAUDE.md rule #1, SPS-5).
+# Checked by scripts/check-info-plist.sh.
+# Format: `Key` forbids the key entirely; `Key=value` forbids that value inside an array key.
+# App Transport Security exceptions only matter for apps that talk to servers.
+NSAppTransportSecurity
+# Local network access (Bonjour, LAN discovery).
+NSLocalNetworkUsageDescription
+NSBonjourServices
+# Background modes that exist to fetch from or be woken by a server.
+# `processing` stays allowed: BGProcessingTask resumes on-device analysis (SPC-14).
+UIBackgroundModes=fetch
+UIBackgroundModes=remote-notification

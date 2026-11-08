@@ -7,19 +7,29 @@ excluded:
   - Packages/Data/.build
   - Packages/Presentation/.build
 
+# Zero-network guard rails (CLAUDE.md rule #1, SPS-5). scripts/fixtures/NetworkViolations.swift must trigger
+# every rule below; CI checks that, so update the fixture when you change a regex.
 custom_rules:
   no_network_apis:
     name: "Zero network"
-    regex: '\b(URLSession|URLRequest|NWConnection|WKWebView)\b'
+    regex: '\b(URLSession\w*|URLRequest|NSURLConnection|NWConnection|NWPathMonitor|NWBrowser|NWListener|WKWebView|SFSafariViewController|ASWebAuthenticationSession|AsyncImage|CFNetwork\w*|CFStream\w*|CFHTTP\w*)\b'
     message: "Networking APIs are forbidden (CLAUDE.md rule #1)."
     severity: error
   no_network_frameworks:
     name: "Zero network frameworks"
-    regex: '^\s*(@\w+\s+)*import\s+(Network|WebKit)\b'
-    message: "Network and WebKit frameworks are forbidden (CLAUDE.md rule #1)."
+    regex: '^\s*(@\w+\s+)*import\s+(Network|WebKit|SafariServices|CFNetwork|CloudKit|MultipeerConnectivity)\b'
+    message: "Network, WebKit, SafariServices, CFNetwork, CloudKit and MultipeerConnectivity are forbidden (CLAUDE.md rule #1)."
     severity: error
   no_icloud_downloads:
     name: "No iCloud downloads"
-    regex: 'isNetworkAccessAllowed\s*=\s*true'
-    message: "iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
+    # Any assignment other than the literal `false` (true, YES, a variable, !false...). Comparisons (==) are fine.
+    regex: 'isNetworkAccessAllowed\s*+=(?!=)\s*+(?!false\b)'
+    message: "Set isNetworkAccessAllowed = false (literal). iCloud-only originals are skipped, never downloaded (CLAUDE.md rule #1)."
+    severity: error
+  no_remote_url_literals:
+    name: "No remote URLs"
+    regex: '(?i)\b(https?|wss?|ftp)://'
+    match_kinds:
+      - string
+    message: "Remote URL literals are forbidden: the app must not load anything from the network (CLAUDE.md rule #1). If a link only opens in another app (e.g. a privacy policy in Safari), disable this rule for that line with a justification."
     severity: error

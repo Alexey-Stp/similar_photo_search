@@ -1,0 +1,10 @@
+# Required-reason API categories and the source patterns (Perl regex) that mean the category is in use.
+# Format: <NSPrivacyAccessedAPIType> | <Perl regex>
+# If a pattern matches anything under SimilarPhotos/ or Packages/*/Sources, the category must be declared
+# in SimilarPhotos/PrivacyInfo.xcprivacy with at least one reason. Checked by scripts/check-privacy-manifest.sh.
+# Reference: https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api
+NSPrivacyAccessedAPICategoryUserDefaults | \bUserDefaults\b|@AppStorage\b
+NSPrivacyAccessedAPICategoryFileTimestamp | \.(creationDate|contentModificationDate|contentAccessDate|attributeModificationDate)Key\b|FileAttributeKey\.(creationDate|modificationDate)|\.attributesOfItem\(|\b(stat|fstat|lstat|fstatat|getattrlist|fgetattrlist|getattrlistat)\(
+NSPrivacyAccessedAPICategorySystemBootTime | \bsystemUptime\b|\bmach_absolute_time\b
+NSPrivacyAccessedAPICategoryDiskSpace | \bvolume(Available|Total)Capacity\w*Key\b|\bsystem(Free)?Size\b|\b(statfs|statvfs|fstatfs|fstatvfs)\(|\.attributesOfFileSystem\(
+NSPrivacyAccessedAPICategoryActiveKeyboards | \bactiveInputModes\b

@@ -1,0 +1,15 @@
+{
+  "originHash" : "0000000000000000000000000000000000000000000000000000000000000000",
+  "pins" : [
+    {
+      "identity" : "analytics-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/example/analytics-sdk.git",
+      "state" : {
+        "revision" : "0000000000000000000000000000000000000000",
+        "version" : "1.0.0"
+      }
+    }
+  ],
+  "version" : 3
+}

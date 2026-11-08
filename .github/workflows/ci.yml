@@ -40,10 +40,61 @@ jobs:
           fi
           echo "Negative fixture rejected as expected"
 
+      - name: Info.plist check rejects network keys (self-test)
+        run: |
+          for fixture in scripts/fixtures/Info-ats-exception.plist scripts/fixtures/Info-background-fetch.plist; do
+            if bash scripts/check-info-plist.sh "$fixture"; then
+              echo "::error::check-info-plist.sh accepted $fixture"
+              exit 1
+            fi
+          done
+          echo "Negative fixtures rejected as expected"
+
+      - name: Privacy manifest
+        run: bash scripts/check-privacy-manifest.sh
+
+      - name: Privacy manifest check rejects bad manifests (self-test)
+        run: |
+          for fixture in scripts/fixtures/PrivacyInfo-*.xcprivacy; do
+            if bash scripts/check-privacy-manifest.sh "$fixture"; then
+              echo "::error::check-privacy-manifest.sh accepted $fixture"
+              exit 1
+            fi
+          done
+          echo "Negative fixtures rejected as expected"
+
+      - name: Dependency check rejects a non-allowed Package.resolved entry (self-test)
+        run: |
+          if bash scripts/check-dependencies.sh scripts/fixtures/resolved-forbidden; then
+            echo "::error::check-dependencies.sh accepted a Package.resolved with a non-allowed package"
+            exit 1
+          fi
+          echo "Negative fixture rejected as expected"
+
       - name: SwiftLint
         run: |
           command -v swiftlint >/dev/null || brew install swiftlint
           swiftlint --strict --reporter github-actions-logging
+
+      - name: SwiftLint zero-network rules fire (self-test)
+        run: |
+          set +e
+          output="$(swiftlint lint --strict --no-cache --config .swiftlint.yml scripts/fixtures/NetworkViolations.swift 2>&1)"
+          code=$?
+          set -e
+          echo "$output"
+          if [[ $code -eq 0 ]]; then
+            echo "::error::SwiftLint accepted scripts/fixtures/NetworkViolations.swift"
+            exit 1
+          fi
+          missing=0
+          for rule in no_network_apis no_network_frameworks no_icloud_downloads no_remote_url_literals; do
+            if ! grep -q "($rule)" <<< "$output"; then
+              echo "::error::SwiftLint rule $rule did not fire on the fixture"
+              missing=1
+            fi
+          done
+          exit $missing
 
   test:
     name: Build & test
@@ -64,6 +115,11 @@ jobs:
         run: |
           command -v xcodegen >/dev/null || brew install xcodegen
           xcodegen generate
+
+      - name: Allowed dependencies (resolved, including transitive)
+        run: |
+          xcodebuild -resolvePackageDependencies -project SimilarPhotos.xcodeproj -scheme SimilarPhotos
+          bash scripts/check-dependencies.sh
 
       - name: xcodebuild test
         run: |
