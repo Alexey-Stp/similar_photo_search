@@ -13,8 +13,29 @@ env:
   XCODE_VERSION: "16.4"
 
 jobs:
+  # Docs-only changes (.claude/, docs/, root *.md) skip the macOS jobs below.
+  # Skipped jobs count as passed, so required status checks never wait on them.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check whether the change needs a build
+        id: filter
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: bash scripts/ci-needs-build.sh "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
   lint:
     name: Lint & architecture guards
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -146,7 +167,8 @@ jobs:
     # A healthy run takes about 5 minutes; a hung test must not hold a runner for the 6-hour default. Leaves room for
     # both test steps' own limits (10 + 20 min) plus setup, including a possible iOS platform download.
     timeout-minutes: 60
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.code == 'true'
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
