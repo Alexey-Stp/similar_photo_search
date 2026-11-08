@@ -3,6 +3,7 @@ import Foundation
 import os
 import Photos
 #if canImport(UIKit)
+import PhotosUI // declares PHPhotoLibrary.presentLimitedLibraryPicker(from:completionHandler:)
 import UIKit
 #endif
 
