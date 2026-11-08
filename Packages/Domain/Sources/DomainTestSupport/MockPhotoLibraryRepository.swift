@@ -3,9 +3,13 @@ import Foundation
 
 /// In-memory `PhotoLibraryRepository` for tests.
 ///
-/// Applies the scope's album, date-range and screenshot filters to `assets`, delivers them in
-/// `PhotoAsset.libraryOrder` and splits them into pages of exactly `pageSize`.
-/// Bursts are not modelled: every asset is returned whatever `includeBursts` says.
+/// Mirrors the PhotoKit repository's contract:
+/// - applies the scope's album, date-range and screenshot filters to `assets`;
+/// - when `includeBursts` is `false`, keeps one representative per `burstIdentifier`
+///   (the first in `PhotoAsset.libraryOrder`; PhotoKit's own pick may differ);
+/// - delivers assets in `PhotoAsset.libraryOrder`, in pages of `pageSize` that grow only to keep photos with the
+///   same timestamp together; photos without a date start a new page;
+/// - `assetCount` counts a photo once per selected album it is in, like the real per-album sum.
 public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
     /// Every asset in the fake library.
     public private(set) var assets: [PhotoAsset]
@@ -48,12 +52,21 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
         pageFailure = (afterPages, error)
     }
 
+    /// Number of matching assets; with albums selected, the sum of each distinct album's matching assets.
     public func assetCount(scope: ScanScope) -> Int {
         assetCountCallCount += 1
         requestedScopes.append(scope)
-        return matchingAssets(in: scope).count
+        guard let albumIDs = scope.albumIDs else {
+            return matchingAssets(in: scope).count
+        }
+        return Set(albumIDs).reduce(0) { total, albumID in
+            var singleAlbum = scope
+            singleAlbum.albumIDs = [albumID]
+            return total + matchingAssets(in: singleAlbum).count
+        }
     }
 
+    /// Streams the matching assets, de-duplicated across albums, failing as configured by `pageFailure`.
     public nonisolated func assetPages(
         scope: ScanScope,
         pageSize: Int
@@ -82,30 +95,61 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
         }
     }
 
+    /// Returns `albumSummaries`.
     public func albums() -> [AlbumSummary] {
         albumsCallCount += 1
         return albumSummaries
     }
 
+    /// Records the request and splits the matching assets into pages.
     private func startPaging(
         scope: ScanScope,
         pageSize: Int
     ) -> (pages: [[PhotoAsset]], failure: (afterPages: Int, error: any Error)?) {
         assetPagesCallCount += 1
         requestedScopes.append(scope)
-        let ordered = matchingAssets(in: scope)
-        let size = max(1, pageSize)
-        let pages = stride(from: 0, to: ordered.count, by: size).map {
-            Array(ordered[$0..<min($0 + size, ordered.count)])
-        }
-        return (pages, pageFailure)
+        return (Self.pages(of: matchingAssets(in: scope), pageSize: max(1, pageSize)), pageFailure)
     }
 
+    /// Splits ordered assets into pages of `pageSize`, letting a page grow to keep equal timestamps together.
+    /// The first undated asset always starts a new page.
+    private static func pages(of ordered: [PhotoAsset], pageSize: Int) -> [[PhotoAsset]] {
+        var pages: [[PhotoAsset]] = []
+        var current: [PhotoAsset] = []
+        for asset in ordered {
+            if let last = current.last,
+               startsNewPage(asset, after: last, currentCount: current.count, pageSize: pageSize) {
+                pages.append(current)
+                current = []
+            }
+            current.append(asset)
+        }
+        if !current.isEmpty {
+            pages.append(current)
+        }
+        return pages
+    }
+
+    /// Whether `asset` must open a new page after `last`, given the current page's size.
+    private static func startsNewPage(
+        _ asset: PhotoAsset,
+        after last: PhotoAsset,
+        currentCount: Int,
+        pageSize: Int
+    ) -> Bool {
+        if last.creationDate != nil, asset.creationDate == nil {
+            return true
+        }
+        guard currentCount >= pageSize else { return false }
+        return asset.creationDate == nil || asset.creationDate != last.creationDate
+    }
+
+    /// Assets in `scope`, de-duplicated, in `PhotoAsset.libraryOrder`.
     private func matchingAssets(in scope: ScanScope) -> [PhotoAsset] {
         let albumAssetIDs = scope.albumIDs.map { ids in
             ids.reduce(into: Set<String>()) { $0.formUnion(albumMembers[$1] ?? []) }
         }
-        return assets
+        let ordered = assets
             .filter { asset in
                 if let albumAssetIDs, !albumAssetIDs.contains(asset.id) {
                     return false
@@ -119,5 +163,11 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
                 return true
             }
             .sorted(by: PhotoAsset.libraryOrder)
+        guard !scope.includeBursts else { return ordered }
+        var seenBursts: Set<String> = []
+        return ordered.filter { asset in
+            guard let burstID = asset.burstIdentifier else { return true }
+            return seenBursts.insert(burstID).inserted
+        }
     }
 }

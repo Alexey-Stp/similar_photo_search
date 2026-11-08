@@ -15,12 +15,15 @@ protocol AssetSource {
 
 /// An `AssetSource` backed by a lazy `PHFetchResult`. Only the requested range is materialized.
 struct PHFetchResultSource: AssetSource {
+    /// The fetch result to read from. It must already be sorted by `creationDate` descending.
     let result: PHFetchResult<PHAsset>
 
+    /// Number of assets in the fetch result. Reading it loads no assets.
     var count: Int {
         result.count
     }
 
+    /// Materializes only `range` and maps it to domain values inside an autorelease pool.
     func assets(in range: Range<Int>) -> [PhotoAsset] {
         autoreleasepool {
             result.objects(at: IndexSet(integersIn: range)).map(PhotoKitAssetMapper.asset(from:))

@@ -21,17 +21,20 @@ public final class PhotoKitLibraryRepository: PhotoLibraryRepository {
     /// Creates the repository.
     public init() {}
 
+    /// Number of photos in `scope`: the sum of one lazy fetch count per selected album, or the library count.
     public func assetCount(scope: ScanScope) async -> Int {
         // Fetch results are lazy: counting loads no assets.
         Self.fetchResults(for: scope).reduce(0) { $0 + $1.count }
     }
 
+    /// Streams the photos in `scope` in `PhotoAsset.libraryOrder`. The fetches run when the first page is requested.
     public func assetPages(scope: ScanScope, pageSize: Int) -> AsyncThrowingStream<[PhotoAsset], Error> {
         AssetPageProducer.stream(pageSize: pageSize) {
             Self.fetchResults(for: scope).map { PHFetchResultSource(result: $0) as any AssetSource }
         }
     }
 
+    /// Recents, Favorites, Selfies and Portrait (those that exist on this device), then the user's albums.
     public func albums() async -> [AlbumSummary] {
         var summaries: [AlbumSummary] = []
         for album in Self.smartAlbums {
@@ -65,6 +68,7 @@ public final class PhotoKitLibraryRepository: PhotoLibraryRepository {
         return (0..<collections.count).map { PHAsset.fetchAssets(in: collections.object(at: $0), options: options) }
     }
 
+    /// The summary of `collection`, with PhotoKit's estimated count or, if it has none, the image count.
     private static func summary(of collection: PHAssetCollection, kind: AlbumKind) -> AlbumSummary {
         var count = collection.estimatedAssetCount
         if count == NSNotFound {

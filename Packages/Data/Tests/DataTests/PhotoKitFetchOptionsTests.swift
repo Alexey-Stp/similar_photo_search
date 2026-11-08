@@ -23,11 +23,22 @@ struct PhotoKitFetchOptionsTests {
         #expect(options.includeAllBurstAssets == includeBursts)
     }
 
-    @Test func screenshotClauseOnlyWhenExcluding() {
-        let excluding = PhotoKitFetchOptions.predicate(for: ScanScope(excludeScreenshots: true)).predicateFormat
-        let including = PhotoKitFetchOptions.predicate(for: ScanScope(excludeScreenshots: false)).predicateFormat
-        #expect(excluding.contains("mediaSubtypes"))
-        #expect(!including.contains("mediaSubtypes"))
+    @Test(arguments: [
+        (PHAssetMediaSubtype(), false),
+        (PHAssetMediaSubtype.photoLive, false),
+        (PHAssetMediaSubtype.photoScreenshot, true),
+        (PHAssetMediaSubtype([.photoScreenshot, .photoHDR]), true),
+        (PHAssetMediaSubtype([.photoScreenshot, .photoLive, .photoDepthEffect]), true)
+    ])
+    func screenshotExclusionMatchesOnlyScreenshotFlag(subtypes: PHAssetMediaSubtype, isScreenshot: Bool) {
+        let candidate: NSDictionary = [
+            "mediaType": NSNumber(value: PHAssetMediaType.image.rawValue),
+            "mediaSubtypes": NSNumber(value: subtypes.rawValue)
+        ]
+        let excluding = PhotoKitFetchOptions.predicate(for: ScanScope(excludeScreenshots: true))
+        let including = PhotoKitFetchOptions.predicate(for: ScanScope(excludeScreenshots: false))
+        #expect(excluding.evaluate(with: candidate) == !isScreenshot)
+        #expect(including.evaluate(with: candidate))
     }
 
     @Test func dateRangeIsInclusive() {

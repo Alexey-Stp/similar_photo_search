@@ -6,14 +6,20 @@ import Testing
 struct MockPhotoLibraryRepositoryTests {
     private struct PageError: Error {}
 
-    private func asset(_ id: String, _ seconds: TimeInterval?, screenshot: Bool = false) -> PhotoAsset {
+    private func asset(
+        _ id: String,
+        _ seconds: TimeInterval?,
+        screenshot: Bool = false,
+        burst: String? = nil
+    ) -> PhotoAsset {
         PhotoAsset(
             id: id,
             creationDate: seconds.map { Date(timeIntervalSince1970: $0) },
             pixelWidth: 1,
             pixelHeight: 1,
             isFavorite: false,
-            mediaSubtypes: screenshot ? [.screenshot] : []
+            mediaSubtypes: screenshot ? [.screenshot] : [],
+            burstIdentifier: burst
         )
     }
 
@@ -50,6 +56,33 @@ struct MockPhotoLibraryRepositoryTests {
         let albums = ScanScope(albumIDs: ["x", "y"], excludeScreenshots: false)
         let pages = try await collect(repository.assetPages(scope: albums, pageSize: 10))
         #expect(pages.flatMap { $0 }.map(\.id) == ["b", "shot", "a"])
+    }
+
+    @Test func countAddsEachSelectedAlbumButPagesDeliverSharedAssetsOnce() async throws {
+        let repository = MockPhotoLibraryRepository(
+            assets: [asset("a", 3), asset("shared", 2), asset("b", 1)],
+            albumMembers: ["x": ["a", "shared"], "y": ["shared", "b"]]
+        )
+        let scope = ScanScope(albumIDs: ["x", "y", "x"])
+        #expect(await repository.assetCount(scope: scope) == 4)
+        let pages = try await collect(repository.assetPages(scope: scope, pageSize: 10))
+        #expect(pages.flatMap { $0 }.map(\.id) == ["a", "shared", "b"])
+    }
+
+    @Test func burstsKeepOneRepresentativeUnlessIncluded() async {
+        let repository = MockPhotoLibraryRepository(
+            assets: [asset("b1", 3, burst: "B"), asset("b2", 2, burst: "B"), asset("single", 1)]
+        )
+        #expect(await repository.assetCount(scope: ScanScope(includeBursts: false)) == 2)
+        #expect(await repository.assetCount(scope: ScanScope(includeBursts: true)) == 3)
+    }
+
+    @Test func pagesKeepEqualTimestampsTogetherAndStartUndatedOnANewPage() async throws {
+        let repository = MockPhotoLibraryRepository(
+            assets: [asset("new", 5), asset("t-b", 4), asset("t-a", 4), asset("old", 3), asset("undated", nil)]
+        )
+        let pages = try await collect(repository.assetPages(scope: .allPhotos, pageSize: 2))
+        #expect(pages.map { $0.map(\.id) } == [["new", "t-a", "t-b"], ["old"], ["undated"]])
     }
 
     @Test func injectedFailureEndsTheStreamAfterEarlierPages() async {

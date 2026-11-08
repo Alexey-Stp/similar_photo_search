@@ -11,6 +11,8 @@ import Foundation
 /// - Assets without a `creationDate` are collected as they are met and delivered after all dated assets,
 ///   sorted by `id`. Only these are held until the end; the library usually has few of them.
 /// - Sources are read in chunks of `pageSize`, never all at once.
+/// - Cancellation of the current task is checked before every asset and before sorting, so a long run of equal
+///   timestamps or undated assets stops promptly. After `nextPage()` throws, the pager must not be reused.
 struct OrderedAssetPager {
     private var cursors: [SourceCursor]
     private let pageSize: Int
@@ -31,20 +33,24 @@ struct OrderedAssetPager {
     }
 
     /// The next page, or `nil` when every asset has been delivered.
-    mutating func nextPage() -> [PhotoAsset]? {
+    /// Throws `CancellationError` if the current task is cancelled while the page is being built.
+    mutating func nextPage() throws -> [PhotoAsset]? {
         if !isDatedPhaseFinished {
-            if let page = nextDatedPage() {
+            if let page = try nextDatedPage() {
                 return page
             }
+            try Task.checkCancellation()
             isDatedPhaseFinished = true
             undated.sort(by: PhotoAsset.libraryOrder)
         }
         return nextUndatedPage()
     }
 
-    private mutating func nextDatedPage() -> [PhotoAsset]? {
-        while let asset = nextDatedAsset() {
+    /// The next page of dated assets, or `nil` when there are no more.
+    private mutating func nextDatedPage() throws -> [PhotoAsset]? {
+        while let asset = try nextDatedAsset() {
             if pending.count >= pageSize, asset.creationDate != pending.last?.creationDate {
+                try Task.checkCancellation()
                 let page = pending.sorted(by: PhotoAsset.libraryOrder)
                 pending = [asset]
                 return page
@@ -52,11 +58,13 @@ struct OrderedAssetPager {
             pending.append(asset)
         }
         guard !pending.isEmpty else { return nil }
+        try Task.checkCancellation()
         let page = pending.sorted(by: PhotoAsset.libraryOrder)
         pending = []
         return page
     }
 
+    /// The next page of undated assets (already sorted by `id`), or `nil` when there are no more.
     private mutating func nextUndatedPage() -> [PhotoAsset]? {
         guard undatedOffset < undated.count else { return nil }
         let end = min(undatedOffset + pageSize, undated.count)
@@ -66,8 +74,9 @@ struct OrderedAssetPager {
     }
 
     /// The newest not-yet-delivered dated asset across all sources. Undated assets met on the way are set aside.
-    private mutating func nextDatedAsset() -> PhotoAsset? {
-        while let index = indexOfNewestHead() {
+    private mutating func nextDatedAsset() throws -> PhotoAsset? {
+        while let index = try indexOfNewestHead() {
+            try Task.checkCancellation()
             let asset = cursors[index].pop()
             if markDelivered(asset) {
                 return asset
@@ -77,10 +86,10 @@ struct OrderedAssetPager {
     }
 
     /// The source whose next dated asset is the newest; ties go to the first source.
-    private mutating func indexOfNewestHead() -> Int? {
+    private mutating func indexOfNewestHead() throws -> Int? {
         var newest: (index: Int, date: Date)?
         for index in cursors.indices {
-            guard let date = datedHeadDate(at: index) else { continue }
+            guard let date = try datedHeadDate(at: index) else { continue }
             if newest.map({ date > $0.date }) ?? true {
                 newest = (index, date)
             }
@@ -89,11 +98,12 @@ struct OrderedAssetPager {
     }
 
     /// The date of the source's next asset, after moving any undated assets in front of it aside.
-    private mutating func datedHeadDate(at index: Int) -> Date? {
+    private mutating func datedHeadDate(at index: Int) throws -> Date? {
         while let head = cursors[index].peek() {
             if let date = head.creationDate {
                 return date
             }
+            try Task.checkCancellation()
             let asset = cursors[index].pop()
             if markDelivered(asset) {
                 undated.append(asset)
@@ -118,6 +128,7 @@ private struct SourceCursor {
     private var bufferIndex = 0
     private var nextOffset = 0
 
+    /// Creates a cursor at the start of `source`, reading `chunkSize` assets at a time.
     init(source: any AssetSource, chunkSize: Int) {
         self.source = source
         self.count = source.count
@@ -153,18 +164,20 @@ actor AssetPageProducer {
     private let makeSources: @Sendable () -> [any AssetSource]
     private var pager: OrderedAssetPager?
 
+    /// Creates a producer. `makeSources` runs once, on the first `nextPage()` call.
     init(pageSize: Int, makeSources: @escaping @Sendable () -> [any AssetSource]) {
         self.pageSize = pageSize
         self.makeSources = makeSources
     }
 
-    /// The next page, or `nil` at the end. Throws `CancellationError` if the consuming task was cancelled.
+    /// The next page, or `nil` at the end. Throws `CancellationError` if the consuming task is cancelled
+    /// before or while the page is built.
     func nextPage() throws -> [PhotoAsset]? {
         try Task.checkCancellation()
         if pager == nil {
             pager = OrderedAssetPager(sources: makeSources(), pageSize: pageSize)
         }
-        return pager?.nextPage()
+        return try pager?.nextPage()
     }
 
     /// A stream of pages that pulls one page each time the consumer asks for the next element.
