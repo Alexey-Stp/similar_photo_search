@@ -64,32 +64,88 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens Settings, where you can allow access to all photos." } }
       }
     },
+    "onboarding.allowAccess" : {
+      "comment" : "Onboarding button on the last page that shows the system photo access prompt.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow Access" } }
+      }
+    },
+    "onboarding.allowAccess.hint" : {
+      "comment" : "VoiceOver hint for the onboarding Allow Access button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Asks for access to your photo library." } }
+      }
+    },
     "onboarding.continue" : {
-      "comment" : "Onboarding button that asks for photo access.",
+      "comment" : "Onboarding button on the last page when photo access was already decided, for example after a reinstall.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Continue" } }
       }
     },
     "onboarding.continue.hint" : {
-      "comment" : "VoiceOver hint for the onboarding continue button.",
+      "comment" : "VoiceOver hint for the onboarding Continue button.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Asks for access to your photo library." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens the app." } }
       }
     },
-    "onboarding.message" : {
-      "comment" : "Onboarding explanation.",
+    "onboarding.next" : {
+      "comment" : "Onboarding button that goes to the next page.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Find near-duplicate photos and free up space. Everything stays on your device." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Next" } }
       }
     },
-    "onboarding.title" : {
-      "comment" : "Onboarding title.",
+    "onboarding.next.hint" : {
+      "comment" : "VoiceOver hint for the onboarding Next button.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clean up similar photos" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows the next page." } }
+      }
+    },
+    "onboarding.page1.body" : {
+      "comment" : "Onboarding page 1 body: what the app does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "SimilarPhotos groups near-duplicate shots, like bursts and retakes, and suggests the best one to keep. You decide what gets deleted." } }
+      }
+    },
+    "onboarding.page1.title" : {
+      "comment" : "Onboarding page 1 title: what the app does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Find similar photos" } }
+      }
+    },
+    "onboarding.page2.body" : {
+      "comment" : "Onboarding page 2 body: the on-device privacy promise. Must stay accurate: the app has no networking code.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your photos are analysed right on this iPhone. This app does not send your photos or any data about them anywhere, and it works the same in Airplane Mode." } }
+      }
+    },
+    "onboarding.page2.title" : {
+      "comment" : "Onboarding page 2 title: the on-device privacy promise.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "100% on your device" } }
+      }
+    },
+    "onboarding.page3.body" : {
+      "comment" : "Onboarding page 3 body: explains why full photo access is needed.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "To find similar photos, the app needs to see your library. Full access finds the most. If you share only some photos, results may be incomplete. Nothing is ever deleted without your confirmation." } }
+      }
+    },
+    "onboarding.page3.title" : {
+      "comment" : "Onboarding page 3 title: photo access primer.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow photo access" } }
       }
     },
     "permissionDenied.message" : {

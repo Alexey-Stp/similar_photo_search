@@ -11,8 +11,18 @@ public enum AppRoute: Sendable, Equatable {
     /// Main screen. Also used for limited access, together with a banner.
     case home
 
-    /// The route for a photo library authorization status.
-    public init(authorization: PhotoLibraryAuthorization) {
+    /// The route for a photo library authorization status and onboarding progress.
+    ///
+    /// Onboarding is shown until the user finishes it, whatever the status (for example after a
+    /// reinstall with access already granted), and again whenever the status is `.notDetermined`.
+    /// - Parameters:
+    ///   - authorization: The current photo library authorization status.
+    ///   - hasCompletedOnboarding: Whether the user finished the welcome flow.
+    public init(authorization: PhotoLibraryAuthorization, hasCompletedOnboarding: Bool) {
+        guard hasCompletedOnboarding else {
+            self = .onboarding
+            return
+        }
         switch authorization {
         case .notDetermined:
             self = .onboarding

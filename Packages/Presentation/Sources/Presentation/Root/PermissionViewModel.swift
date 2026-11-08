@@ -11,8 +11,9 @@ public final class PermissionViewModel {
     public private(set) var accessiblePhotoCount: Int?
 
     /// The screen to show, or `nil` while the status is still unknown.
-    public var route: AppRoute? {
-        status.map(AppRoute.init(authorization:))
+    /// - Parameter hasCompletedOnboarding: Whether the user finished the welcome flow.
+    public func route(hasCompletedOnboarding: Bool) -> AppRoute? {
+        status.map { AppRoute(authorization: $0, hasCompletedOnboarding: hasCompletedOnboarding) }
     }
 
     /// Whether the user shared only some of their photos.
