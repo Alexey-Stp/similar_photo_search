@@ -17,8 +17,9 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ -z "$key" ]]; then
         continue
     fi
-    value="$(plutil -extract "$key" raw -o - "$plist" 2>/dev/null || true)"
-    if [[ -z "$(echo "$value" | tr -d '[:space:]')" ]]; then
+    # plutil prints its error message to stdout on a missing key, so rely on the exit code.
+    if ! value="$(plutil -extract "$key" raw -o - "$plist" 2>/dev/null)" \
+        || [[ -z "$(echo "$value" | tr -d '[:space:]')" ]]; then
         echo "error: $plist is missing required key $key (or its value is empty)" >&2
         status=1
     fi
