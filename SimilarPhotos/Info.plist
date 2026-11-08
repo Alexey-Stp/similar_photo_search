@@ -23,7 +23,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>SimilarPhotos looks at your photos on this device to find near-duplicates you can delete. Nothing leaves your device.</string>
+	<string>SimilarPhotos analyses your photos on this device to find near-duplicates you can delete. The app does not send your photos or any data about them anywhere.</string>
 	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>

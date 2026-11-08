@@ -8,6 +8,7 @@ When working on a ticket, read its section there first and treat its Acceptance 
 
 1. **Zero network.** Never add `URLSession`, `URLRequest`, `NWConnection`, `WKWebView`, analytics, crash reporters or any third-party SDK that can talk to the network.
    Every `PHImageRequestOptions` must set `isNetworkAccessAllowed = false`. iCloud-only originals are **skipped**, never downloaded.
+   Using a required-reason API (UserDefaults/`@AppStorage`, file timestamps, disk space, boot time) needs a matching entry in `SimilarPhotos/PrivacyInfo.xcprivacy`; `scripts/check-privacy-manifest.sh` enforces it. Never add collected data types or tracking domains.
 2. **Never delete without the user's explicit action.** Favorites are never auto-selected. Each cluster keeps at least one photo unless the user confirms otherwise.
 3. **Memory discipline.** Never keep collections of full-size `UIImage`/`CGImage`. Analysis images are ~512 px. Wrap per-image work in `autoreleasepool`. Process in bounded batches.
 4. **No `PHAsset` across actor boundaries.** Pass `localIdentifier` strings or `Sendable` domain structs.

@@ -1,0 +1,18 @@
+{
+  "originHash" : "0000000000000000000000000000000000000000000000000000000000000000",
+  "pins" : [
+    {
+      "identity" : "first-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/example/first-package",
+      "state" : { "revision" : "0000000000000000000000000000000000000000", "version" : "1.0.0" }
+    },
+    {
+      "identity" : "second-package",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/example/second-package.git",
+      "state" : { "revision" : "0000000000000000000000000000000000000000", "version" : "2.0.0" }
+    }
+  ],
+  "version" : 3
+}

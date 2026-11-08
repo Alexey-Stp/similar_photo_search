@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Privacy manifest for SimilarPhotos (SPS-5).
+
+  The app has no networking code, collects no data and does no tracking, so the App Store
+  privacy label reads "Data Not Collected". scripts/check-privacy-manifest.sh enforces that
+  the three keys below stay false/empty, and that every required-reason API used in the
+  sources is declared here (see scripts/required-reason-apis.txt).
+-->
 <plist version="1.0">
 <dict>
 	<key>NSPrivacyTracking</key>
@@ -9,6 +17,28 @@
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array/>
 	<key>NSPrivacyAccessedAPITypes</key>
-	<array/>
+	<array>
+		<!--
+		  UserDefaults, reason CA92.1: read and write information that is only accessible to
+		  the app itself. Used via @AppStorage for app preferences: hasCompletedOnboarding (SPS-4),
+		  and later the scan scope (SPC-8) and session gap (SPC-26). Nothing is shared with other
+		  apps or app groups.
+
+		  Not declared on purpose, because the app does not use these APIs:
+		  - FileTimestamp: PHAsset.modificationDate/creationDate are PhotoKit properties, not
+		    file timestamp APIs.
+		  - SystemBootTime: use ContinuousClock/Date for timing, not ProcessInfo.systemUptime.
+		  - DiskSpace, ActiveKeyboards.
+		  Add a category only together with code that needs it; the CI check will ask for it.
+		-->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
