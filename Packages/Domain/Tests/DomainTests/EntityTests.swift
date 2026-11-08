@@ -59,6 +59,9 @@ struct EntityTests {
         requireSendable(FeaturePrint.self)
         requireSendable(PhotoLibraryAuthorization.self)
         requireSendable(DeletionOutcome.self)
+        requireSendable(ScanScope.self)
+        requireSendable(AlbumSummary.self)
+        requireSendable(AlbumKind.self)
     }
 
     private func requireSendable<T: Sendable>(_ type: T.Type) {}
