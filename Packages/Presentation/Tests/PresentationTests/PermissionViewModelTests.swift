@@ -23,17 +23,22 @@ struct PermissionViewModelTests {
         let viewModel = makeViewModel(MockPhotoPermissionService(status: status))
         await viewModel.refresh()
         #expect(viewModel.status == status)
-        #expect(viewModel.route == expected)
+        #expect(viewModel.route(hasCompletedOnboarding: true) == expected)
     }
 
-    @Test func restrictedIsNotTheDeniedScreen() {
-        #expect(AppRoute(authorization: .restricted) != AppRoute(authorization: .denied))
+    @Test(arguments: [
+        PhotoLibraryAuthorization.notDetermined, .authorized, .limited, .denied, .restricted
+    ])
+    func unfinishedOnboardingAlwaysRoutesToOnboarding(status: PhotoLibraryAuthorization) async {
+        let viewModel = makeViewModel(MockPhotoPermissionService(status: status))
+        await viewModel.refresh()
+        #expect(viewModel.route(hasCompletedOnboarding: false) == .onboarding)
     }
 
     @Test func startsWithUnknownRouteWithoutTouchingTheLibrary() async {
         let service = MockPhotoPermissionService(status: .authorized)
         let viewModel = makeViewModel(service)
-        #expect(viewModel.route == nil)
+        #expect(viewModel.route(hasCompletedOnboarding: true) == nil)
         #expect(await service.requestAccessCallCount == 0)
         #expect(await service.photoCountCallCount == 0)
     }
@@ -45,7 +50,8 @@ struct PermissionViewModelTests {
         let service = MockPhotoPermissionService(status: .notDetermined, statusAfterRequest: result)
         let viewModel = makeViewModel(service)
         await viewModel.requestAccess()
-        #expect(viewModel.route == AppRoute(authorization: result))
+        let expected = AppRoute(authorization: result, hasCompletedOnboarding: true)
+        #expect(viewModel.route(hasCompletedOnboarding: true) == expected)
         #expect(await service.requestAccessCallCount == 1)
     }
 
@@ -53,11 +59,11 @@ struct PermissionViewModelTests {
         let service = MockPhotoPermissionService(status: .denied)
         let viewModel = makeViewModel(service)
         await viewModel.refresh()
-        #expect(viewModel.route == .permissionDenied)
+        #expect(viewModel.route(hasCompletedOnboarding: true) == .permissionDenied)
 
         await service.setStatus(.authorized)
         await viewModel.refresh()
-        #expect(viewModel.route == .home)
+        #expect(viewModel.route(hasCompletedOnboarding: true) == .home)
         #expect(viewModel.isLimited == false)
     }
 
@@ -132,7 +138,7 @@ struct PermissionViewModelTests {
 
         await service.releaseHeldPhotoCount()
         await olderRefresh.value
-        #expect(viewModel.route == .permissionDenied)
+        #expect(viewModel.route(hasCompletedOnboarding: true) == .permissionDenied)
         #expect(viewModel.accessiblePhotoCount == nil)
     }
 
