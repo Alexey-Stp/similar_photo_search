@@ -1,11 +1,8 @@
 import SwiftUI
-#if canImport(UIKit)
-import UIKit
-#endif
 
-/// Shown when photo access is denied or restricted. Placeholder content until the permissions ticket.
+/// Shown when the user denied photo access. Offers a shortcut to the app's page in Settings.
 struct PermissionDeniedView: View {
-    @Environment(\.openURL) private var openURL
+    let viewModel: PermissionViewModel
 
     var body: some View {
         ScrollView {
@@ -22,19 +19,27 @@ struct PermissionDeniedView: View {
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                #if canImport(UIKit)
                 Button {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        openURL(url)
-                    }
+                    viewModel.openSettings()
                 } label: {
                     Text("permissionDenied.openSettings", bundle: .module)
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                #endif
+                .accessibilityHint(Text("permissionDenied.openSettings.hint", bundle: .module))
             }
             .padding()
         }
     }
 }
+
+#if DEBUG
+#Preview("Light") {
+    PermissionDeniedView(viewModel: .preview(status: .denied))
+}
+
+#Preview("Dark") {
+    PermissionDeniedView(viewModel: .preview(status: .denied))
+        .preferredColorScheme(.dark)
+}
+#endif

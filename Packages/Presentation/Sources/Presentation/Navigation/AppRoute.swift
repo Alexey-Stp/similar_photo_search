@@ -4,9 +4,11 @@ import Domain
 public enum AppRoute: Sendable, Equatable {
     /// First launch: explain the app and ask for photo access.
     case onboarding
-    /// Photo access was denied or is restricted.
+    /// The user denied photo access; they can turn it on in Settings.
     case permissionDenied
-    /// Main screen.
+    /// Photo access is blocked by parental controls or device management; the user cannot change it.
+    case restricted
+    /// Main screen. Also used for limited access, together with a banner.
     case home
 
     /// The route for a photo library authorization status.
@@ -16,8 +18,10 @@ public enum AppRoute: Sendable, Equatable {
             self = .onboarding
         case .authorized, .limited:
             self = .home
-        case .denied, .restricted:
+        case .denied:
             self = .permissionDenied
+        case .restricted:
+            self = .restricted
         }
     }
 }

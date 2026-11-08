@@ -1,6 +1,7 @@
 import DataLayer
 import Domain
 import Presentation
+import UIKit
 
 /// Composition root: the only place where concrete Data implementations are created.
 ///
@@ -8,6 +9,7 @@ import Presentation
 @MainActor
 final class AppContainer: ViewModelFactory {
     let photoLibrary: any PhotoLibraryRepository
+    let permissionService: any PhotoPermissionService
     let featurePrintService: any FeaturePrintService
     let featurePrintCache: any FeaturePrintCache
     let clusteringEngine: any ClusteringEngine
@@ -16,6 +18,7 @@ final class AppContainer: ViewModelFactory {
 
     init() {
         photoLibrary = PhotoKitLibraryRepository()
+        permissionService = PhotoKitPermissionService()
         featurePrintService = VisionFeaturePrintService()
         featurePrintCache = SwiftDataFeaturePrintCache()
         clusteringEngine = UnionFindClusteringEngine()
@@ -23,7 +26,13 @@ final class AppContainer: ViewModelFactory {
         assetDeletionService = PhotoKitAssetDeletionService()
     }
 
-    func makeRootViewModel() -> RootViewModel {
-        RootViewModel(photoLibrary: photoLibrary)
+    func makePermissionViewModel() -> PermissionViewModel {
+        PermissionViewModel(permissions: permissionService, openSettings: Self.openAppSettings)
+    }
+
+    /// Opens the app's own page in the Settings app.
+    private static func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }

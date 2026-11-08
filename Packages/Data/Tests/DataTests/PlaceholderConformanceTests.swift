@@ -3,17 +3,18 @@ import Domain
 import Testing
 
 /// Smoke tests: every Data implementation exists and conforms to its Domain protocol.
-/// The placeholder methods are never called because they `fatalError`.
+/// Methods are not called: placeholders `fatalError`, and real PhotoKit calls need a device.
 struct PlaceholderConformanceTests {
     @Test func everyImplementationConformsToItsDomainProtocol() {
         let photoLibrary: any PhotoLibraryRepository = PhotoKitLibraryRepository()
+        let permissions: any PhotoPermissionService = PhotoKitPermissionService()
         let featurePrints: any FeaturePrintService = VisionFeaturePrintService()
         let cache: any FeaturePrintCache = SwiftDataFeaturePrintCache()
         let clustering: any ClusteringEngine = UnionFindClusteringEngine()
         let scorer: any QualityScorer = VisionQualityScorer()
         let deletion: any AssetDeletionService = PhotoKitAssetDeletionService()
 
-        let services: [any Sendable] = [photoLibrary, featurePrints, cache, clustering, scorer, deletion]
-        #expect(services.count == 6)
+        let services: [any Sendable] = [photoLibrary, permissions, featurePrints, cache, clustering, scorer, deletion]
+        #expect(services.count == 7)
     }
 }

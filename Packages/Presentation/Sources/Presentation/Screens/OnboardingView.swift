@@ -2,7 +2,7 @@ import SwiftUI
 
 /// First-launch screen. Placeholder content until the onboarding ticket.
 struct OnboardingView: View {
-    let viewModel: RootViewModel
+    let viewModel: PermissionViewModel
 
     var body: some View {
         ScrollView {
