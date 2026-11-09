@@ -22,6 +22,7 @@ public actor MockFeaturePrintCache: FeaturePrintCache {
         self.init(entries: featurePrints.map { AnalysisRecord(featurePrint: $0, analyzedAt: analyzedAt) })
     }
 
+    /// Returns the stored records that are valid for `assets` under `revision`.
     public func validEntries(for assets: [PhotoAsset], revision: Int) -> [String: AnalysisRecord] {
         var result: [String: AnalysisRecord] = [:]
         for asset in assets {
@@ -32,6 +33,7 @@ public actor MockFeaturePrintCache: FeaturePrintCache {
         return result
     }
 
+    /// Records the call and stores `records`, or throws `writeError`.
     public func upsert(_ records: [AnalysisRecord]) throws {
         if let writeError { throw writeError }
         upsertCalls.append(records)
@@ -40,6 +42,7 @@ public actor MockFeaturePrintCache: FeaturePrintCache {
         }
     }
 
+    /// Records the IDs and removes their records, or throws `writeError`.
     public func purge(assetIDs: [String]) throws {
         if let writeError { throw writeError }
         purgedIDs.append(contentsOf: assetIDs)

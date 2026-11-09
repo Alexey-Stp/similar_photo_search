@@ -23,6 +23,7 @@ actor AnalysisStore {
     /// The valid records of `assets` under `revision`, keyed by asset ID.
     ///
     /// Reads in chunks of `fetchBatchSize` IDs; rows whose vector bytes or status can't be decoded count as misses.
+    /// If any chunk fails to read, the result is empty: every photo is a miss, never a partial set.
     func validEntries(for assets: [PhotoAsset], revision: Int) -> [String: AnalysisRecord] {
         var assetsByID: [String: PhotoAsset] = [:]
         assetsByID.reserveCapacity(assets.count)
@@ -48,6 +49,7 @@ actor AnalysisStore {
             }
         } catch {
             Self.logger.error("Analysis cache read failed: \(String(describing: error), privacy: .private)")
+            return [:]
         }
         return result
     }
@@ -123,6 +125,7 @@ actor AnalysisStore {
         return try modelContext.fetch(descriptor)
     }
 
+    /// Saves the context and counts the save.
     private func save() throws {
         try modelContext.save()
         saveCount += 1

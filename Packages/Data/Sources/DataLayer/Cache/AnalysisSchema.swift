@@ -7,8 +7,10 @@ import SwiftData
 /// To change the model, add `AnalysisSchemaV2` with a copy of the model, point `CachedAnalysis` at it and add a
 /// stage to `AnalysisMigrationPlan`. Never edit a shipped version in place.
 enum AnalysisSchemaV1: VersionedSchema {
+    /// Version 1.0.0.
     static var versionIdentifier: Schema.Version { Schema.Version(1, 0, 0) }
 
+    /// The models of this version.
     static var models: [any PersistentModel.Type] { [CachedAnalysis.self] }
 
     /// One analysed photo. No relationships, so bulk reads stay flat.
@@ -75,7 +77,9 @@ typealias CachedAnalysis = AnalysisSchemaV1.CachedAnalysis
 
 /// Migrations between analysis cache schema versions. Version 1 needs none.
 enum AnalysisMigrationPlan: SchemaMigrationPlan {
+    /// Every schema version, oldest first.
     static var schemas: [any VersionedSchema.Type] { [AnalysisSchemaV1.self] }
 
+    /// The migration stages between neighbouring versions; none yet.
     static var stages: [MigrationStage] { [] }
 }

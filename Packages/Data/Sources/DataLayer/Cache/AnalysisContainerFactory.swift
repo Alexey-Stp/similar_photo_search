@@ -77,8 +77,10 @@ enum AnalysisContainerFactory {
 
     // MARK: - Private
 
+    /// The schema of the current version, `AnalysisSchemaV1`.
     private static var schema: Schema { Schema(versionedSchema: AnalysisSchemaV1.self) }
 
+    /// A container over the SQLite store at `url`, with the migration plan and no CloudKit.
     private static func makeFileContainer(url: URL) throws -> ModelContainer {
         // `cloudKitDatabase: .none` explicitly: the default `.automatic` would sync through CloudKit if the app ever
         // gained an iCloud entitlement (CLAUDE.md rule 1).
@@ -96,6 +98,7 @@ enum AnalysisContainerFactory {
         )
     }
 
+    /// A container that keeps nothing on disk, or `nil` if even that can't be created.
     private static func makeInMemoryContainer() -> ModelContainer? {
         let configuration = ModelConfiguration(
             "Analysis-\(UUID().uuidString)",
@@ -150,6 +153,7 @@ enum AnalysisContainerFactory {
         #endif
     }
 
+    /// Deletes the store file and its `-wal`/`-shm` files; a file that can't be deleted is logged.
     private static func deleteStoreFiles(at url: URL) {
         for file in storeFiles(at: url) where FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) {
             do {

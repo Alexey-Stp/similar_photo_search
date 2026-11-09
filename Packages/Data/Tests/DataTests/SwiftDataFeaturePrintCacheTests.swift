@@ -3,12 +3,14 @@ import Domain
 import Foundation
 import Testing
 
+/// The SwiftData cache against in-memory and temporary-directory stores.
 @Suite(.timeLimit(.minutes(1)))
 struct SwiftDataFeaturePrintCacheTests {
     /// Sub-second on purpose: the date must survive the SQLite round trip exactly.
     private let modificationDate = Date(timeIntervalSince1970: 1_700_000_000.123_456)
     private let analyzedAt = Date(timeIntervalSince1970: 1_700_000_500.5)
 
+    /// A photo whose modification date is `modified`, or `modificationDate` if `nil`.
     private func asset(_ id: String, modified: Date? = nil) -> PhotoAsset {
         PhotoAsset(
             id: id,
@@ -26,6 +28,7 @@ struct SwiftDataFeaturePrintCacheTests {
         (0..<count).map { Float(seed) + Float($0) / 1_000 }
     }
 
+    /// The analyzed record of a print of `id` with `vector(seed:)`.
     private func record(_ id: String, revision: Int = 2, seed: Int = 1, qualityScore: Double? = nil) -> AnalysisRecord {
         AnalysisRecord(
             featurePrint: FeaturePrint(
@@ -49,6 +52,7 @@ struct SwiftDataFeaturePrintCacheTests {
 
     // MARK: - Round trip and validity
 
+    /// Analyzed and failed records come back field for field, including sub-second dates.
     @Test func storedRecordsComeBackUnchanged() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         let analyzed = record("A", qualityScore: 0.75)
@@ -78,6 +82,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(hits["B"] == failed)
     }
 
+    /// A record of another revision is a miss, but still a hit for its own revision.
     @Test func aDifferentRevisionIsAMiss() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         try await cache.upsert([record("A", revision: 1)])
@@ -85,6 +90,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(await cache.validEntries(for: [asset("A")], revision: 1).count == 1)
     }
 
+    /// A photo edited after its analysis is a miss.
     @Test func aModifiedPhotoIsAMiss() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         try await cache.upsert([record("A")])
@@ -92,6 +98,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(await cache.validEntries(for: [edited], revision: 2).isEmpty)
     }
 
+    /// Photos without a record are left out of the result.
     @Test func unknownAssetsAreMisses() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         try await cache.upsert([record("A")])
@@ -101,6 +108,7 @@ struct SwiftDataFeaturePrintCacheTests {
 
     // MARK: - Writes
 
+    /// An upsert replaces the asset's earlier record, and the last duplicate in one call wins.
     @Test func upsertReplacesTheRecordOfTheSameAsset() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         try await cache.upsert([record("A", revision: 1, seed: 1)])
@@ -111,6 +119,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(await cache.recordCount() == 1)
     }
 
+    /// 450 records are written with three saves: 200, 200 and 50.
     @Test func upsertSavesEveryTwoHundredRecords() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         let records = (0..<450).map { record("asset-\($0)", seed: $0) }
@@ -122,6 +131,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(await cache.recordCount() == 450)
     }
 
+    /// A read larger than one fetch batch still returns every record.
     @Test func readsMoreAssetsThanOneFetchBatch() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         let count = AnalysisStore.fetchBatchSize * 2 + 7
@@ -132,6 +142,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(hits["asset-\(count - 1)"]?.vector == vector(seed: count - 1))
     }
 
+    /// Purging removes the given assets only; duplicates and unknown IDs are fine.
     @Test func purgeRemovesOnlyTheGivenAssets() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         try await cache.upsert([record("A"), record("B"), record("C")])
@@ -142,6 +153,7 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(await cache.recordCount() == 1)
     }
 
+    /// Calls with nothing to do never open the store.
     @Test func emptyCallsDoNotOpenTheStore() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
         #expect(await cache.validEntries(for: [], revision: 2).isEmpty)
@@ -152,6 +164,7 @@ struct SwiftDataFeaturePrintCacheTests {
 
     // MARK: - File store
 
+    /// Records written by one cache are read by a new cache over the same directory.
     @Test func recordsSurviveReopeningTheStore() async throws {
         try await withTemporaryDirectory { directory in
             try await SwiftDataFeaturePrintCache(location: .directory(directory)).upsert([record("A")])
@@ -164,6 +177,7 @@ struct SwiftDataFeaturePrintCacheTests {
         }
     }
 
+    /// The store directory is excluded from backup.
     @Test func theStoreDirectoryIsExcludedFromBackup() async throws {
         try await withTemporaryDirectory { directory in
             let cache = SwiftDataFeaturePrintCache(location: .directory(directory))
@@ -174,6 +188,7 @@ struct SwiftDataFeaturePrintCacheTests {
         }
     }
 
+    /// A store that is not a database is deleted and rebuilt as a working file store.
     @Test func aCorruptStoreIsDeletedAndRebuilt() async throws {
         try await withTemporaryDirectory { directory in
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -194,6 +209,7 @@ struct SwiftDataFeaturePrintCacheTests {
 
     // MARK: - Vector packing
 
+    /// Packing and unpacking keeps every float bit for bit, including -0 and infinity.
     @Test func vectorsRoundTripBitForBit() throws {
         let values: [Float] = [0, -0.0, 1, -1, .leastNonzeroMagnitude, .greatestFiniteMagnitude, .infinity, 0.1]
         let data = FeatureVectorPacking.data(from: values)
@@ -202,14 +218,17 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(decoded.map(\.bitPattern) == values.map(\.bitPattern))
     }
 
+    /// An empty vector (failed or skipped records) round-trips.
     @Test func anEmptyVectorRoundTrips() {
         #expect(FeatureVectorPacking.vector(from: FeatureVectorPacking.data(from: [])) == [])
     }
 
+    /// A byte count that is not a multiple of 4 is rejected.
     @Test func bytesThatAreNotWholeFloatsAreRejected() {
         #expect(FeatureVectorPacking.vector(from: Data([1, 2, 3])) == nil)
     }
 
+    /// A `Data` slice that starts at an odd offset decodes correctly.
     @Test func aMisalignedSliceDecodes() throws {
         let values: [Float] = [1.5, -2.25, 3.125]
         let padded = Data([0xFF]) + FeatureVectorPacking.data(from: values)

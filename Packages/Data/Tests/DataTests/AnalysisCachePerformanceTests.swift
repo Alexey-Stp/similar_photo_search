@@ -8,6 +8,7 @@ private let isDevicePerformanceRun = ProcessInfo.processInfo.environment["RUN_DE
 /// Device-only: run on an iPhone 13 with the scheme environment variable `RUN_DEVICE_PERFORMANCE_TESTS=1`.
 /// Needs no photo library: it writes 50,000 synthetic Revision 2 records (about 150 MB) to a temporary store.
 struct AnalysisCachePerformanceTests {
+    /// 50,000 Revision 2 vectors are read back, all valid, in under 1.5 s from a cold context.
     @Test(.enabled(if: isDevicePerformanceRun, "Device-only performance test"))
     func readsFiftyThousandVectorsUnderOneAndAHalfSeconds() async throws {
         let directory = FileManager.default.temporaryDirectory

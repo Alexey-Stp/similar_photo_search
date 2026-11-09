@@ -36,17 +36,20 @@ public actor SwiftDataFeaturePrintCache: FeaturePrintCache {
         self.location = location
     }
 
+    /// Returns the valid records for `assets` under `revision`; an unavailable store gives no hits.
     public func validEntries(for assets: [PhotoAsset], revision: Int) async -> [String: AnalysisRecord] {
         guard !assets.isEmpty, let store = openStore() else { return [:] }
         return await store.validEntries(for: assets, revision: revision)
     }
 
+    /// Stores `records`, replacing earlier records of the same assets; saves every `writeBatchSize`.
     public func upsert(_ records: [AnalysisRecord]) async throws {
         guard !records.isEmpty else { return }
         guard let store = openStore() else { throw FeaturePrintCacheError.unavailable }
         try await store.upsert(records)
     }
 
+    /// Removes the records of `assetIDs`; unknown IDs are ignored.
     public func purge(assetIDs: [String]) async throws {
         guard !assetIDs.isEmpty else { return }
         guard let store = openStore() else { throw FeaturePrintCacheError.unavailable }
