@@ -4,10 +4,10 @@ import Foundation
 import Testing
 
 struct SessionSegmenterTests {
-    private struct PageError: Error, Equatable {}
+    struct PageError: Error, Equatable {}
 
     /// Counts page requests made to an on-demand test stream.
-    private actor RequestCounter {
+    actor RequestCounter {
         private var count = 0
 
         /// The 0-based number of this request.
@@ -17,13 +17,13 @@ struct SessionSegmenterTests {
         }
     }
 
-    private static let calendar: Calendar = {
+    static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
         return calendar
     }()
 
-    private static func date(_ day: Int, _ hour: Int, _ minute: Int, _ second: Int = 0) -> Date {
+    static func date(_ day: Int, _ hour: Int, _ minute: Int, _ second: Int = 0) -> Date {
         let components = DateComponents(year: 2026, month: 11, day: day, hour: hour, minute: minute, second: second)
         guard let date = calendar.date(from: components) else {
             fatalError("Invalid test date")
@@ -31,7 +31,7 @@ struct SessionSegmenterTests {
         return date
     }
 
-    private static func asset(_ id: String, _ date: Date?, burst: String? = nil) -> PhotoAsset {
+    static func asset(_ id: String, _ date: Date?, burst: String? = nil) -> PhotoAsset {
         PhotoAsset(
             id: id,
             creationDate: date,
@@ -44,7 +44,7 @@ struct SessionSegmenterTests {
     }
 
     /// A finished stream of `pages`.
-    private static func stream(_ pages: [[PhotoAsset]]) -> AsyncThrowingStream<[PhotoAsset], Error> {
+    static func stream(_ pages: [[PhotoAsset]]) -> AsyncThrowingStream<[PhotoAsset], Error> {
         AsyncThrowingStream { continuation in
             for page in pages {
                 continuation.yield(page)
@@ -54,7 +54,7 @@ struct SessionSegmenterTests {
     }
 
     /// All events for a library given as one page (assets are sorted into `libraryOrder` first).
-    private static func events(
+    static func events(
         _ assets: [PhotoAsset],
         config: SessionConfig = .default,
         logger: MockSessionSegmentationLogger = MockSessionSegmentationLogger()
@@ -63,7 +63,7 @@ struct SessionSegmenterTests {
         return try await collect(SessionSegmenter(logger: logger).sessions(from: pages, config: config))
     }
 
-    private static func collect(
+    static func collect(
         _ sequence: SessionSequence
     ) async throws -> (sessions: [PhotoSession], summary: SessionSegmentationSummary?) {
         var sessions: [PhotoSession] = []
@@ -257,145 +257,4 @@ struct SessionSegmenterTests {
         #expect(logger.splits.map(\.partSizes) == [[500, 1]])
     }
 
-}
-
-extension SessionSegmenterTests {
-    // MARK: - Streaming and cancellation
-
-    @Test func sessionIsEmittedBeforeTheInputEnds() async throws {
-        let (pages, continuation) = AsyncThrowingStream.makeStream(of: [PhotoAsset].self, throwing: Error.self)
-        var iterator = SessionSegmenter().sessions(from: pages).makeAsyncIterator()
-        continuation.yield([Self.asset("a", Self.date(9, 12, 0)), Self.asset("b", Self.date(9, 11, 59))])
-        continuation.yield([Self.asset("c", Self.date(9, 9, 0))])
-        // The input is still open, yet the first session is already closed by the 3 h gap.
-        let first = try await iterator.next()
-        guard case .session(let firstSession) = first else {
-            Issue.record("Expected the first session, got \(String(describing: first))")
-            return
-        }
-        #expect(firstSession.assets.map(\.id) == ["a", "b"])
-        continuation.finish()
-        let second = try await iterator.next()
-        guard case .session(let last) = second else {
-            Issue.record("Expected the last session, got \(String(describing: second))")
-            return
-        }
-        #expect(last.assets.map(\.id) == ["c"])
-        guard case .finished = try await iterator.next() else {
-            Issue.record("Expected the summary")
-            return
-        }
-        #expect(try await iterator.next() == nil)
-    }
-
-    @Test func cancellingTheConsumerWhileItWaitsForAPageStopsSegmentation() async throws {
-        let (requests, requestSignal) = AsyncStream.makeStream(of: Int.self)
-        let counter = RequestCounter()
-        let firstPage = [Self.asset("a", Self.date(9, 12, 0))]
-        // On-demand input: the first request gets a page, the second one waits until it is cancelled.
-        let pages = AsyncThrowingStream<[PhotoAsset], Error>(unfolding: {
-            let request = await counter.next()
-            requestSignal.yield(request)
-            guard request > 0 else { return firstPage }
-            try await Task.sleep(for: .seconds(3_600))
-            return nil
-        })
-        let sequence = SessionSegmenter().sessions(from: pages)
-        let consumer = Task {
-            for try await _ in sequence {}
-        }
-        // Cancel only once the segmenter is really waiting for the second page; a regression fails here, not hangs.
-        let isWaiting = await Self.waitForRequest(1, in: requests, timeout: .seconds(5))
-        #expect(isWaiting, "The segmenter never asked for the second page")
-        consumer.cancel()
-        await #expect(throws: CancellationError.self) {
-            try await consumer.value
-        }
-        requestSignal.finish()
-    }
-
-    @Test func cancelledConsumerStopsBeforeReadingAnything() async throws {
-        let (pages, continuation) = AsyncThrowingStream.makeStream(of: [PhotoAsset].self, throwing: Error.self)
-        continuation.yield([Self.asset("a", Self.date(9, 12, 0))])
-        let sequence = SessionSegmenter().sessions(from: pages)
-        let consumer = Task {
-            withUnsafeCurrentTask { $0?.cancel() }
-            for try await _ in sequence {}
-        }
-        await #expect(throws: CancellationError.self) {
-            try await consumer.value
-        }
-        continuation.finish()
-    }
-
-    /// Whether request number `number` shows up on `requests` within `timeout`.
-    private static func waitForRequest(_ number: Int, in requests: AsyncStream<Int>, timeout: Duration) async -> Bool {
-        await withTaskGroup(of: Bool.self) { group in
-            group.addTask {
-                for await request in requests where request == number {
-                    return true
-                }
-                return false
-            }
-            group.addTask {
-                try? await Task.sleep(for: timeout)
-                return false
-            }
-            let first = await group.next() ?? false
-            group.cancelAll()
-            return first
-        }
-    }
-
-    @Test func errorsFromTheInputAreRethrown() async throws {
-        let pages = AsyncThrowingStream<[PhotoAsset], Error> { continuation in
-            continuation.yield([Self.asset("a", Self.date(9, 12, 0))])
-            continuation.finish(throwing: PageError())
-        }
-        await #expect(throws: PageError.self) {
-            _ = try await Self.collect(SessionSegmenter().sessions(from: pages))
-        }
-    }
-
-    // MARK: - IDs
-
-    @Test func sessionIDsAreStableAcrossRuns() async throws {
-        let assets = [
-            Self.asset("a", Self.date(9, 10, 0)),
-            Self.asset("b", Self.date(9, 10, 5)),
-            Self.asset("c", Self.date(9, 10, 40))
-        ]
-        let first = try await Self.events(assets).sessions.map(\.id)
-        let second = try await Self.events(Array(assets.reversed())).sessions.map(\.id)
-        #expect(first == second)
-        #expect(first == [
-            PhotoSession.id(newestID: "c", newestDate: Self.date(9, 10, 40)),
-            PhotoSession.id(newestID: "b", newestDate: Self.date(9, 10, 5))
-        ])
-        #expect(first[0] == "c@\(Int64(Self.date(9, 10, 40).timeIntervalSince1970) * 1_000)")
-    }
-
-    @Test func sessionRejectsUndatedOrEmptyInput() {
-        #expect(PhotoSession(assets: []) == nil)
-        #expect(PhotoSession(assets: [Self.asset("a", Self.date(9, 1, 0)), Self.asset("b", nil)]) == nil)
-    }
-
-    // MARK: - Config
-
-    @Test func configClampsInvalidValues() {
-        var config = SessionConfig(sessionGap: -1, maxSessionSize: 0)
-        #expect(config.sessionGap == 0)
-        #expect(config.maxSessionSize == 1)
-        config.maxSessionSize = -5
-        config.sessionGap = -60
-        #expect(config.maxSessionSize == 1)
-        #expect(config.sessionGap == 0)
-        config.maxSessionSize = 20
-        #expect(config.maxSessionSize == 20)
-        #expect(SessionConfig.default == SessionConfig(sessionGap: 900, maxSessionSize: 500))
-    }
-
-    @Test func presetIntervals() {
-        #expect(SessionGapPreset.allCases.map(\.interval) == [300, 900, 3_600])
-    }
 }
