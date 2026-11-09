@@ -42,3 +42,4 @@ reconciles deleted IDs on the next launch. `photos-redirect://` is undocumented 
   confirm), `DeletionProgressView` (`.interactiveDismissDisabled(true)`), `DeletionResultView` (success/partial, failed items with reasons, "Open Photos").
 - Store the last version that asked for a review in `@AppStorage` (UserDefaults is already declared in the privacy manifest).
 - Unit tests for state transitions and cache/cluster cleanup with mocks.
+- From SPS-13: the method is `FeaturePrintCache.purge(assetIDs:)`.

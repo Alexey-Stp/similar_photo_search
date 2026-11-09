@@ -46,3 +46,4 @@ low-light photos mistakes noise for sharpness; use a light Gaussian pre-blur. Fa
   cluster, best first, with `reasons` ("Sharpest", "Best faces"). Reasons shown in the UI must be localizable keys, not English strings.
 - Sharpness: Planar8 grayscale via `vImageConvert`, then PlanarF, convolve, variance via `vDSP.meanSquare`/`mean`.
 - Tests: blurred vs sharp fixture → sharper wins; nil-face weight redistribution; favorites passthrough.
+- From SPS-13: `CachedAnalysis` v1 has only `qualityScore: Double?` and no scoring version. Scores are min-max normalized per cluster, so cache the raw per-photo signals (or a raw score) with a scoring version, not the normalized score: add them in `AnalysisSchemaV2` with a stage in `AnalysisMigrationPlan`.
