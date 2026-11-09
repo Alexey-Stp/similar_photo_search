@@ -42,3 +42,4 @@ one record at a time is very slow. Concurrent upserts on a unique key must go th
 - `ModelContainerFactory.make()` storing at Application Support/Analysis.store; on load failure delete the store files
   (including `-wal`/`-shm`) and retry once.
 - Tests: in-memory `ModelConfiguration(isStoredInMemoryOnly: true)`; invalidation on revision and modification-date change; float round trip.
+- From SPS-12: a print can end as `FeaturePrintOutcome.failed(.vision)`; store it with status `failed` under the same revision/modification-date rule so the photo is not re-run through Vision on every scan.

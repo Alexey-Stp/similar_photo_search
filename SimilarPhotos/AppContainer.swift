@@ -19,10 +19,12 @@ final class AppContainer: ViewModelFactory {
     /// Cuts the photo stream into shooting sessions; consumed by the scan coordinator (SPS-14).
     let sessionSegmenter: SessionSegmenter
 
+    /// Builds every service once.
     init() {
         photoLibrary = PhotoKitLibraryRepository()
         permissionService = PhotoKitPermissionService()
-        featurePrintService = VisionFeaturePrintService()
+        let imageLoader = PhotoKitImageLoader()
+        featurePrintService = VisionFeaturePrintService(images: imageLoader)
         featurePrintCache = SwiftDataFeaturePrintCache()
         clusteringEngine = UnionFindClusteringEngine()
         qualityScorer = VisionQualityScorer()
@@ -31,10 +33,12 @@ final class AppContainer: ViewModelFactory {
         sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())
     }
 
+    /// A view model for the photo-library permission flow.
     func makePermissionViewModel() -> PermissionViewModel {
         PermissionViewModel(permissions: permissionService, openSettings: Self.openAppSettings)
     }
 
+    /// A view model for the album and scope sheet; `onApply` receives the saved choice.
     func makeScopeSelectionViewModel(
         onApply: @escaping @MainActor (ScopePreferences) -> Void
     ) -> ScopeSelectionViewModel {

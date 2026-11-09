@@ -76,7 +76,7 @@ within 5 s on a 10k library; second launch with an unchanged library reaches clu
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-12](SPS-12.md) | Feature print extraction via Vision | To do | SPS-9 |
+| [SPS-12](SPS-12.md) | Feature print extraction via Vision | Review | SPS-9 |
 | [SPS-13](SPS-13.md) | SwiftData feature print cache | To do | SPS-12 |
 | [SPS-14](SPS-14.md) | Analysis orchestrator: progress, cancellation, resume, thermal | To do | SPS-9, SPS-12, SPS-13, SPS-16, SPS-26 (SPS-10, SPS-17 when available) |
 

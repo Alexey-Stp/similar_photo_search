@@ -98,6 +98,9 @@ jobs:
 
   test:
     name: Build & test
+    # A healthy run takes about 5 minutes; a hung test must not hold a runner for the 6-hour default. Leaves room for
+    # both test steps' own limits (10 + 20 min) plus setup, including a possible iOS platform download.
+    timeout-minutes: 60
     needs: lint
     runs-on: macos-15
     steps:
@@ -107,6 +110,7 @@ jobs:
         run: sudo xcode-select -s "/Applications/Xcode_${XCODE_VERSION}.app"
 
       - name: Package tests (Domain, Data)
+        timeout-minutes: 10
         run: |
           swift test --package-path Packages/Domain -Xswiftc -warnings-as-errors
           swift test --package-path Packages/Data -Xswiftc -warnings-as-errors
@@ -152,6 +156,7 @@ jobs:
           echo "SIMULATOR_DESTINATION=platform=iOS Simulator,id=$udid" >> "$GITHUB_ENV"
 
       - name: xcodebuild test
+        timeout-minutes: 20
         run: |
           set -o pipefail
           xcodebuild test \
