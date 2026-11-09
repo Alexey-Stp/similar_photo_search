@@ -4,7 +4,8 @@ Native iOS app (Swift + SwiftUI) that finds and deletes near-duplicate photos.
 All processing is strictly on-device, with zero network data transmission.
 
 One file per ticket lives next to this index (`SPS-<n>.md`). To work on a ticket, read **this page** (principles and
-dependencies) and **the ticket file**, nothing else from the backlog. The ticket's acceptance criteria are its definition of done.
+dependencies) and **the ticket file**. Other ticket files only as the `/ticket` skill allows: the implementation notes of its
+dependencies, and a dependent ticket right before adding a line to it. The ticket's acceptance criteria are its definition of done.
 
 How the files relate to the rest of the repo:
 

@@ -8,7 +8,8 @@ A service that deletes assets by local identifier and maps every outcome to a ty
 
 ## Acceptance criteria
 
-- Re-fetch the assets with `PHAsset.fetchAssets(withLocalIdentifiers:options:)` right before deletion; missing IDs are reported as `alreadyDeleted`, not as an error.
+- Re-fetch the assets with `PHAsset.fetchAssets(withLocalIdentifiers:options:)` right before deletion; missing IDs are reported as `failed[id] = .unavailable` (deleted elsewhere **or** no longer accessible, e.g. removed from
+  Limited access) and are not counted as deleted. Only IDs this call deleted and the post-delete re-fetch no longer finds go into `deleted`.
 - Filter with `asset.canPerform(.delete)`; non-deletable assets (for example in shared albums) are reported as `notDeletable` and excluded.
 - Call `PHPhotoLibrary.shared().performChanges { PHAssetChangeRequest.deleteAssets(...) }` (async variant). iOS shows its
   own confirmation alert, so the app adds no second "Are you sure?" (SPS-25 has the pre-summary).

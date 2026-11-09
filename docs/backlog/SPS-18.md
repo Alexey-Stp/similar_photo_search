@@ -11,7 +11,7 @@ while still having the final say.
 
 - **Given** a cluster, **then** the top-ranked member is marked **Keep (Best)**, and all others are pre-selected for deletion.
 - **Given** a cluster member is a favorite, **then** it is never pre-selected. If several favorites exist, all are kept.
-- **Given** two members' scores are within 2% of each other, **then** both are kept, and the cluster is flagged "Review recommended".
+- **Given** two members' weighted quality scores (SPS-17, range 0…1) differ by at most 0.02, **then** both are kept, and the cluster is flagged "Review recommended".
 - **Given** the cluster is an exact duplicate, **then** the version with higher resolution or edits is kept.
 - The user can override any selection (SPS-21, SPS-22). Overrides persist for the session and survive a re-cluster if the members are unchanged.
 - A global "Smart Select All" and "Deselect All" exist, and their result is shown before any deletion ("38 photos, 214 MB
@@ -30,7 +30,7 @@ Deleting a photo the user wanted is the worst possible outcome, so be conservati
 ## Implementation hints
 
 - Input: `[SimilarityCluster]`, ranked members from SPS-17, `PhotoAsset` metadata.
-- Rules: keep best; never select favorites; keep near-ties (score delta < 0.02) and flag `needsReview`; exact duplicates keep
+- Rules: keep best; never select favorites; keep near-ties (`abs(a.score - b.score) <= 0.02` on the SPS-17 weighted score) and flag `needsReview`; exact duplicates keep
   highest pixel count, then edited; invariant: each cluster keeps ≥ 1 unselected member unless `confirmDeleteAll(clusterID)` was called.
 - `SelectionStore`: `toggle(assetID, in:)`, `selectSmartAll()`, `deselectAll()`, `selectedCount`, `estimatedBytes` (async,
   off-main, optional), `isKept(assetID)`, overrides kept across re-cluster when member IDs are equal.

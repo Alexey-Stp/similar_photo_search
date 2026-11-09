@@ -19,6 +19,9 @@ As a user, I want to scroll through groups of similar photos with the suggested 
 - A sticky bottom bar shows "Delete N photos (X MB)" and is disabled when N is 0.
 - **Given** a scan is running, **when** new groups arrive (`ClusterUpdate.added`), **then** they are appended at the end
   (newest sessions come first, so new results are older photos). Visible rows don't move; selections and scroll position are kept.
+- **Given** groups newer than the first row arrive outside the scan's append order (the SPS-10 live observer found new
+  photos), **then** they are inserted above the current rows with the scroll position anchored to the first visible row, so
+  nothing on screen moves; the user reaches them by scrolling up. This is the only exception to append-only (SPS-14, CLAUDE.md).
 - **Given** a scan is running, **then** the list ends with a footer row "Still scanning… 4,210 of 18,000".
 - **Given** a scan is running and the sort is not by date, **then** new groups are inserted at their sorted position only when
   the user is not touching the list (applied on scroll end).

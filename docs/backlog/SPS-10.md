@@ -9,8 +9,10 @@ updated and deleted assets since the last successful scan.
 
 ## Acceptance criteria
 
-- After a successful scan, store `PHPhotoLibrary.shared().currentChangeToken` (archived via `NSKeyedArchiver`;
-  `PHPersistentChangeToken` supports `NSSecureCoding`).
+- At the start of a scan, read `PHPhotoLibrary.shared().currentChangeToken` **before** computing the delta or enumerating
+  the library. After the scan succeeds, persist that start token (archived via `NSKeyedArchiver`; `PHPersistentChangeToken`
+  supports `NSSecureCoding`), never the token current at the end: changes made while the scan ran are then picked up by the
+  next scan instead of being skipped.
 - On the next scan, `fetchPersistentChanges(since:)` gives the inserted, updated and deleted local identifiers for
   `PHObjectType.asset`. Only those are queued for analysis or eviction.
 - **Given** the token has expired (`PHPhotosError.persistentChangeTokenExpired`) or the details are truncated

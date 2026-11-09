@@ -12,7 +12,7 @@ I can recover photos from Recently Deleted.
 - **Given** N > 0 photos are selected, **when** the user taps "Delete N photos", **then** a review sheet shows the count,
   estimated size, number of groups, a thumbnail strip and the note: "Deleted photos move to Recently Deleted and can be recovered for 30 days."
 - **When** the user confirms, **then** `AssetDeletionService` is called and a non-dismissible progress state is shown until the system alert resolves.
-- **Given** success, **then** a success screen appears ("Freed ~X MB, deleted N photos") with a shortcut that opens the Photos
+- **Given** success, **then** a success screen appears ("Deleted N photos (~X MB). The space is freed when Recently Deleted is emptied.") with a shortcut that opens the Photos
   app (`photos-redirect://`, best effort; hidden if it can't be opened).
 - **Given** a user cancel, **then** the user returns silently to the review sheet with the selection unchanged.
 - **Given** a partial failure, **then** the screen says "Deleted 40 of 45. 5 couldn't be deleted (shared album)", and the failed items stay visible and selectable.

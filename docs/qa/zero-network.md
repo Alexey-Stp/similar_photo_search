@@ -5,7 +5,7 @@ CI enforces the code side (see [README → Guard rails](../../README.md#guard-ra
 
 Run it before every release, and again whenever scanning (SPS-14), deletion (SPS-24/SPS-25) or a new framework is added.
 
-> **Current scope.** Scanning, analysis and deletion are still placeholders. Until SPS-14 and SPS-24 land, run checks 1 and 2 on the flows that exist (onboarding, permission prompt, Limited/Denied screens, Home). Re-run them over a full scan and a deletion as part of the definition of done for SPS-14, SPS-24 and SPS-25.
+> **Current scope.** Scanning, analysis and deletion are still placeholders. Until SPS-14 lands, run checks 1 and 2 on the flows that exist (onboarding, permission prompt, Limited/Denied screens, Home). For SPS-14, run them over a full scan and skip the deletion steps if deletion does not exist yet. For SPS-24 and SPS-25, run the full flow including deletion.
 
 ## 1. Airplane Mode parity
 

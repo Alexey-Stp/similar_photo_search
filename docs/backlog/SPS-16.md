@@ -46,7 +46,9 @@ small, a real series is split and never compared.
 - **Start from** the existing `ClusteringEngine` protocol, `SimilarityCluster` (`assetIDs`, `suggestedKeeperID`) and the
   `UnionFindClusteringEngine` placeholder (Data, SPS-2). Accelerate is allowed in the clustering engine only; decide whether
   the engine moves to Domain (as the ticket says) or stays in Data, and record it in the implementation notes.
-- Input `struct VectorItem: Sendable { id: String; date: Date; burstID: String?; vector: [Float] }`;
+- Input `struct VectorItem: Sendable { id: String; date: Date; burstID: String?; revision: Int; vector: [Float] }`
+  (`revision` from `FeaturePrint.revision`). Items are partitioned by `revision` before any pair is compared, so items of
+  different revisions never share a cluster; a test feeds identical vectors with two revisions and expects two clusters;
   `func clusters(in session: [VectorItem], config: ClusteringConfig) -> [SimilarityCluster]` (synchronous, pure).
 - Two-pointer neighbour search limited to `maxPairInterval`; compare `vDSP.distanceSquared` against threshold² (no sqrt in
   the hot loop); burst pairs use `threshold * burstSlack`.

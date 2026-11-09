@@ -10,7 +10,10 @@ that I don't lose time or battery.
 ## Acceptance criteria
 
 - `AnalysisCoordinator` works **session by session, newest first**: enumerate assets by date (SPS-7, or the delta from
-  SPS-10) → split into sessions (SPS-26) → skip single-photo sessions → for each session: take cached vectors (SPS-13), load
+  SPS-10) → split into sessions (SPS-26) → skip single-photo sessions → for each session:
+  (with a delta, first expand the changed IDs to the **whole** sessions they touch: re-enumerate the unchanged neighbours
+  within `sessionGap` of each changed photo, repeating until the session edges are found, and only then segment and drop
+  single-photo sessions, so a session joined or grown by a new photo is rebuilt as a whole; newest-first order is kept) take cached vectors (SPS-13), load
   images and extract feature prints only for the missing ones (SPS-9, SPS-12), cluster the session (SPS-16), score the
   members (SPS-17), save, and **publish that session's groups immediately**.
 - Groups are published through a separate `AsyncStream<ClusterUpdate>` (`.added([SimilarityCluster])`, `.removed([ClusterID])`, `.finished`), independent of progress.
@@ -40,8 +43,8 @@ iOS kills the app. `cancel()` during a half-done SwiftData save needs transactio
 
 ## Implementation hints
 
-- Dependencies (protocols): `PhotoLibraryRepository`, `LibraryChangeTracker`, `FeaturePrintCache`, `ImageLoading`,
-  `FeaturePrintService`, `ThermalMonitor`, `SessionSegmenter`, `ClusteringEngine`, `QualityScorer`.
+- Dependencies (protocols): `PhotoLibraryRepository`, `LibraryChangeTracker`, `FeaturePrintCache`,
+  `FeaturePrintService` (it loads images itself; `ImageLoading` is Data-only, see SPS-9), `ThermalMonitor`, `SessionSegmenter`, `ClusteringEngine`, `QualityScorer`.
 - API: `func start(scope: ScanScope) -> (progress: AsyncStream<ScanProgress>, clusters: AsyncStream<ClusterUpdate>)`;
   `func cancel()`; `func excludeDeleted(_ ids: Set<String>)`.
 - `enum ClusterUpdate: Sendable { case added([SimilarityCluster]), removed([UUID]), finished }`.

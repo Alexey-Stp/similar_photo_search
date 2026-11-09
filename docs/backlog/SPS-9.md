@@ -32,7 +32,10 @@ Resuming the continuation twice crashes; never resuming hangs the task. PhotoKit
 
 ## Implementation hints
 
-- Domain protocol `ImageLoading` (no `CGImage` in Domain: keep the image type in Data, or pass an opaque `Sendable` wrapper).
+- Domain never sees an image. `ImageLoading` and `LoadedImage` (below) are declared in **Data**, next to their only
+  consumers: the Vision `FeaturePrintService` and `QualityScorer` implementations, which already take asset IDs in their
+  Domain protocols and load the image internally. Domain gets the outcome as values (a `FeaturePrint`, a score, a skip
+  reason), so no Domain protocol names `LoadedImage` and the Data → Domain dependency direction is unchanged.
 - `func loadImage(assetID: String, targetSize: CGSize) async throws -> LoadedImage` with
   `struct LoadedImage: @unchecked Sendable { let cgImage: CGImage; let orientation: CGImagePropertyOrientation }` and
   errors `ImageLoadError.notFound, .iCloudOnly, .decodeFailed, .cancelled`.

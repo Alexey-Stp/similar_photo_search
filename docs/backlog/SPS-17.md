@@ -15,8 +15,10 @@ Signals:
 
 ## Acceptance criteria
 
-- Weighted score: `0.4·sharpness + 0.4·faceQuality + 0.1·resolution + 0.1·aesthetics`. Weights are configurable; when no
-  faces are found, the face weight is spread over the other signals.
+- Weighted score: `0.4·sharpness + 0.4·faceQuality + 0.1·resolution + 0.1·aesthetics`, in 0…1. Weights are configurable.
+- A signal is used for a cluster only if every member has it. If any member lacks it (no faces found, or no aesthetics
+  because the device runs iOS 17), its weight is spread over the remaining signals in proportion to their weights, for the
+  whole cluster, so the remaining weights again sum to 1 and all members' scores stay comparable (SPS-18's near-tie rule).
 - All signals are normalized **within the cluster** (min-max).
 - **Given** a favorite asset, **then** it is always protected (never auto-selected for deletion), whatever its score.
 - **Given** Vision returns no faces, **then** `faceQuality = nil`, not 0.

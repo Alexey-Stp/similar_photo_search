@@ -2,8 +2,9 @@
 
 Native iOS app that finds near-duplicate photos in the user's library and helps delete them.
 Backlog: [docs/backlog/README.md](docs/backlog/README.md) (principles, status, dependencies) and one file per ticket, `docs/backlog/SPS-<n>.md`.
-Ticket keys are `SPS-<n>`. To implement a ticket, use the `/ticket SPS-<n>` skill. Read only the index and that ticket's file;
-its Acceptance Criteria are the definition of done. "Implementation hints" in ticket files predate the code: existing types in `Packages/` win.
+Ticket keys are `SPS-<n>`. To implement a ticket, use the `/ticket SPS-<n>` skill. Of the backlog, read the index and that
+ticket's file; the skill says when dependency notes and later tickets may be read too (source code is always fair game).
+Its Acceptance Criteria are the definition of done. "Implementation hints" in ticket files predate the code: existing types in `Packages/` win.
 When a ticket is done, add **Implementation notes** to its file (decisions later tickets must know) and set its status in the index.
 
 ## Non-negotiable rules

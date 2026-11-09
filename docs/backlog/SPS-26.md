@@ -15,9 +15,13 @@ the unit of live results (SPS-14). Sessions with a single photo are marked `need
   (needs analysis) and [10:40] (single photo, skipped).
 - **Given** photos at 23:55 and 00:05 the next day, **then** they are in one session: the rule is the gap between shots, not the calendar day.
 - **Given** two photos more than `sessionGap` apart with no photos between them, **then** they are never in the same session.
-- **Given** a burst (same `burstIdentifier`) or equal timestamps, **then** all of them are in the same session.
+- **Given** a burst (same `burstIdentifier`) or equal timestamps, **then** all of them are in the same session, within the
+  two limits below. Session membership depends only on `creationDate` gaps: `burstIdentifier` never joins photos whose
+  gap is larger than `sessionGap` (for example a burst frame whose date was edited); they go to separate sessions.
 - **Given** a session grows past `maxSessionSize` (default 500, for example an import where all items have nearly the same
-  date), **then** it is split at its largest internal time gap, and the split is logged.
+  date), **then** it is split at its largest internal time gap, and the split is logged. `maxSessionSize` wins over keeping
+  equal timestamps together: a run with no gap left (for example 501 photos with the same timestamp) is cut into chunks of
+  at most `maxSessionSize` in `PhotoAsset.libraryOrder` (500 + 1).
 - **Given** an asset without `creationDate`, **then** it is not put into any session and is counted in the scan summary as "skipped (no date)".
 - Streaming: a session is emitted as soon as the next asset shows a gap larger than `sessionGap`; the segmenter does not wait
   for the whole library. The last session is emitted when the input ends.
@@ -51,4 +55,4 @@ cost. Unstable session IDs make cached results unusable.
   sessions at the first undated asset.
 - Split oversized sessions recursively at the largest internal gap. `onTermination` cancels the reading task.
 - Tests (Swift Testing): the 10:00/10:05/10:40 example, 23:55 → 00:05, two photos on different days, bursts with equal
-  timestamps, nil dates, `maxSessionSize` split, streaming (first session before the input finishes), stable IDs across two runs.
+  timestamps, nil dates, `maxSessionSize` split, 501 photos with one timestamp (500 + 1), a burst split by `sessionGap`, streaming (first session before the input finishes), stable IDs across two runs.

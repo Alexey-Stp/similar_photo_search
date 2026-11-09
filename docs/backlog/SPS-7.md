@@ -18,8 +18,10 @@ exclude hidden, specific album(s), date range.
 - Live Photos are included as still images. Bursts: only the representative by default (`includeAllBurstAssets = false`).
 - Album scope: `PHAssetCollection.fetchAssetCollections(with: .album/.smartAlbum, ...)`, then `PHAsset.fetchAssets(in:options:)`.
 - Edge case: an empty library returns an empty result and the UI shows the "No photos" state.
-- Edge case: assets with `creationDate == nil` sort last and are still processed.
-- Edge case: under Limited access, only the accessible assets are returned, and the count matches.
+- Edge case: assets with `creationDate == nil` sort last and are still processed. When the scope has a date range, they
+  are outside it and are neither returned nor counted (`ScanScope.dateRange`).
+- Edge case: under Limited access, only the accessible assets are returned, and the count matches for the whole library or
+  a single album. For overlapping albums `assetCount` stays an upper bound (see the notes).
 - Performance: enumerating 50k assets into identifiers takes under 2 s on an iPhone 12.
 
 ## Risks
@@ -30,8 +32,11 @@ Turning the whole `PHFetchResult` into an array causes memory spikes and UI hang
 
 - API: `assetCount(scope:)`, `assetPages(scope:pageSize:)` and `albums()`. The order contract is `PhotoAsset.libraryOrder` (Domain).
 - PhotoKit cannot sort by `localIdentifier`, so `OrderedAssetPager` (Data) restores the contract: the run of photos sharing a
-  page's last timestamp is held back to the next page, and each page is sorted. A page can therefore be slightly larger than `pageSize`.
-- Photos without a date are collected while paging and delivered after all dated photos, sorted by id.
+  page's last timestamp is held back to the next page, and each page is sorted. A whole equal-timestamp run stays on one
+  page, so a page can be much larger than `pageSize` (for example an import of thousands of photos with one date).
+- Photos without a date are collected while paging and delivered after all dated photos, sorted by id. With a date range
+  in the scope they are filtered out by the fetch, so SPS-26 can only count "skipped (no date)" for scans without a date
+  range; counting them there too would need a change to the `ScanScope` filtering contract.
 - Several selected albums are merged by date and de-duplicated by id. `assetCount` for overlapping albums is an upper bound.
 - Pages are produced on demand (`AsyncThrowingStream(unfolding:)`), so the stream never runs ahead of its consumer.
 - `PhotoAsset` gained `modificationDate` (cache key, SPS-13) and `burstIdentifier` (SPS-16, SPS-26).
