@@ -63,7 +63,7 @@ iPhone 12; library changes are picked up incrementally.
 | [SPS-7](SPS-7.md) | `PhotoLibraryRepository` with scope filters | Done | SPS-2 |
 | [SPS-8](SPS-8.md) | Album and scope selection UI | Done | SPS-7 |
 | [SPS-26](SPS-26.md) | Split the library into shooting sessions by time | To do | SPS-7 |
-| [SPS-9](SPS-9.md) | Memory-safe batched image loading pipeline | To do | SPS-7 |
+| [SPS-9](SPS-9.md) | Memory-safe batched image loading pipeline | Review | SPS-7 |
 | [SPS-10](SPS-10.md) | Incremental library change tracking | To do | SPS-13, SPS-26 |
 
 ### Epic SPS-11 — Visual analysis and caching

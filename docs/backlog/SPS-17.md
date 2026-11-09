@@ -38,6 +38,8 @@ low-light photos mistakes noise for sharpness; use a light Gaussian pre-blur. Fa
 ## Implementation hints
 
 - **Start from** the existing `QualityScorer` protocol and `VisionQualityScorer` placeholder (SPS-2).
+- Load images through `ImageLoading` (SPS-9) injected into `VisionQualityScorer`'s initializer; the Domain protocol keeps
+  taking asset IDs, and `rawSignals(for: LoadedImage, …)` stays inside Data.
 - Data: `func rawSignals(for image: LoadedImage, asset: PhotoAsset) async throws -> QualitySignals` with
   `struct QualitySignals: Sendable { sharpness: Float; faceQuality: Float?; aesthetics: Float?; isUtility: Bool?; pixelCount: Int; isFavorite: Bool; isEdited: Bool }`.
 - Domain (pure): `func rank(_ signals: [String: QualitySignals], weights: QualityWeights) -> [RankedMember]`, min-max per
