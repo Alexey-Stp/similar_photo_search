@@ -16,6 +16,8 @@ final class AppContainer: ViewModelFactory {
     let qualityScorer: any QualityScorer
     let assetDeletionService: any AssetDeletionService
     let scopePreferencesStore: any ScopePreferencesStore
+    /// Cuts the photo stream into shooting sessions; consumed by the scan coordinator (SPS-14).
+    let sessionSegmenter: SessionSegmenter
 
     init() {
         photoLibrary = PhotoKitLibraryRepository()
@@ -26,6 +28,7 @@ final class AppContainer: ViewModelFactory {
         qualityScorer = VisionQualityScorer()
         assetDeletionService = PhotoKitAssetDeletionService()
         scopePreferencesStore = UserDefaultsScopePreferencesStore(defaults: .standard)
+        sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())
     }
 
     func makePermissionViewModel() -> PermissionViewModel {

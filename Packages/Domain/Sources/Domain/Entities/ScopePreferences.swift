@@ -1,6 +1,6 @@
 import Foundation
 
-/// The scan scope as the user chose it, saved between launches.
+/// The scan scope as the user chose it, saved between launches, together with the session gap.
 ///
 /// Unlike `ScanScope`, the date filter is stored as a preset ("Last 30 days"), not as fixed dates,
 /// so it stays current. Call `scanScope(now:calendar:)` to resolve it right before a scan.
@@ -13,22 +13,42 @@ public struct ScopePreferences: Sendable, Hashable, Codable {
     public var excludeScreenshots: Bool
     /// Whether every photo of a burst is scanned. When `false`, only each burst's representative is.
     public var includeBursts: Bool
+    /// How far apart two shots may be and still be compared. Changing it invalidates clusters, not feature prints.
+    public var sessionGap: SessionGapPreset
 
-    /// Creates preferences. The defaults scan the whole library at any date, without screenshots or extra burst frames.
+    /// Creates preferences. The defaults scan the whole library at any date, without screenshots or extra burst
+    /// frames, with the balanced session gap.
     public init(
         albumIDs: [String]? = nil,
         dateFilter: DateFilter = .anyTime,
         excludeScreenshots: Bool = true,
-        includeBursts: Bool = false
+        includeBursts: Bool = false,
+        sessionGap: SessionGapPreset = .balanced
     ) {
         self.albumIDs = albumIDs
         self.dateFilter = dateFilter
         self.excludeScreenshots = excludeScreenshots
         self.includeBursts = includeBursts
+        self.sessionGap = sessionGap
     }
 
-    /// All Photos, any date, screenshots skipped.
+    /// Decodes saved preferences. Values saved before `sessionGap` existed get `.balanced`.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        albumIDs = try container.decodeIfPresent([String].self, forKey: .albumIDs)
+        dateFilter = try container.decode(DateFilter.self, forKey: .dateFilter)
+        excludeScreenshots = try container.decode(Bool.self, forKey: .excludeScreenshots)
+        includeBursts = try container.decode(Bool.self, forKey: .includeBursts)
+        sessionGap = try container.decodeIfPresent(SessionGapPreset.self, forKey: .sessionGap) ?? .balanced
+    }
+
+    /// All Photos, any date, screenshots skipped, balanced session gap.
     public static let `default` = ScopePreferences()
+
+    /// The session config for the chosen gap, with the default `maxSessionSize`.
+    public var sessionConfig: SessionConfig {
+        SessionConfig(sessionGap: sessionGap.interval)
+    }
 
     /// The scope to scan, with the date preset resolved against `now`.
     public func scanScope(now: Date, calendar: Calendar) -> ScanScope {

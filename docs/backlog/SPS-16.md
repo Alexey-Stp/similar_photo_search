@@ -55,3 +55,4 @@ small, a real series is split and never compared.
 - Drop singletons, compute `averageDistance`, sort clusters by date descending.
 - Tests (Swift Testing): empty, singleton, identical, chain splitting, `maxPairInterval` boundary, determinism (run twice).
   Performance test with a 500-item session of random 768-dim vectors.
+- From SPS-26: `PhotoSession.assets` arrive newest first (`PhotoAsset.libraryOrder`), not oldest first; sort as needed and keep the determinism rule.
