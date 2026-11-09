@@ -43,3 +43,4 @@ runs off the main thread; touching view-model state directly causes data races.
 - `LiveLibraryObserver: NSObject, PHPhotoLibraryChangeObserver` exposing a debounced (1 s) `AsyncStream<Void>`.
 - Tests: the error-to-fallback mapping; session merge and single→pair cases at the Domain level.
 - From SPS-26: `PhotoSession.id` is the newest photo's id and timestamp, so it changes when a newer photo joins a session but not when an older one is added or removed; compare membership, not only IDs, to decide which cached session results are stale.
+- From SPS-13: the full-diff fallback needs every cached ID, which `FeaturePrintCache` can't list yet: add `cachedAssetIDs() async -> Set<String>` (fetch with `propertiesToFetch = [\.assetID]`, never the vectors) and call `purge(assetIDs:)` for deleted IDs. An edited photo needs no purge: its new modification date already makes `validEntries` miss.

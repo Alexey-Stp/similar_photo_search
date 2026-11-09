@@ -26,7 +26,8 @@
 
 		  Not declared on purpose, because the app does not use these APIs:
 		  - FileTimestamp: PHAsset.modificationDate/creationDate are PhotoKit properties, not
-		    file timestamp APIs.
+		    file timestamp APIs. The analysis cache store (SPS-13) only sets backup exclusion and
+		    file protection on its files; it reads no file dates.
 		  - SystemBootTime: use ContinuousClock/Date for timing, not ProcessInfo.systemUptime.
 		  - DiskSpace, ActiveKeyboards.
 		  Add a category only together with code that needs it; the CI check will ask for it.

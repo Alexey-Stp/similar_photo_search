@@ -1,12 +1,23 @@
 import Foundation
 
-/// Persistent cache of feature prints.
+/// Persistent cache of analysis results (feature prints, failures, quality scores), so later scans skip Vision for
+/// unchanged photos.
 ///
-/// An entry is valid only if asset ID, revision and modification date all match.
+/// An entry is valid only if asset ID, revision and modification date all match
+/// (`AnalysisRecord.isValid(for:revision:)`).
+/// Read one shooting session at a time: a Revision 2 vector is about 3 KB, so the whole table of a large library is
+/// hundreds of megabytes.
 public protocol FeaturePrintCache: Sendable {
-    /// Returns the cached print if one exists for exactly this asset, revision and modification date.
-    func cachedFeaturePrint(for assetID: String, revision: Int, modificationDate: Date?) async -> FeaturePrint?
+    /// Returns the valid records for `assets` under `revision`, keyed by asset ID.
+    ///
+    /// Photos without a valid record (none stored, other revision, modified since) are missing from the result and
+    /// must be analysed again. Never throws: if the store can't be read, every photo is a miss.
+    func validEntries(for assets: [PhotoAsset], revision: Int) async -> [String: AnalysisRecord]
 
-    /// Stores a print, replacing any previous entry for the same asset.
-    func store(_ featurePrint: FeaturePrint) async throws
+    /// Stores records, replacing any previous record of the same asset. If `records` names an asset twice, the
+    /// last one wins. Implementations write in batches, so pass a whole session (or more) at once.
+    func upsert(_ records: [AnalysisRecord]) async throws
+
+    /// Removes the records of deleted photos. Unknown IDs are ignored.
+    func purge(assetIDs: [String]) async throws
 }
