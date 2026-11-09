@@ -18,6 +18,12 @@ final class AppContainer: ViewModelFactory {
     let scopePreferencesStore: any ScopePreferencesStore
     /// Cuts the photo stream into shooting sessions; consumed by the scan coordinator (SPS-14).
     let sessionSegmenter: SessionSegmenter
+    /// Library changes since the last completed scan (SPS-10); the coordinator commits after a successful scan.
+    let libraryChangeTracker: any LibraryChangeTracker
+    /// First step of every scan: the delta, the full-diff fallback and cache eviction (SPS-10).
+    let incrementalScanPreparer: IncrementalScanPreparer
+    /// Debounced (1 s) library changes while the app runs, for refreshing visible results (SPS-10).
+    let libraryObserver: any LibraryChangeObserving
 
     /// Builds every service once.
     init() {
@@ -31,6 +37,10 @@ final class AppContainer: ViewModelFactory {
         assetDeletionService = PhotoKitAssetDeletionService()
         scopePreferencesStore = UserDefaultsScopePreferencesStore(defaults: .standard)
         sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())
+        let changeTracker = PhotoKitLibraryChangeTracker()
+        libraryChangeTracker = changeTracker
+        incrementalScanPreparer = IncrementalScanPreparer(tracker: changeTracker, cache: featurePrintCache)
+        libraryObserver = PhotoKitLibraryObserver()
     }
 
     /// A view model for the photo-library permission flow.

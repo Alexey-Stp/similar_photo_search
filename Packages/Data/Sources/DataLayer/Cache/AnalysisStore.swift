@@ -103,6 +103,25 @@ actor AnalysisStore {
         }
     }
 
+    /// The asset IDs of all stored records, of any revision. Pages through the table `fetchBatchSize` rows at a time,
+    /// fetching only `assetID`, so no vector is loaded.
+    func allAssetIDs() throws -> Set<String> {
+        var ids: Set<String> = []
+        var offset = 0
+        while true {
+            let page: [String] = try autoreleasepool {
+                var descriptor = FetchDescriptor<CachedAnalysis>(sortBy: [SortDescriptor(\.assetID)])
+                descriptor.propertiesToFetch = [\.assetID]
+                descriptor.fetchOffset = offset
+                descriptor.fetchLimit = Self.fetchBatchSize
+                return try modelContext.fetch(descriptor).map(\.assetID)
+            }
+            ids.formUnion(page)
+            guard page.count == Self.fetchBatchSize else { return ids }
+            offset += page.count
+        }
+    }
+
     /// The number of stored records, of any revision.
     func count() throws -> Int {
         try modelContext.fetchCount(FetchDescriptor<CachedAnalysis>())

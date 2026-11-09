@@ -16,10 +16,13 @@ struct PlaceholderConformanceTests {
         let scorer: any QualityScorer = VisionQualityScorer()
         let deletion: any AssetDeletionService = PhotoKitAssetDeletionService()
         let sessionLog: any SessionSegmentationLogging = OSLogSessionSegmentationLogger()
+        let changeTracker: any LibraryChangeTracker = PhotoKitLibraryChangeTracker()
+        let libraryObserver: any LibraryChangeObserving = PhotoKitLibraryObserver()
 
         let services: [any Sendable] = [
-            photoLibrary, permissions, featurePrints, cache, clustering, scorer, deletion, images, sessionLog
+            photoLibrary, permissions, featurePrints, cache, clustering, scorer, deletion, images, sessionLog,
+            changeTracker, libraryObserver
         ]
-        #expect(services.count == 9)
+        #expect(services.count == 11)
     }
 }

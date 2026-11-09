@@ -153,6 +153,18 @@ struct SwiftDataFeaturePrintCacheTests {
         #expect(await cache.recordCount() == 1)
     }
 
+    /// The full-diff fallback (SPS-10) lists every cached ID, of every revision, across more than one page.
+    @Test func cachedAssetIDsListsEveryRecord() async throws {
+        let cache = SwiftDataFeaturePrintCache(location: .inMemory)
+        #expect(await cache.cachedAssetIDs().isEmpty)
+        let ids = (0..<(AnalysisStore.fetchBatchSize + 7)).map { "asset-\($0)" }
+        try await cache.upsert(ids.map { record($0, seed: 0) } + [record("old-revision", revision: 1)])
+        #expect(await cache.cachedAssetIDs() == Set(ids + ["old-revision"]))
+
+        try await cache.purge(assetIDs: ["asset-0"])
+        #expect(await cache.cachedAssetIDs().contains("asset-0") == false)
+    }
+
     /// Calls with nothing to do never open the store.
     @Test func emptyCallsDoNotOpenTheStore() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)

@@ -20,4 +20,10 @@ public protocol FeaturePrintCache: Sendable {
 
     /// Removes the records of deleted photos. Unknown IDs are ignored.
     func purge(assetIDs: [String]) async throws
+
+    /// The asset IDs of every stored record, of any revision, for the full-diff fallback of change tracking.
+    ///
+    /// Reads only the IDs, never the vectors. Never throws: if the store can't be read, the result is empty (so
+    /// nothing is evicted).
+    func cachedAssetIDs() async -> Set<String>
 }
