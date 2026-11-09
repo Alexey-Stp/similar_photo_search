@@ -71,6 +71,9 @@ device. A shared `VNRequest` across threads crashes.
 - `AppContainer` builds a `PhotoKitImageLoader` and passes it in; SPS-17 should share that loader.
 - The iOS 18 Swift-native `GenerateImageFeaturePrintRequest` was not added; it can be another `FeaturePrintExtracting`.
 - Tests: real-Vision tests on synthetic, code-drawn images (vDSP vs `computeDistance` ≤ 1e-4, same image ≈ 0, orientation
-  applied) run on iOS only (Simulator via `xcodebuild`, device): in the macOS CI virtual machine `swift test` hung for an
-  hour with them and a `@MainActor` test in the run. `VisionFeaturePrintDeviceTests` repeats the 1e-4 check on 20
-  real photos with `RUN_DEVICE_PERFORMANCE_TESTS=1`. **Still open on a device:** that run.
+  applied) run **only on a physical device** (`#if os(iOS) && !targetEnvironment(simulator)`), so CI never runs them.
+  In the macOS CI virtual machine `swift test` hung for an hour with them (and a `@MainActor` test) in the run. In the
+  Simulator the feature-print model is missing (`fopen failed for data file`) and every image gets the same print
+  (distance 0): **in the Simulator the app would group unrelated photos**, so never judge clustering there.
+  `VisionFeaturePrintDeviceTests` repeats the 1e-4 check on 20 real photos with `RUN_DEVICE_PERFORMANCE_TESTS=1`.
+  **Still open on a device:** a test run of `DataTests` on an iPhone (the synthetic-image tests and that device test).

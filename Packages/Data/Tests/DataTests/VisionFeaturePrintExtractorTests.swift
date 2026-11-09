@@ -106,9 +106,10 @@ struct VisionFeaturePrintExtractorTests {
     }
 }
 
-#if os(iOS)
-/// Real Vision runs only on iOS (Simulator and device). The macOS CI runner is a virtual machine without a Neural
-/// Engine or GPU, where Vision requests can hang the whole `swift test` run.
+#if os(iOS) && !targetEnvironment(simulator)
+/// Real Vision runs only on a physical device. In the Simulator the feature-print model is missing (Vision logs
+/// "fopen failed for data file") and every image gets the same print (distance 0); in the macOS CI virtual machine
+/// Vision requests could hang the whole `swift test` run.
 extension VisionFeaturePrintExtractorTests {
     @Test func extractsAFloatVectorTaggedWithItsRevision() throws {
         let extracted = try extractor.extract(from: image(0))
