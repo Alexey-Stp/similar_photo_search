@@ -8,6 +8,8 @@ import Testing
 extension SessionSegmenterTests {
     // MARK: - Streaming and cancellation
 
+    /// A session closed by a gap is emitted while the input stream is still open; the last one, the summary and
+    /// `nil` follow once the input ends.
     @Test func sessionIsEmittedBeforeTheInputEnds() async throws {
         let (pages, continuation) = AsyncThrowingStream.makeStream(of: [PhotoAsset].self, throwing: Error.self)
         var iterator = SessionSegmenter().sessions(from: pages).makeAsyncIterator()
@@ -34,6 +36,8 @@ extension SessionSegmenterTests {
         #expect(try await iterator.next() == nil)
     }
 
+    /// Cancelling the consuming task while the segmenter waits for a page ends iteration with `CancellationError`.
+    /// Cancellation is sent only after the page request is known to be pending, with a bounded wait.
     @Test func cancellingTheConsumerWhileItWaitsForAPageStopsSegmentation() async throws {
         let (requests, requestSignal) = AsyncStream.makeStream(of: Int.self)
         let counter = RequestCounter()
@@ -60,6 +64,7 @@ extension SessionSegmenterTests {
         requestSignal.finish()
     }
 
+    /// A task that is already cancelled throws `CancellationError` on the first step, before reading any page.
     @Test func cancelledConsumerStopsBeforeReadingAnything() async throws {
         let (pages, continuation) = AsyncThrowingStream.makeStream(of: [PhotoAsset].self, throwing: Error.self)
         continuation.yield([Self.asset("a", Self.date(9, 12, 0))])

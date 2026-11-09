@@ -23,6 +23,7 @@ struct SessionSegmenterTests {
         return calendar
     }()
 
+    /// A UTC date in November 2026. Crashes the test run on an invalid date, which is a bug in the test itself.
     static func date(_ day: Int, _ hour: Int, _ minute: Int, _ second: Int = 0) -> Date {
         let components = DateComponents(year: 2026, month: 11, day: day, hour: hour, minute: minute, second: second)
         guard let date = calendar.date(from: components) else {
@@ -63,6 +64,8 @@ struct SessionSegmenterTests {
         return try await collect(SessionSegmenter(logger: logger).sessions(from: pages, config: config))
     }
 
+    /// Iterates `sequence` to the end, returning the sessions in order and the summary.
+    /// Records an issue if a session arrives after the summary.
     static func collect(
         _ sequence: SessionSequence
     ) async throws -> (sessions: [PhotoSession], summary: SessionSegmentationSummary?) {
@@ -123,6 +126,7 @@ struct SessionSegmenterTests {
         #expect(result.sessions.map { $0.assets.map(\.id) } == [["c"], ["b", "a"]])
     }
 
+    /// Two shots 10 minutes apart: split under Strict (5 min), together under Balanced and Relaxed.
     @Test(arguments: SessionGapPreset.allCases)
     func presetsDecideTheGap(preset: SessionGapPreset) async throws {
         // 10 minutes apart: together only when the gap is at least 10 minutes.
@@ -231,6 +235,7 @@ struct SessionSegmenterTests {
         #expect(logger.splits.map(\.partSizes) == [[2, 2, 2]])
     }
 
+    /// Worst case for splitting: every cut peels off one photo. Checks order, sizes and that no photo is lost.
     @Test func steadilyGrowingGapsSplitOnePhotoAtATime() async throws {
         let base = Self.date(9, 10, 0)
         // Gaps (newest first) grow: 1, 2, 3, ... s. With max 2 every cut takes the oldest gap, peeling off one photo.
