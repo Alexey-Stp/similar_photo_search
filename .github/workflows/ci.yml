@@ -98,8 +98,9 @@ jobs:
 
   test:
     name: Build & test
-    # A healthy run takes about 5 minutes; a hung test must not hold a runner for the 6-hour default.
-    timeout-minutes: 40
+    # A healthy run takes about 5 minutes; a hung test must not hold a runner for the 6-hour default. Leaves room for
+    # both test steps' own limits (10 + 20 min) plus setup, including a possible iOS platform download.
+    timeout-minutes: 60
     needs: lint
     runs-on: macos-15
     steps:

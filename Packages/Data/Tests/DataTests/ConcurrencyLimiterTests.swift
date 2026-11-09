@@ -4,10 +4,12 @@ import Testing
 
 @Suite(.timeLimit(.minutes(1)))
 struct ConcurrencyLimiterTests {
+    /// A zero or negative limit still lets one task through instead of deadlocking.
     @Test func aLimitBelowOneIsTreatedAsOne() async {
         #expect(await ConcurrencyLimiter(limit: 0).limit == 1)
     }
 
+    /// A released slot goes straight to a waiting task.
     @Test func releaseHandsTheSlotToTheOldestWaiter() async throws {
         let limiter = ConcurrencyLimiter(limit: 1)
         try await limiter.acquire()
@@ -21,6 +23,7 @@ struct ConcurrencyLimiterTests {
         await limiter.release()
     }
 
+    /// Waiters are served first in, first out.
     @Test func waitersGetSlotsInTheOrderTheyQueued() async throws {
         let limiter = ConcurrencyLimiter(limit: 1)
         let order = OrderRecorder()
@@ -51,6 +54,7 @@ struct ConcurrencyLimiterTests {
         await limiter.release()
     }
 
+    /// Cancelling a waiting task ends its wait within 200 ms and leaks no slot.
     @Test func aCancelledWaiterStopsWaitingAtOnceAndHoldsNoSlot() async throws {
         let limiter = ConcurrencyLimiter(limit: 1)
         try await limiter.acquire()
@@ -70,6 +74,7 @@ struct ConcurrencyLimiterTests {
         await limiter.release()
     }
 
+    /// A task that is already cancelled throws at once instead of queueing.
     @Test func anAlreadyCancelledTaskDoesNotWait() async {
         let limiter = ConcurrencyLimiter(limit: 1)
         let task = Task {

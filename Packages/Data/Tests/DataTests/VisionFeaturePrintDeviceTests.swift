@@ -12,6 +12,7 @@ private let isDeviceRun = ProcessInfo.processInfo.environment["RUN_DEVICE_PERFOR
 /// authorized library of at least 20 photos stored on the device, with the scheme environment variable
 /// `RUN_DEVICE_PERFORMANCE_TESTS=1`.
 struct VisionFeaturePrintDeviceTests {
+    /// On a device, vDSP distances between real photos match Vision's within 1e-4.
     @Test(.enabled(if: isDeviceRun, "Device-only Vision test"))
     func realPhotosMatchVisionDistancesWithin1e4() async throws {
         try #require(PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized)

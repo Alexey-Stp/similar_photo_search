@@ -41,6 +41,7 @@ struct VisionFeaturePrintServiceTests {
 
     // MARK: - Results
 
+    /// A computed print carries the revision, the vector and the asset's modification date.
     @Test func computesAPrintWithItsRevisionAndTheAssetsModificationDate() async throws {
         let requester = try respondingRequester()
         let extractor = MockFeaturePrintExtractor(revision: 2, vector: [0.5, 0.25])
@@ -59,6 +60,7 @@ struct VisionFeaturePrintServiceTests {
         #expect(requester.requestedSizes == [ImageLoadingDefaults.targetSize])
     }
 
+    /// Unloadable images become `.skipped` with their reason, and Vision never runs.
     @Test func imagesThatCannotBeLoadedAreSkippedWithoutRunningVision() async throws {
         let cases: [(MockImageRequester.Behavior, SkipReason)] = [
             (.respond([ImageRequestResult(isInCloud: true)]), .iCloudOnly),
@@ -73,6 +75,7 @@ struct VisionFeaturePrintServiceTests {
         }
     }
 
+    /// A Vision error gives `.failed(.vision)` and the next photo is still analysed.
     @Test func aVisionErrorMarksThePhotoFailedAndTheNextPhotoIsStillAnalysed() async throws {
         let extractor = MockFeaturePrintExtractor(failingCalls: [1])
         let service = makeService(requester: try respondingRequester(), extractor: extractor)
@@ -89,6 +92,7 @@ struct VisionFeaturePrintServiceTests {
 
     // MARK: - Cancellation
 
+    /// Cancelling during the image load throws `CancellationError` and cancels the request.
     @Test func cancellingWhileTheImageLoadsThrowsCancellationAndSkipsVision() async throws {
         let requester = MockImageRequester(defaultBehavior: .hold)
         let extractor = MockFeaturePrintExtractor()
@@ -105,6 +109,7 @@ struct VisionFeaturePrintServiceTests {
 
     // MARK: - Threads and concurrency
 
+    /// By default no more than two Vision requests run at the same time.
     @Test func atMostTwoVisionRequestsRunAtOnceByDefault() async throws {
         #expect(VisionFeaturePrintService.defaultMaxConcurrentRequests == 2)
         let extractor = MockFeaturePrintExtractor(duration: 0.05)
@@ -116,6 +121,7 @@ struct VisionFeaturePrintServiceTests {
         #expect(extractor.maxCallsAtOnce == 2)
     }
 
+    /// The Vision concurrency limit can be changed.
     @Test(arguments: [1, 3])
     func theVisionLimitIsConfigurable(limit: Int) async throws {
         let extractor = MockFeaturePrintExtractor(duration: 0.05)
@@ -129,6 +135,7 @@ struct VisionFeaturePrintServiceTests {
 
     // Not `@MainActor`: the macOS `swift test` runner is not guaranteed to service the main actor. Every call goes
     // through the Vision queue whoever calls it, so recording the thread the extractor ran on is enough.
+    /// Vision work never runs on the main thread.
     @Test func visionNeverRunsOnTheMainThread() async throws {
         let extractor = MockFeaturePrintExtractor()
         let service = makeService(requester: try respondingRequester(), extractor: extractor)

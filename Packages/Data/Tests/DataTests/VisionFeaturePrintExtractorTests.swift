@@ -15,6 +15,7 @@ struct VisionFeaturePrintExtractorTests {
 
     // MARK: - Request configuration
 
+    /// Requests use Revision 2 and the fixed `.scaleFill` crop-and-scale option.
     @Test func usesRevision2AndAFixedScaleFill() {
         #expect(extractor.revision == VNGenerateImageFeaturePrintRequestRevision2)
         let request = extractor.makeRequest()
@@ -23,6 +24,7 @@ struct VisionFeaturePrintExtractorTests {
         #expect(VisionFeaturePrintExtractor.cropAndScaleOption == .scaleFill)
     }
 
+    /// Revision 2 is chosen when supported, Revision 1 otherwise.
     @Test func fallsBackToRevision1WhenRevision2IsUnavailable() {
         let revision1 = VNGenerateImageFeaturePrintRequestRevision1
         let revision2 = VNGenerateImageFeaturePrintRequestRevision2
@@ -30,6 +32,7 @@ struct VisionFeaturePrintExtractorTests {
         #expect(VisionFeaturePrintExtractor.preferredRevision(supported: IndexSet([revision1, revision2])) == revision2)
     }
 
+    /// Without Revision 2 support, the extractor and its requests use Revision 1.
     @Test func anOSWithoutRevision2GetsRevision1Requests() {
         let revision1 = VNGenerateImageFeaturePrintRequestRevision1
         let extractor = VisionFeaturePrintExtractor(supportedRevisions: IndexSet([revision1]))
@@ -37,18 +40,21 @@ struct VisionFeaturePrintExtractorTests {
         #expect(extractor.makeRequest().revision == revision1)
     }
 
+    /// Requests are never shared: every call builds a new one.
     @Test func eachRequestIsANewObject() {
         #expect(extractor.makeRequest() !== extractor.makeRequest())
     }
 
     // MARK: - Data to floats
 
+    /// Float observation data becomes the same `[Float]`.
     @Test func copiesFloatDataIntoAVector() throws {
         let vector: [Float] = [0.5, -1.25, 3, 1e-7]
         let data = vector.withUnsafeBufferPointer { Data(buffer: $0) }
         #expect(try VisionFeaturePrintExtractor.floats(from: data, elementCount: 4, elementType: .float) == vector)
     }
 
+    /// Data that starts at a misaligned address converts without trapping.
     @Test func copiesMisalignedFloatData() throws {
         let vector: [Float] = [0.5, -1.25, 3, 1e-7]
         // One leading byte, then slicing it off: the floats start one byte past an aligned address.
@@ -64,6 +70,7 @@ struct VisionFeaturePrintExtractorTests {
         #expect(copied == vector)
     }
 
+    /// Only `.float` elements are accepted; `.double` and unknown types throw.
     @Test func rejectsDoubleAndUnknownElements() {
         let data = Data(count: 32)
         for elementType in [VNElementType.double, .unknown] {
@@ -73,6 +80,7 @@ struct VisionFeaturePrintExtractorTests {
         }
     }
 
+    /// Data that doesn't hold exactly `elementCount` floats throws.
     @Test func rejectsDataOfTheWrongSize() {
         #expect(throws: FeaturePrintExtractionError.sizeMismatch(expectedBytes: 16, actualBytes: 12)) {
             try VisionFeaturePrintExtractor.floats(from: Data(count: 12), elementCount: 4, elementType: .float)
@@ -111,6 +119,7 @@ struct VisionFeaturePrintExtractorTests {
 /// "fopen failed for data file") and every image gets the same print (distance 0); in the macOS CI virtual machine
 /// Vision requests could hang the whole `swift test` run.
 extension VisionFeaturePrintExtractorTests {
+    /// Real Vision gives a finite, non-empty vector tagged with Revision 2.
     @Test func extractsAFloatVectorTaggedWithItsRevision() throws {
         let extracted = try extractor.extract(from: image(0))
         #expect(extracted.revision == VNGenerateImageFeaturePrintRequestRevision2)
@@ -119,6 +128,7 @@ extension VisionFeaturePrintExtractorTests {
         #expect(allFinite)
     }
 
+    /// The vDSP distance matches `computeDistance` within 1e-4 for different images.
     @Test func vDSPDistanceMatchesVisionWithin1e4() throws {
         let first = try extractor.makeObservation(for: image(0))
         let second = try extractor.makeObservation(for: image(1))
@@ -130,6 +140,7 @@ extension VisionFeaturePrintExtractorTests {
         #expect(abs(visionDistance - vectorDistance) <= 1e-4)
     }
 
+    /// The same image analysed twice gives prints about 0 apart.
     @Test func theSameImageIsZeroApart() throws {
         let picture = try image(1)
         let first = try extractor.extract(from: picture)
@@ -137,6 +148,7 @@ extension VisionFeaturePrintExtractorTests {
         #expect(VectorMath.euclideanDistance(first.vector, second.vector) <= 1e-4)
     }
 
+    /// The image orientation is passed to Vision, so rotated pixels give the upright print.
     @Test func orientationIsApplied() throws {
         // `.right` means "turn the pixels 90° clockwise to show the photo upright". Vision must see the same picture
         // as for pixels that were already turned.
