@@ -2,6 +2,7 @@ import CoreGraphics
 import DataLayer
 import Domain
 import Foundation
+import ImageIO
 import Photos
 import Testing
 

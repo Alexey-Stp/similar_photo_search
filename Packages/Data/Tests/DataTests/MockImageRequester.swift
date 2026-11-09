@@ -1,6 +1,7 @@
 import CoreGraphics
 import DataLayer
 import Foundation
+import ImageIO
 
 /// Thread-safe `ImageRequesting` fake: answers at once, holds requests until a test releases them, or reports the
 /// asset as missing. Records requests, cancellations and the highest number of requests held at the same time.
