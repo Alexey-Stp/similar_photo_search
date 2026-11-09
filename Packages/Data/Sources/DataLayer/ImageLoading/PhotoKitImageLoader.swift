@@ -54,9 +54,12 @@ public final class PhotoKitImageLoader: ImageLoading {
                 return ImageLoadOutcome(assetID: assetID, result: .failure(.cancelled))
             }
         }
+        // The stream owns `lifetime`; when the consumer drops the stream (break, throw, or cancellation between
+        // outcomes), `lifetime` is released and cancels whatever is still loading.
+        let lifetime = BatchLifetime(window: window)
         return AsyncStream(
-            unfolding: { await window.next() },
-            onCancel: { Task { await window.cancel() } }
+            unfolding: { await lifetime.window.next() },
+            onCancel: { Task { await lifetime.window.cancel() } }
         )
     }
 
@@ -154,6 +157,20 @@ private final class PendingImageRequest: @unchecked Sendable {
             requester.cancelRequest(requestID)
         }
         continuation?.resume(throwing: ImageLoadError.cancelled)
+    }
+}
+
+/// Cancels a batch when its stream is released, so a consumer that stops early still cancels pending requests.
+private final class BatchLifetime: Sendable {
+    let window: ImageBatchWindow
+
+    init(window: ImageBatchWindow) {
+        self.window = window
+    }
+
+    deinit {
+        let window = window
+        Task { await window.cancel() }
     }
 }
 

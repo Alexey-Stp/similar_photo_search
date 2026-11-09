@@ -42,19 +42,23 @@ public final class PhotoKitImageRequester: ImageRequesting, @unchecked Sendable 
         targetSize: CGSize,
         resultHandler: @escaping @Sendable (ImageRequestResult) -> Void
     ) -> ImageRequestID? {
-        guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil).firstObject else {
-            return nil
-        }
-        return manager.requestImage(
-            for: asset,
-            targetSize: targetSize,
-            contentMode: Self.contentMode,
-            options: Self.makeOptions()
-        ) { image, info in
-            let result = autoreleasepool {
-                Self.result(image: image, info: info)
+        // The lookup and request setup create autoreleased PhotoKit objects; drain them here, because Swift
+        // concurrency's worker threads don't reliably do it.
+        autoreleasepool { () -> ImageRequestID? in
+            guard let asset = PHAsset.fetchAssets(withLocalIdentifiers: [assetID], options: nil).firstObject else {
+                return nil
             }
-            resultHandler(result)
+            return manager.requestImage(
+                for: asset,
+                targetSize: targetSize,
+                contentMode: Self.contentMode,
+                options: Self.makeOptions()
+            ) { image, info in
+                let result = autoreleasepool {
+                    Self.result(image: image, info: info)
+                }
+                resultHandler(result)
+            }
         }
     }
 

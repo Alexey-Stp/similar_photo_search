@@ -155,6 +155,36 @@ struct PhotoKitImageLoaderTests {
         #expect(requester.maxHeldAtOnce == 3)
     }
 
+    @Test func defaultBatchRequestsAnalysisSizedImagesNotFullResolution() async throws {
+        let requester = MockImageRequester(defaultBehavior: .respond([try ImageTestSupport.success()]))
+        for await _ in PhotoKitImageLoader(requester: requester).loadBatch(Self.ids(3)) {}
+        #expect(requester.requestedSizes == Array(repeating: CGSize(width: 512, height: 512), count: 3))
+    }
+
+    @Test func stoppingEarlyCancelsPendingRequestsWithin200Milliseconds() async throws {
+        let requester = MockImageRequester(defaultBehavior: .hold)
+        let loader = PhotoKitImageLoader(requester: requester)
+        let size = size
+        let consumer = Task {
+            for await _ in loader.loadBatch(Self.ids(10), targetSize: size, maxConcurrent: 3) {
+                break
+            }
+        }
+        #expect(await ImageTestSupport.waitUntil { requester.heldCount == 3 })
+        requester.releaseFirstHeld(with: try ImageTestSupport.success())
+        await consumer.value
+
+        let start = ContinuousClock.now
+        let allCancelled = await ImageTestSupport.waitUntil(timeout: .seconds(1)) {
+            requester.allHeldRequestsCancelled
+        }
+        let elapsed = ContinuousClock.now - start
+
+        #expect(allCancelled)
+        #expect(elapsed < .milliseconds(200))
+        requester.releaseAllHeld(with: try ImageTestSupport.success())
+    }
+
     @Test func batchDoesNotLoadAheadOfItsConsumer() async throws {
         let requester = MockImageRequester(defaultBehavior: .respond([try ImageTestSupport.success()]))
         let loader = PhotoKitImageLoader(requester: requester)

@@ -28,6 +28,7 @@ final class MockImageRequester: ImageRequesting, @unchecked Sendable {
     private var held: [HeldRequest] = []
     private var nextRequestID: ImageRequestID = 1
     private var requested: [String] = []
+    private var sizes: [CGSize] = []
     private var cancelled: [ImageRequestID] = []
     private var maxHeld = 0
 
@@ -38,6 +39,12 @@ final class MockImageRequester: ImageRequesting, @unchecked Sendable {
 
     /// Asset IDs requested so far, in order.
     var requestedAssetIDs: [String] { locked { requested } }
+    /// Target sizes of the requests, in order.
+    var requestedSizes: [CGSize] { locked { sizes } }
+    /// Whether at least one request is held and every held request was cancelled.
+    var allHeldRequestsCancelled: Bool {
+        locked { !held.isEmpty && held.allSatisfy { cancelled.contains($0.requestID) } }
+    }
     /// Request IDs passed to `cancelRequest`.
     var cancelledRequestIDs: [ImageRequestID] { locked { cancelled } }
     /// Requests currently held open.
@@ -59,6 +66,7 @@ final class MockImageRequester: ImageRequesting, @unchecked Sendable {
         let requestID = nextRequestID
         nextRequestID += 1
         requested.append(assetID)
+        sizes.append(targetSize)
         switch behavior {
         case .respond(let results):
             lock.unlock()

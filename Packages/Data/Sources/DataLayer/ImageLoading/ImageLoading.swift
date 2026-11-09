@@ -69,11 +69,12 @@ public protocol ImageLoading: Sendable {
     /// - Throws: `ImageLoadError`. A cancelled calling task throws `ImageLoadError.cancelled`.
     func loadImage(assetID: String, targetSize: CGSize) async throws -> LoadedImage
 
-    /// Loads several photos with at most `maxConcurrent` requests in flight.
+    /// Loads several photos with at most `maxConcurrent` requests in flight. Values below 1 are treated as 1 (as
+    /// `pageSize` is in `PhotoLibraryRepository`); to pause, don't call this.
     ///
     /// Outcomes arrive in completion order, one per identifier; a failed photo never stops the batch. Loading only runs
     /// ahead of the consumer by `maxConcurrent` images, so memory stays flat however slowly the outcomes are used.
-    /// Cancelling the consuming task cancels the pending PhotoKit requests.
+    /// Cancelling the consuming task, or dropping the stream before it ends, cancels the pending PhotoKit requests.
     func loadBatch(_ assetIDs: [String], targetSize: CGSize, maxConcurrent: Int) -> AsyncStream<ImageLoadOutcome>
 }
 

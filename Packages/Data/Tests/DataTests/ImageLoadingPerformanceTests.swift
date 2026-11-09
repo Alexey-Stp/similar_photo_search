@@ -8,8 +8,9 @@ import Testing
 
 private let isDevicePerformanceRun = ProcessInfo.processInfo.environment["RUN_DEVICE_PERFORMANCE_TESTS"] == "1"
 
-/// Device-only: needs a real, authorized library. Run on an iPhone 12 with at least 10,000 photos and the scheme
-/// environment variable `RUN_DEVICE_PERFORMANCE_TESTS=1`. The absolute 250 MB peak is checked in Instruments
+/// Device-only: needs a real, authorized library. Run on an iPhone 12 with at least 10,000 photos whose originals are
+/// on the device (Settings › Photos › Download and Keep Originals), and the scheme environment variable
+/// `RUN_DEVICE_PERFORMANCE_TESTS=1`. The absolute 250 MB peak is checked in Instruments
 /// (Allocations); this test checks that the pipeline itself keeps memory flat over a 10k batch.
 struct ImageLoadingPerformanceTests {
     @Test(.enabled(if: isDevicePerformanceRun, "Device-only memory test"))
@@ -36,7 +37,8 @@ struct ImageLoadingPerformanceTests {
         }
 
         let growthInMegabytes = (baseline - lowest) / (1_024 * 1_024)
-        #expect(loaded > 0)
+        // Every photo must really be decoded, or skipped photos would make the memory result look better than it is.
+        #expect(loaded == 10_000, "Only \(loaded) of 10,000 photos loaded; keep originals on the device")
         // A bounded window holds at most a few 512 px images (about 1 MB each); growth stays far below the budget.
         #expect(growthInMegabytes < 100, "Memory grew by \(growthInMegabytes) MB")
     }
