@@ -68,11 +68,13 @@ struct ScopeSelectionViewModelTests {
         countDebounce: Duration = .zero
     ) -> ScopeSelectionViewModel {
         let recorder = recorder ?? ApplyRecorder()
+        // Copy the main-actor static into a local: the `now` closure is @Sendable.
+        let fixedNow = Self.now
         return ScopeSelectionViewModel(
             library: library ?? Self.makeLibrary(),
             store: store ?? MockScopePreferencesStore(),
             onApply: { recorder.applied.append($0) },
-            now: { Self.now },
+            now: { fixedNow },
             calendar: Self.calendar,
             countDebounce: countDebounce
         )
