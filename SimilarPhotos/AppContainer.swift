@@ -22,7 +22,8 @@ final class AppContainer: ViewModelFactory {
     init() {
         photoLibrary = PhotoKitLibraryRepository()
         permissionService = PhotoKitPermissionService()
-        featurePrintService = VisionFeaturePrintService()
+        let imageLoader = PhotoKitImageLoader()
+        featurePrintService = VisionFeaturePrintService(images: imageLoader)
         featurePrintCache = SwiftDataFeaturePrintCache()
         clusteringEngine = UnionFindClusteringEngine()
         qualityScorer = VisionQualityScorer()

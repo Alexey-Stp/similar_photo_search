@@ -57,3 +57,4 @@ iOS kills the app. `cancel()` during a half-done SwiftData save needs transactio
 - `ScanViewModel` (`@Observable @MainActor`) consumes the streams, exposes percentage and ETA text, handles `scenePhase`.
 - Tests with mocks: cancellation latency, resume (cached IDs skipped), thermal throttling, publish order = session order.
 - From SPS-26: `SessionSegmenter` is a concrete struct (inject it as is, no protocol) that yields `.session` events and a final `.finished(summary)`; map `summary.skippedNoDateCount` to `SkipReason.noDate`, take the config from `ScopePreferences.sessionConfig`, and drop stored clusters when it changes (feature prints stay valid).
+- From SPS-12: call `featurePrint(for: PhotoAsset)`; it returns `.computed`/`.skipped(SkipReason)`/`.failed(.vision)` and throws only on cancellation. Use `featurePrintService.revision` for cache lookups. It caps Vision at 2 requests itself, but not image loads: keep the task-group width bounded.

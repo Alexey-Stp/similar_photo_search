@@ -8,12 +8,12 @@ struct PlaceholderConformanceTests {
     @Test func everyImplementationConformsToItsDomainProtocol() {
         let photoLibrary: any PhotoLibraryRepository = PhotoKitLibraryRepository()
         let permissions: any PhotoPermissionService = PhotoKitPermissionService()
-        let featurePrints: any FeaturePrintService = VisionFeaturePrintService()
+        let images: any ImageLoading = PhotoKitImageLoader()
+        let featurePrints: any FeaturePrintService = VisionFeaturePrintService(images: images)
         let cache: any FeaturePrintCache = SwiftDataFeaturePrintCache()
         let clustering: any ClusteringEngine = UnionFindClusteringEngine()
         let scorer: any QualityScorer = VisionQualityScorer()
         let deletion: any AssetDeletionService = PhotoKitAssetDeletionService()
-        let images: any ImageLoading = PhotoKitImageLoader()
         let sessionLog: any SessionSegmentationLogging = OSLogSessionSegmentationLogger()
 
         let services: [any Sendable] = [
