@@ -211,9 +211,10 @@ private actor ImageBatchWindow {
             let key = nextKey
             nextKey += 1
             let load = load
+            // The task inherits the actor's isolation: `load` runs off the actor, `complete` back on it.
             inFlight[key] = Task {
                 let outcome = await load(assetID)
-                await self.complete(key: key, outcome: outcome)
+                self.complete(key: key, outcome: outcome)
             }
         }
     }
