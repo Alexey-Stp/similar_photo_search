@@ -6,8 +6,10 @@ import ImageIO
 import Testing
 import Vision
 
-/// Runs real Vision on small synthetic images. Absolute distances differ between the Simulator, a Mac and a device;
-/// these tests only compare Vision with itself, so they hold everywhere. Real photos: `VisionFeaturePrintDeviceTests`.
+/// Request configuration and float conversion run everywhere. The real-Vision tests (iOS only, below) use small
+/// synthetic images and compare Vision only with itself, so they hold on the Simulator and on a device alike.
+/// Real photos: `VisionFeaturePrintDeviceTests`.
+@Suite(.timeLimit(.minutes(1)))
 struct VisionFeaturePrintExtractorTests {
     private let extractor = VisionFeaturePrintExtractor()
 
@@ -77,8 +79,37 @@ struct VisionFeaturePrintExtractorTests {
         }
     }
 
-    // MARK: - Real Vision
+    // MARK: - Helpers
 
+    /// A synthetic picture, upright.
+    private func image(_ variant: Int) throws -> LoadedImage {
+        LoadedImage(cgImage: try SyntheticImages.pattern(variant), orientation: .up)
+    }
+
+    /// The distance Vision itself reports between two observations.
+    static func visionDistance(
+        _ first: VNFeaturePrintObservation,
+        _ second: VNFeaturePrintObservation
+    ) throws -> Float {
+        var distance: Float = 0
+        try first.computeDistance(&distance, to: second)
+        return distance
+    }
+
+    /// The observation as floats, converted the way the extractor does it.
+    static func vector(_ observation: VNFeaturePrintObservation) throws -> [Float] {
+        try VisionFeaturePrintExtractor.floats(
+            from: observation.data,
+            elementCount: observation.elementCount,
+            elementType: observation.elementType
+        )
+    }
+}
+
+#if os(iOS)
+/// Real Vision runs only on iOS (Simulator and device). The macOS CI runner is a virtual machine without a Neural
+/// Engine or GPU, where Vision requests can hang the whole `swift test` run.
+extension VisionFeaturePrintExtractorTests {
     @Test func extractsAFloatVectorTaggedWithItsRevision() throws {
         let extracted = try extractor.extract(from: image(0))
         #expect(extracted.revision == VNGenerateImageFeaturePrintRequestRevision2)
@@ -119,33 +150,8 @@ struct VisionFeaturePrintExtractorTests {
         #expect(orientedDistance < ignoredDistance)
         #expect(orientedDistance < 0.1)
     }
-
-    // MARK: - Helpers
-
-    /// A synthetic picture, upright.
-    private func image(_ variant: Int) throws -> LoadedImage {
-        LoadedImage(cgImage: try SyntheticImages.pattern(variant), orientation: .up)
-    }
-
-    /// The distance Vision itself reports between two observations.
-    static func visionDistance(
-        _ first: VNFeaturePrintObservation,
-        _ second: VNFeaturePrintObservation
-    ) throws -> Float {
-        var distance: Float = 0
-        try first.computeDistance(&distance, to: second)
-        return distance
-    }
-
-    /// The observation as floats, converted the way the extractor does it.
-    static func vector(_ observation: VNFeaturePrintObservation) throws -> [Float] {
-        try VisionFeaturePrintExtractor.floats(
-            from: observation.data,
-            elementCount: observation.elementCount,
-            elementType: observation.elementType
-        )
-    }
 }
+#endif
 
 /// Distinct, asymmetric test pictures drawn in code, so no image files are bundled.
 enum SyntheticImages {

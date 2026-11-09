@@ -2,6 +2,7 @@
 import Foundation
 import Testing
 
+@Suite(.timeLimit(.minutes(1)))
 struct ConcurrencyLimiterTests {
     @Test func aLimitBelowOneIsTreatedAsOne() async {
         #expect(await ConcurrencyLimiter(limit: 0).limit == 1)

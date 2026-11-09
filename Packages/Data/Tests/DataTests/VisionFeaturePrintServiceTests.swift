@@ -4,6 +4,7 @@ import Domain
 import Foundation
 import Testing
 
+@Suite(.timeLimit(.minutes(1)))
 struct VisionFeaturePrintServiceTests {
     private let modificationDate = Date(timeIntervalSince1970: 1_700_000_000)
 
@@ -126,7 +127,8 @@ struct VisionFeaturePrintServiceTests {
         #expect(extractor.maxCallsAtOnce == limit)
     }
 
-    @MainActor
+    // Not `@MainActor`: the macOS `swift test` runner is not guaranteed to service the main actor. Every call goes
+    // through the Vision queue whoever calls it, so recording the thread the extractor ran on is enough.
     @Test func visionNeverRunsOnTheMainThread() async throws {
         let extractor = MockFeaturePrintExtractor()
         let service = makeService(requester: try respondingRequester(), extractor: extractor)
