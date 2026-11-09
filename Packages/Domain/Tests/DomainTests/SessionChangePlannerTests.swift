@@ -33,19 +33,29 @@ struct SessionChangePlannerTests {
         try await SessionSegmenterTests.events(library).sessions
     }
 
+    /// The outcome of `plan(before:after:delta:)`.
+    private struct Plan {
+        /// The classification of each current session, keyed by its photo IDs in library order.
+        let changes: [[String]: SessionChange]
+        /// Previous session IDs whose results are out of date.
+        let stale: Set<String>
+        /// The previous scan's sessions.
+        let before: [PhotoSession]
+    }
+
     /// Classifies every session of `after` against the sessions of `before`.
     private static func plan(
         before: [PhotoAsset],
         after: [PhotoAsset],
         delta: LibraryDelta
-    ) async throws -> (changes: [[String]: SessionChange], stale: Set<String>, before: [PhotoSession]) {
+    ) async throws -> Plan {
         let previous = try await sessions(before)
         var planner = SessionChangePlanner(previous: previous.map(SessionFingerprint.init), delta: delta)
         var changes: [[String]: SessionChange] = [:]
         for session in try await sessions(after) {
             changes[session.assets.map(\.id)] = planner.classify(session)
         }
-        return (changes, planner.staleSessionIDs, previous)
+        return Plan(changes: changes, stale: planner.staleSessionIDs, before: previous)
     }
 
     private static func record(_ asset: PhotoAsset) -> AnalysisRecord {
@@ -61,13 +71,13 @@ struct SessionChangePlannerTests {
     }
 
     // Three sessions on two days: A (morning), B (afternoon), C (next day).
-    private static let a1 = asset("a1", 9, 10, 0)
-    private static let a2 = asset("a2", 9, 10, 5)
-    private static let b1 = asset("b1", 9, 14, 0)
-    private static let b2 = asset("b2", 9, 14, 5)
-    private static let c1 = asset("c1", 10, 9, 0)
-    private static let c2 = asset("c2", 10, 9, 5)
-    private static let library = [a1, a2, b1, b2, c1, c2]
+    private static let morning1 = asset("a1", 9, 10, 0)
+    private static let morning2 = asset("a2", 9, 10, 5)
+    private static let afternoon1 = asset("b1", 9, 14, 0)
+    private static let afternoon2 = asset("b2", 9, 14, 5)
+    private static let nextDay1 = asset("c1", 10, 9, 0)
+    private static let nextDay2 = asset("c2", 10, 9, 5)
+    private static let library = [morning1, morning2, afternoon1, afternoon2, nextDay1, nextDay2]
 
     // MARK: - New photos
 
@@ -121,12 +131,12 @@ struct SessionChangePlannerTests {
 
     /// Edge case: a new photo closes the gap between two sessions, which merge and are clustered together.
     @Test func newPhotoBetweenTwoSessionsMergesThem() async throws {
-        let x1 = Self.asset("x1", 11, 10, 0)
-        let x2 = Self.asset("x2", 11, 10, 5)
-        let y1 = Self.asset("y1", 11, 10, 25)
-        let y2 = Self.asset("y2", 11, 10, 30)
+        let early1 = Self.asset("x1", 11, 10, 0)
+        let early2 = Self.asset("x2", 11, 10, 5)
+        let late1 = Self.asset("y1", 11, 10, 25)
+        let late2 = Self.asset("y2", 11, 10, 30)
         let bridge = Self.asset("bridge", 11, 10, 15)
-        let before = Self.library + [x1, x2, y1, y2]
+        let before = Self.library + [early1, early2, late1, late2]
         let result = try await Self.plan(
             before: before,
             after: before + [bridge],
@@ -157,7 +167,7 @@ struct SessionChangePlannerTests {
         #expect(result.changes.values.filter { $0 == .changed }.count == 1)
 
         let cache = MockFeaturePrintCache(entries: Self.library.map(Self.record))
-        let hits = await cache.validEntries(for: [edited, Self.b2], revision: Self.revision)
+        let hits = await cache.validEntries(for: [edited, Self.afternoon2], revision: Self.revision)
         #expect(Set(hits.keys) == ["b2"], "The edited photo's cached print no longer matches")
     }
 
@@ -173,8 +183,8 @@ struct SessionChangePlannerTests {
     }
 
     @Test func deletionChangesTheRestOfTheSession() async throws {
-        let a3 = Self.asset("a3", 9, 10, 10)
-        let before = Self.library + [a3]
+        let morning3 = Self.asset("a3", 9, 10, 10)
+        let before = Self.library + [morning3]
         let after = before.filter { $0.id != "a2" }
         let result = try await Self.plan(before: before, after: after, delta: LibraryDelta(deleted: ["a2"]))
         #expect(result.changes[["a3", "a1"]] == .changed)

@@ -140,7 +140,10 @@ struct PhotoKitLibraryChangeTrackerTests {
             code: PHPhotosError.Code.persistentChangeDetailsUnavailable.rawValue
         )
         let otherPhotoKit = NSError(domain: PHPhotosErrorDomain, code: PHPhotosError.Code.accessRestricted.rawValue)
-        let unrelated = NSError(domain: NSCocoaErrorDomain, code: PHPhotosError.Code.persistentChangeTokenExpired.rawValue)
+        let unrelated = NSError(
+            domain: NSCocoaErrorDomain,
+            code: PHPhotosError.Code.persistentChangeTokenExpired.rawValue
+        )
 
         #expect(PhotoKitPersistentChangeSource.map(expired) == .tokenExpired)
         #expect(PhotoKitPersistentChangeSource.map(PHPhotosError(.persistentChangeTokenExpired)) == .tokenExpired)
