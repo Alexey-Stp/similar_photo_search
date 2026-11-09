@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import os
 import SwiftData
 
 /// SwiftData-backed analysis cache (`FeaturePrintCache`).
@@ -21,6 +22,8 @@ public actor SwiftDataFeaturePrintCache: FeaturePrintCache {
 
     /// Records written per `save()`.
     public static let writeBatchSize = AnalysisStore.writeBatchSize
+
+    private static let logger = Logger(subsystem: "com.similarphotos", category: "analysisCache")
 
     private let location: Location
     private var store: AnalysisStore?
@@ -54,6 +57,17 @@ public actor SwiftDataFeaturePrintCache: FeaturePrintCache {
         guard !assetIDs.isEmpty else { return }
         guard let store = openStore() else { throw FeaturePrintCacheError.unavailable }
         try await store.purge(assetIDs: assetIDs)
+    }
+
+    /// The asset IDs of all stored records; empty if the store is unavailable or can't be read.
+    public func cachedAssetIDs() async -> Set<String> {
+        guard let store = openStore() else { return [] }
+        do {
+            return try await store.allAssetIDs()
+        } catch {
+            Self.logger.error("Analysis cache ID listing failed: \(String(describing: error), privacy: .private)")
+            return []
+        }
     }
 
     /// The number of stored records of any revision, or `nil` if the store is unavailable.

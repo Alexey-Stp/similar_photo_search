@@ -51,6 +51,11 @@ public actor MockFeaturePrintCache: FeaturePrintCache {
         }
     }
 
+    /// The IDs of all stored records.
+    public func cachedAssetIDs() -> Set<String> {
+        Set(entries.keys)
+    }
+
     /// Sets or clears the error that writes throw.
     public func setWriteError(_ error: (any Error)?) {
         writeError = error
