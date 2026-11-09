@@ -20,6 +20,7 @@ public final class DebouncedSignal: @unchecked Sendable {
         self.interval = interval
     }
 
+    /// Cancels a pending event and finishes every open stream.
     deinit {
         pending?.cancel()
         for continuation in continuations.values {
@@ -95,6 +96,7 @@ public final class DebouncedSignal: @unchecked Sendable {
         }
     }
 
+    /// Forgets the continuation of a stream whose consumer has stopped.
     private func removeStream(_ id: UInt64) {
         lock.lock()
         continuations[id] = nil

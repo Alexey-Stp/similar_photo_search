@@ -7,6 +7,7 @@ struct PhotoKitPersistentChangeSource: PersistentChangeSource {
     /// Asset IDs read per `autoreleasepool` while listing the library.
     static let listingBatchSize = 1_000
 
+    /// Archives `PHPhotoLibrary.shared().currentChangeToken`; `nil` if archiving fails.
     func currentToken() -> Data? {
         try? NSKeyedArchiver.archivedData(
             withRootObject: PHPhotoLibrary.shared().currentChangeToken,
@@ -14,6 +15,7 @@ struct PhotoKitPersistentChangeSource: PersistentChangeSource {
         )
     }
 
+    /// Decodes `token`, fetches the changes since it and accumulates their asset details in order.
     func assetChanges(since token: Data) throws -> LibraryDelta {
         let decoded: PHPersistentChangeToken?
         do {
@@ -50,6 +52,7 @@ struct PhotoKitPersistentChangeSource: PersistentChangeSource {
         return delta
     }
 
+    /// Lists every image ID, `listingBatchSize` per `autoreleasepool`, checking cancellation per batch.
     func allAssetIDs() throws -> Set<String> {
         let options = PHFetchOptions()
         options.includeHiddenAssets = false

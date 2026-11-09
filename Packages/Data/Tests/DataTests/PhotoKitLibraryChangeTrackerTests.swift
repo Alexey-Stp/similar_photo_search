@@ -15,17 +15,20 @@ struct PhotoKitLibraryChangeTrackerTests {
         private(set) var calls: [String] = []
         private(set) var changesRequestedSince: [Data] = []
 
+        /// Records the call and returns `token`.
         func currentToken() -> Data? {
             calls.append("currentToken")
             return token
         }
 
+        /// Records the call and its token, then returns or throws `changes`.
         func assetChanges(since token: Data) throws -> LibraryDelta {
             calls.append("assetChanges")
             changesRequestedSince.append(token)
             return try changes.get()
         }
 
+        /// Records the call and returns `currentIDs`.
         func allAssetIDs() throws -> Set<String> {
             calls.append("allAssetIDs")
             return currentIDs
@@ -44,6 +47,7 @@ struct PhotoKitLibraryChangeTrackerTests {
         try await body(PhotoKitLibraryChangeTracker(source: source, tokenStore: store), store)
     }
 
+    /// Without a saved token the first scan is a `noBaseline` full diff; the token is read before the library.
     @Test func firstScanHasNoBaselineAndListsTheLibrary() async throws {
         let source = FakeSource()
         try await withTracker(source) { tracker, _ in
@@ -70,6 +74,7 @@ struct PhotoKitLibraryChangeTrackerTests {
         }
     }
 
+    /// A scan that never commits leaves the saved token alone, so the next scan sees the same changes.
     @Test func withoutCommitTheNextScanStartsFromTheSameBaseline() async throws {
         let source = FakeSource()
         try await withTracker(source) { tracker, store in
@@ -83,6 +88,7 @@ struct PhotoKitLibraryChangeTrackerTests {
         }
     }
 
+    /// Committing before any scan started writes nothing.
     @Test func commitWithoutAStartedScanDoesNothing() async throws {
         try await withTracker(FakeSource()) { tracker, store in
             try await tracker.commitScanCompleted()
@@ -90,6 +96,7 @@ struct PhotoKitLibraryChangeTrackerTests {
         }
     }
 
+    /// A start token is saved by one commit only; a second commit does not overwrite a newer token.
     @Test func commitIsUsedOnlyOnce() async throws {
         let source = FakeSource()
         try await withTracker(source) { tracker, store in
@@ -101,6 +108,7 @@ struct PhotoKitLibraryChangeTrackerTests {
         }
     }
 
+    /// Every history error becomes a full-library fallback with the matching reason.
     @Test(arguments: [
         (PersistentChangeError.tokenExpired, FullRescanReason.tokenExpired),
         (.detailsUnavailable, .detailsUnavailable),
@@ -117,6 +125,23 @@ struct PhotoKitLibraryChangeTrackerTests {
         }
     }
 
+    /// An already-cancelled scan throws before reading the token or listing the library.
+    @Test func cancelledTaskTouchesNothing() async throws {
+        let source = FakeSource()
+        source.currentIDs = []
+        try await withTracker(source) { tracker, _ in
+            let task = Task {
+                withUnsafeCurrentTask { $0?.cancel() }
+                return try await tracker.changesSinceLastScan()
+            }
+            await #expect(throws: CancellationError.self) {
+                _ = try await task.value
+            }
+            #expect(source.calls.isEmpty)
+        }
+    }
+
+    /// Cancellation while reading the history is thrown, not turned into a full diff.
     @Test func cancellationIsNotAFallback() async throws {
         let source = FakeSource()
         source.changes = .failure(CancellationError())
@@ -130,6 +155,7 @@ struct PhotoKitLibraryChangeTrackerTests {
 
     // MARK: - PhotoKit error mapping
 
+    /// PhotoKit error codes map to their fallback; other codes and domains map to `.other`.
     @Test func photoKitErrorsMapToTheirFallbackReason() {
         let expired = NSError(
             domain: PHPhotosErrorDomain,
@@ -152,6 +178,7 @@ struct PhotoKitLibraryChangeTrackerTests {
         #expect(PhotoKitPersistentChangeSource.map(unrelated) == .other)
     }
 
+    /// A token that is not an archive is reported as unreadable.
     @Test func garbageTokenIsUnreadable() {
         #expect(throws: PersistentChangeError.unreadableToken) {
             _ = try PhotoKitPersistentChangeSource().assetChanges(since: Data("not an archive".utf8))
@@ -160,6 +187,7 @@ struct PhotoKitLibraryChangeTrackerTests {
 
     // MARK: - Token file
 
+    /// The token round-trips through its file, the directory is excluded from backup, `remove()` deletes it.
     @Test func tokenFileIsExcludedFromBackup() throws {
         let directory = FileManager.default.temporaryDirectory
             .appending(path: "ChangeTokenStoreTests-\(UUID().uuidString)", directoryHint: .isDirectory)

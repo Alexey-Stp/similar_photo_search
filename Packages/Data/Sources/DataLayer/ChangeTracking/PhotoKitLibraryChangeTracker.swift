@@ -27,7 +27,9 @@ public actor PhotoKitLibraryChangeTracker: LibraryChangeTracker {
     }
 
     /// The changes since the last committed scan; remembers the current token as this scan's start token first.
+    /// Throws `CancellationError` before touching PhotoKit or the disk if the task is already cancelled.
     public func changesSinceLastScan() async throws -> LibraryChangeReport {
+        try Task.checkCancellation()
         startToken = source.currentToken()
         if startToken == nil {
             Self.logger.error("Could not archive the current change token; this scan will not be committed")

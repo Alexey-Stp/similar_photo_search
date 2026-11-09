@@ -9,6 +9,7 @@ struct SessionChangePlannerTests {
     private static let revision = 2
     private static let modified = Date(timeIntervalSince1970: 1_700_000_000)
 
+    /// A dated photo on November `day`, 2026 (UTC), with a modification date and favorite flag.
     private static func asset(
         _ id: String,
         _ day: Int,
@@ -58,6 +59,7 @@ struct SessionChangePlannerTests {
         return Plan(changes: changes, stale: planner.staleSessionIDs, before: previous)
     }
 
+    /// The analyzed record of `asset`, valid for its current modification date.
     private static func record(_ asset: PhotoAsset) -> AnalysisRecord {
         AnalysisRecord(
             featurePrint: FeaturePrint(
@@ -81,6 +83,7 @@ struct SessionChangePlannerTests {
 
     // MARK: - New photos
 
+    /// A new photo changes only its own session; the other sessions keep their results.
     @Test func newPhotoChangesOnlyItsOwnSession() async throws {
         let new = Self.asset("new", 9, 14, 10)
         let result = try await Self.plan(
@@ -159,6 +162,7 @@ struct SessionChangePlannerTests {
 
     // MARK: - Edits and deletions
 
+    /// An edited photo changes its session, and its cached print misses on the new modification date.
     @Test func editedPhotoChangesItsSessionAndInvalidatesItsPrint() async throws {
         let edited = Self.asset("b1", 9, 14, 0, modified: Self.modified.addingTimeInterval(60))
         let after = Self.library.filter { $0.id != "b1" } + [edited]
@@ -182,6 +186,7 @@ struct SessionChangePlannerTests {
         #expect(result.changes[["a2", "a1"]] == .unchanged)
     }
 
+    /// Deleting a photo changes the rest of its session and makes the old session stale.
     @Test func deletionChangesTheRestOfTheSession() async throws {
         let morning3 = Self.asset("a3", 9, 10, 10)
         let before = Self.library + [morning3]
@@ -191,12 +196,14 @@ struct SessionChangePlannerTests {
         #expect(result.stale.count == 1)
     }
 
+    /// With no changes every session is reused and nothing is stale.
     @Test func unchangedLibraryReusesEverything() async throws {
         let result = try await Self.plan(before: Self.library, after: Self.library, delta: LibraryDelta())
         #expect(result.changes.values.allSatisfy { $0 == .unchanged })
         #expect(result.stale.isEmpty)
     }
 
+    /// Without stored fingerprints (first scan, new session config) every session is changed.
     @Test func withoutPreviousFingerprintsEverySessionChanges() async throws {
         var planner = SessionChangePlanner(previous: [], delta: LibraryDelta())
         for session in try await Self.sessions(Self.library) {
@@ -224,6 +231,7 @@ struct SessionChangePlannerTests {
         ])
     }
 
+    /// A favorite flag change alone changes the session, also on a full rescan.
     @Test func favoriteFlagIsPartOfTheFingerprint() async throws {
         let favorite = Self.asset("a1", 9, 10, 0, favorite: true)
         let after = Self.library.filter { $0.id != "a1" } + [favorite]
@@ -234,10 +242,12 @@ struct SessionChangePlannerTests {
 }
 
 struct SessionFingerprintTests {
+    /// A session of `assets`, sorted into library order.
     private static func session(_ assets: [PhotoAsset]) throws -> PhotoSession {
         try #require(PhotoSession(assets: assets.sorted(by: PhotoAsset.libraryOrder)))
     }
 
+    /// A photo at a fixed date, modified `modified` seconds after 1970 (`nil` for no date).
     private static func asset(_ id: String, modified: Double? = 1, favorite: Bool = false) -> PhotoAsset {
         PhotoAsset(
             id: id,
@@ -250,6 +260,7 @@ struct SessionFingerprintTests {
         )
     }
 
+    /// The same photos give the same fingerprint, whatever order they are passed in.
     @Test func sameMembersGiveTheSameFingerprint() throws {
         let lhs = SessionFingerprint(try Self.session([Self.asset("a"), Self.asset("b")]))
         let rhs = SessionFingerprint(try Self.session([Self.asset("b"), Self.asset("a")]))
@@ -257,6 +268,7 @@ struct SessionFingerprintTests {
         #expect(lhs.content.memberCount == 2)
     }
 
+    /// Any change of member, modification date or favorite flag changes the content.
     @Test func anyMemberChangeChangesTheContent() throws {
         let base = SessionFingerprint(try Self.session([Self.asset("a"), Self.asset("b")])).content
         let variants: [[PhotoAsset]] = [
@@ -264,6 +276,8 @@ struct SessionFingerprintTests {
             [Self.asset("a"), Self.asset("b"), Self.asset("c")],
             [Self.asset("a")],
             [Self.asset("a"), Self.asset("b", modified: 2)],
+            // Less than half a millisecond apart: still a different modification date for the cache.
+            [Self.asset("a"), Self.asset("b", modified: 1.000_1)],
             [Self.asset("a"), Self.asset("b", modified: nil)],
             [Self.asset("a"), Self.asset("b", favorite: true)],
             // Concatenated IDs that read the same must still differ.
@@ -274,6 +288,7 @@ struct SessionFingerprintTests {
         }
     }
 
+    /// A fingerprint survives JSON encoding, so it can be stored.
     @Test func roundTripsThroughCodable() throws {
         let fingerprint = SessionFingerprint(try Self.session([Self.asset("a")]))
         let decoded = try JSONDecoder().decode(SessionFingerprint.self, from: JSONEncoder().encode(fingerprint))

@@ -11,7 +11,8 @@ public struct SessionFingerprint: Sendable, Hashable, Codable {
     public struct Content: Sendable, Hashable, Codable {
         /// The number of photos.
         public let memberCount: Int
-        /// FNV-1a 64-bit hash over every photo's ID, modification date and favorite flag, in `PhotoAsset.libraryOrder`.
+        /// FNV-1a 64-bit hash over every photo's ID, modification date (its exact `Double` bits) and favorite flag,
+        /// in `PhotoAsset.libraryOrder`.
         public let digest: UInt64
 
         /// Creates a content value, for example when reading a stored fingerprint.
@@ -40,7 +41,8 @@ public struct SessionFingerprint: Sendable, Hashable, Codable {
             hash.combine(UInt8(0x1F))
             if let modified = asset.modificationDate {
                 hash.combine(UInt8(0x01))
-                hash.combine(Int64(exactly: (modified.timeIntervalSince1970 * 1_000).rounded()) ?? 0)
+                // The exact bits, not rounded milliseconds: the cache key compares dates exactly too.
+                hash.combine(Int64(bitPattern: modified.timeIntervalSince1970.bitPattern))
             } else {
                 hash.combine(UInt8(0x00))
             }

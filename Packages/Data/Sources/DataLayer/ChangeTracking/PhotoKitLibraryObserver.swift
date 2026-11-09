@@ -25,6 +25,7 @@ public final class PhotoKitLibraryObserver: NSObject, PHPhotoLibraryChangeObserv
         super.init()
     }
 
+    /// Unregisters from PhotoKit (if registered) and finishes every open stream.
     deinit {
         if isRegistered {
             PHPhotoLibrary.shared().unregisterChangeObserver(self)
@@ -43,6 +44,7 @@ public final class PhotoKitLibraryObserver: NSObject, PHPhotoLibraryChangeObserv
         signal.signal()
     }
 
+    /// Registers with `PHPhotoLibrary.shared()` once, on the first call.
     private func registerIfNeeded() {
         lock.lock()
         defer { lock.unlock() }
