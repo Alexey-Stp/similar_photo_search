@@ -39,6 +39,7 @@ final class MockFeaturePrintExtractor: FeaturePrintExtracting, @unchecked Sendab
     /// Calls that ran on the main thread.
     var callsOnMainThread: Int { locked { mainThreadCalls } }
 
+    /// Records the call, blocks for `duration`, then returns the preset vector or throws `VisionError`.
     func extract(from image: LoadedImage) throws -> ExtractedFeaturePrint {
         let index = locked {
             defer { calls += 1 }
@@ -59,6 +60,7 @@ final class MockFeaturePrintExtractor: FeaturePrintExtracting, @unchecked Sendab
         return ExtractedFeaturePrint(revision: revision, vector: vector)
     }
 
+    /// Runs `body` while holding the lock.
     private func locked<T>(_ body: () -> T) -> T {
         lock.lock()
         defer { lock.unlock() }

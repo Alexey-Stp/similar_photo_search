@@ -7,6 +7,7 @@ import Testing
 struct VisionFeaturePrintServiceTests {
     private let modificationDate = Date(timeIntervalSince1970: 1_700_000_000)
 
+    /// A photo whose creation and modification dates are `modificationDate`.
     private func asset(_ id: String) -> PhotoAsset {
         PhotoAsset(
             id: id,
@@ -19,6 +20,7 @@ struct VisionFeaturePrintServiceTests {
         )
     }
 
+    /// A service over a real `PhotoKitImageLoader` backed by `requester`.
     private func makeService(
         requester: MockImageRequester,
         extractor: MockFeaturePrintExtractor,
@@ -31,6 +33,7 @@ struct VisionFeaturePrintServiceTests {
         )
     }
 
+    /// A requester that answers every request at once with a small image.
     private func respondingRequester() throws -> MockImageRequester {
         MockImageRequester(defaultBehavior: .respond([try ImageTestSupport.success()]))
     }

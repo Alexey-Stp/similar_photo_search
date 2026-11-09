@@ -50,7 +50,8 @@ device. A shared `VNRequest` across threads crashes.
 - **Contract:** `FeaturePrintService.featurePrint(for: PhotoAsset) async throws -> FeaturePrintOutcome` (Domain). It takes
   the `PhotoAsset`, not just its ID, because the print stores `asset.modificationDate` as part of the cache key. Outcomes:
   `.computed(FeaturePrint)`, `.skipped(SkipReason)` (image not loadable, Vision never ran), `.failed(AnalysisFailure.vision)`.
-  It throws **only** `CancellationError`; a Vision error never stops a scan. The protocol also exposes `revision`, the
+  It throws **only** `CancellationError`; a Vision error never stops a scan. A print that finished before a
+  cancellation is still returned (worth caching); a failure during a cancelled call throws instead of `.failed`. The protocol also exposes `revision`, the
   revision new prints get, so the coordinator can query the cache before computing anything.
 - `MockFeaturePrintService` now takes `outcomes:` (or `featurePrints:`, all computed) and `revision:`; unknown IDs stay `.skipped(.iCloudOnly)`.
 - `VectorMath` (`euclideanDistance`, `euclideanDistanceSquared`, vDSP) lives in `Domain/Clustering/`, the folder

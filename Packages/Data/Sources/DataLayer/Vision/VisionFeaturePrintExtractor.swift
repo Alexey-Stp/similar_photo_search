@@ -45,11 +45,17 @@ public struct VisionFeaturePrintExtractor: FeaturePrintExtracting {
     /// (Vision's default). Changing it would make cached prints of the same revision meaningless.
     public static let cropAndScaleOption: VNImageCropAndScaleOption = .scaleFill
 
+    /// The request revision: Revision 2, or Revision 1 where Revision 2 is not supported.
     public let revision: Int
 
     /// Creates an extractor with Revision 2, or Revision 1 if this OS does not support Revision 2.
     public init() {
-        self.revision = Self.preferredRevision(supported: VNGenerateImageFeaturePrintRequest.supportedRevisions)
+        self.init(supportedRevisions: VNGenerateImageFeaturePrintRequest.supportedRevisions)
+    }
+
+    /// Creates an extractor for the given supported revisions, so tests don't depend on the OS they run on.
+    init(supportedRevisions: IndexSet) {
+        self.revision = Self.preferredRevision(supported: supportedRevisions)
     }
 
     /// Revision 2 when supported, otherwise Revision 1.
@@ -59,6 +65,7 @@ public struct VisionFeaturePrintExtractor: FeaturePrintExtracting {
             : VNGenerateImageFeaturePrintRequestRevision1
     }
 
+    /// Runs a new `VNGenerateImageFeaturePrintRequest` on `image` and copies the observation into floats.
     public func extract(from image: LoadedImage) throws -> ExtractedFeaturePrint {
         try autoreleasepool {
             let observation = try makeObservation(for: image)

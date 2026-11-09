@@ -28,6 +28,13 @@ struct VisionFeaturePrintExtractorTests {
         #expect(VisionFeaturePrintExtractor.preferredRevision(supported: IndexSet([revision1, revision2])) == revision2)
     }
 
+    @Test func anOSWithoutRevision2GetsRevision1Requests() {
+        let revision1 = VNGenerateImageFeaturePrintRequestRevision1
+        let extractor = VisionFeaturePrintExtractor(supportedRevisions: IndexSet([revision1]))
+        #expect(extractor.revision == revision1)
+        #expect(extractor.makeRequest().revision == revision1)
+    }
+
     @Test func eachRequestIsANewObject() {
         #expect(extractor.makeRequest() !== extractor.makeRequest())
     }
@@ -38,6 +45,21 @@ struct VisionFeaturePrintExtractorTests {
         let vector: [Float] = [0.5, -1.25, 3, 1e-7]
         let data = vector.withUnsafeBufferPointer { Data(buffer: $0) }
         #expect(try VisionFeaturePrintExtractor.floats(from: data, elementCount: 4, elementType: .float) == vector)
+    }
+
+    @Test func copiesMisalignedFloatData() throws {
+        let vector: [Float] = [0.5, -1.25, 3, 1e-7]
+        // One leading byte, then slicing it off: the floats start one byte past an aligned address.
+        var padded = Data([0])
+        vector.withUnsafeBufferPointer { padded.append($0) }
+        let misaligned = padded.dropFirst()
+        let isMisaligned = misaligned.withUnsafeBytes { bytes in
+            Int(bitPattern: bytes.baseAddress) % MemoryLayout<Float>.alignment != 0
+        }
+        try #require(isMisaligned)
+
+        let copied = try VisionFeaturePrintExtractor.floats(from: misaligned, elementCount: 4, elementType: .float)
+        #expect(copied == vector)
     }
 
     @Test func rejectsDoubleAndUnknownElements() {
@@ -105,6 +127,7 @@ struct VisionFeaturePrintExtractorTests {
         LoadedImage(cgImage: try SyntheticImages.pattern(variant), orientation: .up)
     }
 
+    /// The distance Vision itself reports between two observations.
     static func visionDistance(
         _ first: VNFeaturePrintObservation,
         _ second: VNFeaturePrintObservation
@@ -114,6 +137,7 @@ struct VisionFeaturePrintExtractorTests {
         return distance
     }
 
+    /// The observation as floats, converted the way the extractor does it.
     static func vector(_ observation: VNFeaturePrintObservation) throws -> [Float] {
         try VisionFeaturePrintExtractor.floats(
             from: observation.data,
@@ -170,6 +194,7 @@ enum SyntheticImages {
         return try makeImage(context)
     }
 
+    /// An RGBA bitmap context of the given size.
     private static func makeContext(width: Int, height: Int) throws -> CGContext {
         guard let context = CGContext(
             data: nil,
@@ -185,6 +210,7 @@ enum SyntheticImages {
         return context
     }
 
+    /// The context's current contents as an image.
     private static func makeImage(_ context: CGContext) throws -> CGImage {
         guard let image = context.makeImage() else {
             throw CocoaError(.featureUnsupported)

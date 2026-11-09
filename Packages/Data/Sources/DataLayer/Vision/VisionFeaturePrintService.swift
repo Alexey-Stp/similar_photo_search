@@ -24,6 +24,7 @@ public struct VisionFeaturePrintService: FeaturePrintService {
     private let limiter: ConcurrencyLimiter
     private let targetSize: CGSize
 
+    /// The revision of the extractor, which every computed print carries.
     public var revision: Int { extractor.revision }
 
     /// Creates the service with the Vision extractor.
@@ -54,6 +55,7 @@ public struct VisionFeaturePrintService: FeaturePrintService {
         self.targetSize = targetSize
     }
 
+    /// Loads the photo's analysis image and computes its print; see `FeaturePrintService.featurePrint(for:)`.
     public func featurePrint(for asset: PhotoAsset) async throws -> FeaturePrintOutcome {
         let image: LoadedImage
         do {
@@ -77,6 +79,12 @@ public struct VisionFeaturePrintService: FeaturePrintService {
             result = await extractOffThread(image)
         }
         await limiter.release()
+
+        // A print finished before a cancellation is still valid and worth saving, but a failure during a cancelled scan
+        // must not mark the photo as failed.
+        if case .failure = result {
+            try Task.checkCancellation()
+        }
 
         switch result {
         case .success(let extracted):

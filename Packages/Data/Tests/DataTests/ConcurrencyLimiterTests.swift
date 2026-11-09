@@ -20,6 +20,36 @@ struct ConcurrencyLimiterTests {
         await limiter.release()
     }
 
+    @Test func waitersGetSlotsInTheOrderTheyQueued() async throws {
+        let limiter = ConcurrencyLimiter(limit: 1)
+        let order = OrderRecorder()
+        try await limiter.acquire()
+
+        let first = Task {
+            try await limiter.acquire()
+            await order.append("first")
+        }
+        // Cancelling on exit wakes any waiter an early failure left suspended; a finished task ignores it.
+        defer { first.cancel() }
+        #expect(await waitForWaiters(1, on: limiter))
+        let second = Task {
+            try await limiter.acquire()
+            await order.append("second")
+        }
+        defer { second.cancel() }
+        #expect(await waitForWaiters(2, on: limiter))
+
+        await limiter.release()
+        let firstGotTheSlot = await waitUntil { await order.names == ["first"] }
+        #expect(firstGotTheSlot)
+        #expect(await limiter.waitingCount == 1)
+
+        await limiter.release()
+        let secondGotTheSlot = await waitUntil { await order.names == ["first", "second"] }
+        #expect(secondGotTheSlot)
+        await limiter.release()
+    }
+
     @Test func aCancelledWaiterStopsWaitingAtOnceAndHoldsNoSlot() async throws {
         let limiter = ConcurrencyLimiter(limit: 1)
         try await limiter.acquire()
@@ -51,13 +81,29 @@ struct ConcurrencyLimiterTests {
 
     /// Polls until `count` tasks wait on the limiter. Returns whether that happened within 2 s.
     private func waitForWaiters(_ count: Int, on limiter: ConcurrencyLimiter) async -> Bool {
+        await waitUntil { await limiter.waitingCount >= count }
+    }
+
+    /// Polls `condition` until it holds. Returns whether that happened within 2 s.
+    private func waitUntil(_ condition: () async -> Bool) async -> Bool {
         let deadline = ContinuousClock.now + .seconds(2)
-        while await limiter.waitingCount < count {
+        while await !condition() {
             if ContinuousClock.now >= deadline {
                 return false
             }
             try? await Task.sleep(for: .milliseconds(1))
         }
         return true
+    }
+}
+
+/// Records the order in which tasks got a slot.
+private actor OrderRecorder {
+    /// Names in the order they were appended.
+    private(set) var names: [String] = []
+
+    /// Appends `name`.
+    func append(_ name: String) {
+        names.append(name)
     }
 }
