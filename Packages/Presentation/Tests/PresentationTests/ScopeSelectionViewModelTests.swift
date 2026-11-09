@@ -231,6 +231,11 @@ struct ScopeSelectionViewModelTests {
         #expect(await store.savedPreferences.isEmpty)
     }
 
+}
+
+// MARK: - Time zones, limited access and overlapping counts
+
+extension ScopeSelectionViewModelTests {
     @Test func savedCustomRangeIsKeptExactlyInAnotherTimeZone() async throws {
         let range = Self.day(2026, 3, 1)...Self.day(2026, 3, 8).addingTimeInterval(-0.5)
         let store = MockScopePreferencesStore(preferences: ScopePreferences(dateFilter: .custom(range)))
