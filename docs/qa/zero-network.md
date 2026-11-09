@@ -3,9 +3,9 @@
 The app promises that it does not transmit anything: no networking code, no analytics, no third-party SDKs, and iCloud-only originals are skipped rather than downloaded.
 CI enforces the code side (see [README → Guard rails](../../README.md#guard-rails)). This checklist covers what only a person with a device can check.
 
-Run it before every release, and again whenever scanning (SPC-14), deletion (SPC-24/SPC-25) or a new framework is added.
+Run it before every release, and again whenever scanning (SPS-14), deletion (SPS-24/SPS-25) or a new framework is added.
 
-> **Current scope.** Scanning, analysis and deletion are still placeholders. Until SPC-14 and SPC-24 land, run checks 1 and 2 on the flows that exist (onboarding, permission prompt, Limited/Denied screens, Home). Re-run them over a full scan and a deletion as part of the definition of done for SPC-14, SPC-24 and SPC-25.
+> **Current scope.** Scanning, analysis and deletion are still placeholders. Until SPS-14 lands, run checks 1 and 2 on the flows that exist (onboarding, permission prompt, Limited/Denied screens, Home). For SPS-14, run them over a full scan and skip the deletion steps if deletion does not exist yet. For SPS-24 and SPS-25, run the full flow including deletion.
 
 ## 1. Airplane Mode parity
 

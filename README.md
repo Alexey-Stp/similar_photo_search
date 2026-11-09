@@ -3,7 +3,7 @@
 A native iOS app that finds near-duplicate photos in your library and helps you delete them.
 Everything runs **on device**: the app makes no network calls, and photos that exist only in iCloud are skipped rather than downloaded.
 
-> Status: early skeleton (SPS-2). Services are placeholders; see the [backlog](docs/jira-tickets.md).
+> Status: early skeleton (SPS-2). Services are placeholders; see the [backlog](docs/backlog/README.md).
 
 ## Requirements
 
@@ -85,7 +85,8 @@ Manual privacy checks (Airplane Mode, Instruments network trace, archive privacy
 
 ## Contributing
 
-- Read the ticket in [docs/jira-tickets.md](docs/jira-tickets.md) first. Its acceptance criteria are the definition of done.
+- Read the ticket in [docs/backlog/](docs/backlog/README.md) first (one file per ticket). Its acceptance criteria are the definition of done.
+  With Claude Code, run `/ticket SPS-<n>`.
 - Project rules and conventions are in [CLAUDE.md](CLAUDE.md).
 - Commit messages start with the ticket key, e.g. `SPS-2: bootstrap project structure`.
 - Tests use Swift Testing (`import Testing`). User-facing strings go into `Localizable.xcstrings`.
