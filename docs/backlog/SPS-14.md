@@ -52,5 +52,7 @@ iOS kills the app. `cancel()` during a half-done SwiftData save needs transactio
   phases: enumerating, analyzing, clustering, done, cancelled, throttled.
 - Bounded `TaskGroup` width from `ThermalMonitor.recommendedConcurrency` (nominal/fair 4, serious 1, critical 0 = pause).
   Throttle progress to 100 ms; persist in batches of 200; `autoreleasepool` per image.
+- Skip counts use Domain `SkipReason` (SPS-9 added `iCloudOnly`, `decodeFailed`, `notFound`; SPS-26 adds "no date").
+  `ImageLoading.loadBatch` delivers in completion order and only loads `maxConcurrent` ahead of its consumer.
 - `ScanViewModel` (`@Observable @MainActor`) consumes the streams, exposes percentage and ETA text, handles `scenePhase`.
 - Tests with mocks: cancellation latency, resume (cached IDs skipped), thermal throttling, publish order = session order.

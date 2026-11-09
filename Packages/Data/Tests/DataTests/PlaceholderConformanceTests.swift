@@ -13,8 +13,11 @@ struct PlaceholderConformanceTests {
         let clustering: any ClusteringEngine = UnionFindClusteringEngine()
         let scorer: any QualityScorer = VisionQualityScorer()
         let deletion: any AssetDeletionService = PhotoKitAssetDeletionService()
+        let images: any ImageLoading = PhotoKitImageLoader()
 
-        let services: [any Sendable] = [photoLibrary, permissions, featurePrints, cache, clustering, scorer, deletion]
-        #expect(services.count == 7)
+        let services: [any Sendable] = [
+            photoLibrary, permissions, featurePrints, cache, clustering, scorer, deletion, images
+        ]
+        #expect(services.count == 8)
     }
 }

@@ -35,6 +35,9 @@ device. A shared `VNRequest` across threads crashes.
 - **Start from** the existing Domain `FeaturePrint` (`assetID`, `revision`, `vector`, `assetModificationDate`,
   `isComparable(with:)`) and `FeaturePrintService` placeholder (SPS-2) rather than adding a new `FeatureVector` type;
   change the protocol signature to take the loaded image from SPS-9.
+- **SPS-9 decided otherwise:** the Domain protocol keeps taking an asset ID. Inject `ImageLoading` (Data) into
+  `VisionFeaturePrintService`'s initializer (built in `AppContainer`), load with `ImageLoadingDefaults.targetSize`, and
+  report skips as Domain `SkipReason` (`ImageLoadError.skipReason`) instead of a bare `nil`.
 - Set `revision = VNGenerateImageFeaturePrintRequestRevision2`; fall back to Revision1 and record it if unavailable.
 - Copy `observation.data` into `[Float]` with `withUnsafeBytes` + `bindMemory` and `elementCount`.
 - `enum VectorMath { static func euclideanDistance(_ a: [Float], _ b: [Float]) -> Float }` with vDSP and a precondition on
