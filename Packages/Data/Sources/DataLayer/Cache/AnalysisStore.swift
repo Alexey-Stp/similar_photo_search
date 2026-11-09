@@ -57,9 +57,9 @@ actor AnalysisStore {
         var latest: [String: AnalysisRecord] = [:]
         var order: [String] = []
         for record in records {
-            if latest.updateValue(record, forKey: record.assetID) == nil {
-                order.append(record.assetID)
-            }
+            let isFirst = latest[record.assetID] == nil
+            latest[record.assetID] = record
+            if isFirst { order.append(record.assetID) }
         }
         for start in stride(from: 0, to: order.count, by: Self.writeBatchSize) {
             let chunk = Array(order[start..<min(start + Self.writeBatchSize, order.count)])
