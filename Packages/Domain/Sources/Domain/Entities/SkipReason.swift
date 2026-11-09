@@ -8,4 +8,7 @@ public enum SkipReason: String, Sendable, Hashable, Codable, CaseIterable {
     case decodeFailed
     /// The photo no longer exists, for example because it was deleted after it was listed.
     case notFound
+    /// The photo has no `creationDate`, so it belongs to no shooting session and is never compared.
+    /// Counted by `SessionSegmentationSummary.skippedNoDateCount`.
+    case noDate
 }

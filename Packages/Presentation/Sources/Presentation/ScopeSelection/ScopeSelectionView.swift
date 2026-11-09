@@ -1,7 +1,8 @@
 import Domain
 import SwiftUI
 
-/// Sheet for choosing what a scan covers: All Photos or albums, a date range, and whether to skip screenshots.
+/// Sheet for choosing what a scan covers: All Photos or albums, a date range, whether to skip screenshots,
+/// and the longest pause between neighbouring shots that keeps them in one session (the session gap).
 struct ScopeSelectionView: View {
     let viewModel: ScopeSelectionViewModel
     let onCancel: () -> Void
@@ -73,6 +74,7 @@ struct ScopeSelectionView: View {
                 }
             }
             dateSection
+            sessionGapSection
             Section {
                 Toggle(isOn: Binding(
                     get: { viewModel.excludeScreenshots },
@@ -117,6 +119,27 @@ struct ScopeSelectionView: View {
             }
         } header: {
             Text("scope.section.dates", bundle: .module)
+        }
+    }
+
+    /// The session gap picker: Strict 5 min, Balanced 15 min, Relaxed 60 min.
+    private var sessionGapSection: some View {
+        Section {
+            Picker(selection: Binding(
+                get: { viewModel.sessionGap },
+                set: { viewModel.setSessionGap($0) }
+            )) {
+                ForEach(SessionGapPreset.allCases) { gap in
+                    sessionGapTitle(gap).tag(gap)
+                }
+            } label: {
+                Text("scope.sessionGap.label", bundle: .module)
+            }
+            .accessibilityHint(Text("scope.sessionGap.hint", bundle: .module))
+        } header: {
+            Text("scope.section.grouping", bundle: .module)
+        } footer: {
+            Text("scope.sessionGap.footer", bundle: .module)
         }
     }
 
@@ -194,6 +217,18 @@ struct ScopeSelectionView: View {
             return Text("scope.album.portrait", bundle: .module)
         case .user:
             return Text("scope.album.untitled", bundle: .module)
+        }
+    }
+
+    /// The localized name of a session gap choice, including its length.
+    private func sessionGapTitle(_ gap: SessionGapPreset) -> Text {
+        switch gap {
+        case .strict:
+            Text("scope.sessionGap.strict", bundle: .module)
+        case .balanced:
+            Text("scope.sessionGap.balanced", bundle: .module)
+        case .relaxed:
+            Text("scope.sessionGap.relaxed", bundle: .module)
         }
     }
 

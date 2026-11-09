@@ -199,6 +199,37 @@ struct ScopeSelectionViewModelTests {
         #expect(await store.preferences.includeBursts)
     }
 
+    @Test func sessionGapDefaultsToBalanced() async {
+        let viewModel = makeViewModel()
+        await viewModel.load()
+        #expect(viewModel.sessionGap == .balanced)
+    }
+
+    @Test func savedSessionGapIsRestoredAndAppliedWithTheScope() async {
+        let store = MockScopePreferencesStore(preferences: ScopePreferences(sessionGap: .strict))
+        let recorder = ApplyRecorder()
+        let viewModel = makeViewModel(store: store, recorder: recorder)
+        await viewModel.load()
+        #expect(viewModel.sessionGap == .strict)
+
+        viewModel.setSessionGap(.relaxed)
+        await viewModel.apply()
+        #expect(await store.preferences == ScopePreferences(sessionGap: .relaxed))
+        #expect(recorder.applied == [ScopePreferences(sessionGap: .relaxed)])
+    }
+
+    @Test func changingTheSessionGapDoesNotRecount() async {
+        let library = Self.makeLibrary()
+        let viewModel = makeViewModel(library: library)
+        await viewModel.load()
+        await viewModel.waitForPendingCount()
+        let countsAfterLoad = await library.assetCountCallCount
+
+        viewModel.setSessionGap(.strict)
+        await viewModel.waitForPendingCount()
+        #expect(await library.assetCountCallCount == countsAfterLoad)
+    }
+
     @Test func customRangeCoversWholeDaysAndKeepsStartBeforeEnd() async {
         let viewModel = makeViewModel()
         await viewModel.load()

@@ -2,7 +2,7 @@ import Domain
 import Foundation
 import Observation
 
-/// Drives the "Scan scope" sheet: which albums, which dates, and whether screenshots are skipped.
+/// Drives the "Scan scope" sheet: which albums, which dates, whether screenshots are skipped, and the session gap.
 ///
 /// No selected album means All Photos. Album IDs that no longer exist (for example albums deleted
 /// outside the app) are dropped silently when the sheet loads, and the cleaned choice is saved.
@@ -41,6 +41,9 @@ public final class ScopeSelectionViewModel {
     public private(set) var customEnd: Date
     /// Whether screenshots are skipped. On by default.
     public private(set) var excludeScreenshots = true
+    /// The longest pause between neighbouring shots that keeps them in one session. Balanced (15 min) by default.
+    /// Changing it does not change which photos are scanned, so it doesn't trigger a new count.
+    public private(set) var sessionGap: SessionGapPreset = .balanced
     /// Photo count for the current choice, or `nil` before the first count finishes.
     /// With several overlapping albums it is an upper bound, so the UI shows it as "about".
     public private(set) var estimatedCount: Int?
@@ -61,7 +64,8 @@ public final class ScopeSelectionViewModel {
             albumIDs: orderedIDs.isEmpty ? nil : orderedIDs,
             dateFilter: dateFilter,
             excludeScreenshots: excludeScreenshots,
-            includeBursts: includeBursts
+            includeBursts: includeBursts,
+            sessionGap: sessionGap
         )
     }
 
@@ -128,6 +132,7 @@ public final class ScopeSelectionViewModel {
         unverifiedAlbumIDs = canVerifyAlbums ? [] : storedIDs.subtracting(knownIDs)
         excludeScreenshots = stored.excludeScreenshots
         includeBursts = stored.includeBursts
+        sessionGap = stored.sessionGap
         restore(stored.dateFilter)
         isLoaded = true
 
@@ -198,6 +203,11 @@ public final class ScopeSelectionViewModel {
         guard exclude != excludeScreenshots else { return }
         excludeScreenshots = exclude
         scheduleCount()
+    }
+
+    /// Changes the session gap. Applying it invalidates existing groups but keeps the feature-print cache.
+    public func setSessionGap(_ gap: SessionGapPreset) {
+        sessionGap = gap
     }
 
     /// Saves the choice and calls `onApply`.

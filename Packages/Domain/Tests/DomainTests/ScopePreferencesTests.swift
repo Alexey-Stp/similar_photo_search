@@ -83,6 +83,31 @@ struct ScopePreferencesTests {
         #expect(decoded == preferences)
     }
 
+    @Test(arguments: SessionGapPreset.allCases)
+    func sessionGapSurvivesCodableRoundTrip(gap: SessionGapPreset) throws {
+        let preferences = ScopePreferences(sessionGap: gap)
+        let decoded = try JSONDecoder().decode(ScopePreferences.self, from: JSONEncoder().encode(preferences))
+        #expect(decoded.sessionGap == gap)
+        #expect(decoded.sessionConfig.sessionGap == gap.interval)
+    }
+
+    @Test func preferencesSavedBeforeSessionGapExistedDecodeAsBalanced() throws {
+        let saved = ScopePreferences(albumIDs: ["a"], dateFilter: .last30Days, sessionGap: .relaxed)
+        let json = try #require(
+            try JSONSerialization.jsonObject(with: JSONEncoder().encode(saved)) as? [String: Any]
+        )
+        let oldJSON = try JSONSerialization.data(withJSONObject: json.filter { $0.key != "sessionGap" })
+        let decoded = try JSONDecoder().decode(ScopePreferences.self, from: oldJSON)
+        #expect(decoded.sessionGap == .balanced)
+        #expect(decoded.albumIDs == ["a"])
+        #expect(decoded.dateFilter == .last30Days)
+    }
+
+    @Test func defaultUsesBalancedGapAndDefaultSessionConfig() {
+        #expect(ScopePreferences.default.sessionGap == .balanced)
+        #expect(ScopePreferences.default.sessionConfig == .default)
+    }
+
     @Test func mockStoreReturnsWhatWasSaved() async {
         let store = MockScopePreferencesStore()
         #expect(await store.load() == .default)

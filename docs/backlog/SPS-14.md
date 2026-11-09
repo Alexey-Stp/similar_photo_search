@@ -56,3 +56,4 @@ iOS kills the app. `cancel()` during a half-done SwiftData save needs transactio
   `ImageLoading.loadBatch` delivers in completion order and only loads `maxConcurrent` ahead of its consumer.
 - `ScanViewModel` (`@Observable @MainActor`) consumes the streams, exposes percentage and ETA text, handles `scenePhase`.
 - Tests with mocks: cancellation latency, resume (cached IDs skipped), thermal throttling, publish order = session order.
+- From SPS-26: `SessionSegmenter` is a concrete struct (inject it as is, no protocol) that yields `.session` events and a final `.finished(summary)`; map `summary.skippedNoDateCount` to `SkipReason.noDate`, take the config from `ScopePreferences.sessionConfig`, and drop stored clusters when it changes (feature prints stay valid).
