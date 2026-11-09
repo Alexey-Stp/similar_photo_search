@@ -17,7 +17,7 @@ A PR description is written for the reviewer. It tells them why the change exist
 
 ## Title
 
-`<TICKET-KEY>: <imperative summary>`, at most 72 characters, for example `SPC-3: Add photo library authorization flow`. Drop the key if the repo doesn't use one.
+`<TICKET-KEY>: <imperative summary>`, at most 72 characters, for example `SPS-3: Add photo library authorization flow`. Drop the key if the repo doesn't use one.
 
 ## Body: these sections, in this order
 

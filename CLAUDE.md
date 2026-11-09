@@ -1,8 +1,11 @@
 # CLAUDE.md — SimilarPhotos (iOS)
 
 Native iOS app that finds near-duplicate photos in the user's library and helps delete them.
-Backlog with all tickets (SPC-1 … SPC-25), acceptance criteria and AI prompts: [docs/jira-tickets.md](docs/jira-tickets.md).
-When working on a ticket, read its section there first and treat its Acceptance Criteria as the definition of done.
+Backlog: [docs/backlog/README.md](docs/backlog/README.md) (principles, status, dependencies) and one file per ticket, `docs/backlog/SPS-<n>.md`.
+Ticket keys are `SPS-<n>`. To implement a ticket, use the `/ticket SPS-<n>` skill. Of the backlog, read the index and that
+ticket's file; the skill says when dependency notes and later tickets may be read too (source code is always fair game).
+Its Acceptance Criteria are the definition of done. "Implementation hints" in ticket files predate the code: existing types in `Packages/` win.
+When a ticket is done, add **Implementation notes** to its file (decisions later tickets must know) and set its status in the index.
 
 ## Non-negotiable rules
 
@@ -42,7 +45,7 @@ docs/                     backlog and design notes
 
 - Feature-print vectors are stored as raw `[Float]` packed into `Data`, together with their Vision **revision**. Never compare vectors of different revisions.
 - Cache entry is valid only if `assetID`, `revision` and `PHAsset.modificationDate` all match.
-- **Similar photos are taken close together in time.** Photos are split into shooting sessions: a run where every gap between neighbouring shots is ≤ `sessionGap` (default 15 min). Only photos from the same session are compared; photos from different days never are. Single-photo sessions skip Vision entirely (SPC-26).
+- **Similar photos are taken close together in time.** Photos are split into shooting sessions: a run where every gap between neighbouring shots is ≤ `sessionGap` (default 15 min). Only photos from the same session are compared; photos from different days never are. Single-photo sessions skip Vision entirely (SPS-26).
 - Clustering works on one session at a time: pairs within `maxPairInterval` → distance threshold → Union-Find → chaining guard for big components. Threshold and session gap are tuned on the labelled fixture set, never guessed; the threshold is keyed by revision.
 - **Results are shown while scanning.** The coordinator processes sessions newest first and publishes each session's groups immediately via `AsyncStream<ClusterUpdate>`. The UI only appends groups and never moves rows under the user. Photos deleted during a scan are excluded from the rest of it.
 - Accepted trade-off: copies of the same picture saved on different days are not found.
@@ -72,4 +75,4 @@ Vision feature prints and performance numbers must be checked on a **physical de
 - Tests with Swift Testing (`import Testing`); every service has a protocol and a mock.
 - User-facing strings go into `Localizable.xcstrings`. Every interactive view has VoiceOver labels and supports Dynamic Type and Dark Mode.
 - Logging via `os.Logger`; asset identifiers and any user data use `privacy: .private`.
-- Commit messages reference the ticket key, e.g. `SPC-12: add feature print service`.
+- Commit messages reference the ticket key, e.g. `SPS-12: add feature print service`.
