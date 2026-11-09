@@ -2,7 +2,7 @@ import Domain
 import SwiftUI
 
 /// Sheet for choosing what a scan covers: All Photos or albums, a date range, whether to skip screenshots,
-/// and how far apart shots may be to still be compared (the session gap).
+/// and the longest pause between neighbouring shots that keeps them in one session (the session gap).
 struct ScopeSelectionView: View {
     let viewModel: ScopeSelectionViewModel
     let onCancel: () -> Void

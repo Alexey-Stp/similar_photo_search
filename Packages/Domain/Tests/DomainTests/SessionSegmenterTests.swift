@@ -6,6 +6,17 @@ import Testing
 struct SessionSegmenterTests {
     private struct PageError: Error, Equatable {}
 
+    /// Counts page requests made to an on-demand test stream.
+    private actor RequestCounter {
+        private var count = 0
+
+        /// The 0-based number of this request.
+        func next() -> Int {
+            defer { count += 1 }
+            return count
+        }
+    }
+
     private static let calendar: Calendar = {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
@@ -122,6 +133,15 @@ struct SessionSegmenterTests {
         #expect(result.sessions.count == (preset == .strict ? 2 : 1))
     }
 
+    @Test func severalSessionsInOnePageAreAllEmittedInOrder() async throws {
+        // 7 photos an hour apart, in pages of 3: every photo is its own session, none dropped or repeated.
+        let assets = (0..<7).map { Self.asset("p\($0)", Self.date(9, 20 - $0, 0)) }
+        let pages = stride(from: 0, to: assets.count, by: 3).map { Array(assets[$0..<min($0 + 3, assets.count)]) }
+        let result = try await Self.collect(SessionSegmenter().sessions(from: Self.stream(pages)))
+        #expect(result.sessions.map { $0.assets.map(\.id) } == assets.map { [$0.id] })
+        #expect(result.summary?.sessionCount == 7)
+    }
+
     @Test func sessionsContinueAcrossPages() async throws {
         let pages = [
             [Self.asset("a", Self.date(9, 10, 20)), Self.asset("b", Self.date(9, 10, 15))],
@@ -211,6 +231,20 @@ struct SessionSegmenterTests {
         #expect(logger.splits.map(\.partSizes) == [[2, 2, 2]])
     }
 
+    @Test func steadilyGrowingGapsSplitOnePhotoAtATime() async throws {
+        let base = Self.date(9, 10, 0)
+        // Gaps (newest first) grow: 1, 2, 3, ... s. With max 2 every cut takes the oldest gap, peeling off one photo.
+        var offset: TimeInterval = 0
+        var assets: [PhotoAsset] = []
+        for index in 0..<40 {
+            offset += TimeInterval(index)
+            assets.append(Self.asset("p" + String(100 + index), base.addingTimeInterval(-offset)))
+        }
+        let result = try await Self.events(assets, config: SessionConfig(maxSessionSize: 2))
+        #expect(result.sessions.flatMap(\.assets).map(\.id) == assets.map(\.id))
+        #expect(result.sessions.map(\.assets.count) == [2] + Array(repeating: 1, count: 38))
+    }
+
     @Test func runWithoutGapIsChunkedInLibraryOrder() async throws {
         let shot = Self.date(9, 10, 0)
         let assets = (0..<501).map { Self.asset("id" + String(1_000 + $0), shot) }
@@ -223,6 +257,9 @@ struct SessionSegmenterTests {
         #expect(logger.splits.map(\.partSizes) == [[500, 1]])
     }
 
+}
+
+extension SessionSegmenterTests {
     // MARK: - Streaming and cancellation
 
     @Test func sessionIsEmittedBeforeTheInputEnds() async throws {
@@ -251,23 +288,63 @@ struct SessionSegmenterTests {
         #expect(try await iterator.next() == nil)
     }
 
-    @Test func cancellingTheConsumerStopsSegmentation() async throws {
+    @Test func cancellingTheConsumerWhileItWaitsForAPageStopsSegmentation() async throws {
+        let (requests, requestSignal) = AsyncStream.makeStream(of: Int.self)
+        let counter = RequestCounter()
+        let firstPage = [Self.asset("a", Self.date(9, 12, 0))]
+        // On-demand input: the first request gets a page, the second one waits until it is cancelled.
+        let pages = AsyncThrowingStream<[PhotoAsset], Error>(unfolding: {
+            let request = await counter.next()
+            requestSignal.yield(request)
+            guard request > 0 else { return firstPage }
+            try await Task.sleep(for: .seconds(3_600))
+            return nil
+        })
+        let sequence = SessionSegmenter().sessions(from: pages)
+        let consumer = Task {
+            for try await _ in sequence {}
+        }
+        // Cancel only once the segmenter is really waiting for the second page; a regression fails here, not hangs.
+        let isWaiting = await Self.waitForRequest(1, in: requests, timeout: .seconds(5))
+        #expect(isWaiting, "The segmenter never asked for the second page")
+        consumer.cancel()
+        await #expect(throws: CancellationError.self) {
+            try await consumer.value
+        }
+        requestSignal.finish()
+    }
+
+    @Test func cancelledConsumerStopsBeforeReadingAnything() async throws {
         let (pages, continuation) = AsyncThrowingStream.makeStream(of: [PhotoAsset].self, throwing: Error.self)
         continuation.yield([Self.asset("a", Self.date(9, 12, 0))])
         let sequence = SessionSegmenter().sessions(from: pages)
         let consumer = Task {
-            var count = 0
-            for try await _ in sequence {
-                count += 1
-            }
-            return count
+            withUnsafeCurrentTask { $0?.cancel() }
+            for try await _ in sequence {}
         }
-        consumer.cancel()
-        // The input never finishes on its own; only cancellation can end the loop.
         await #expect(throws: CancellationError.self) {
-            _ = try await consumer.value
+            try await consumer.value
         }
         continuation.finish()
+    }
+
+    /// Whether request number `number` shows up on `requests` within `timeout`.
+    private static func waitForRequest(_ number: Int, in requests: AsyncStream<Int>, timeout: Duration) async -> Bool {
+        await withTaskGroup(of: Bool.self) { group in
+            group.addTask {
+                for await request in requests where request == number {
+                    return true
+                }
+                return false
+            }
+            group.addTask {
+                try? await Task.sleep(for: timeout)
+                return false
+            }
+            let first = await group.next() ?? false
+            group.cancelAll()
+            return first
+        }
     }
 
     @Test func errorsFromTheInputAreRethrown() async throws {
@@ -306,9 +383,15 @@ struct SessionSegmenterTests {
     // MARK: - Config
 
     @Test func configClampsInvalidValues() {
-        let config = SessionConfig(sessionGap: -1, maxSessionSize: 0)
+        var config = SessionConfig(sessionGap: -1, maxSessionSize: 0)
         #expect(config.sessionGap == 0)
         #expect(config.maxSessionSize == 1)
+        config.maxSessionSize = -5
+        config.sessionGap = -60
+        #expect(config.maxSessionSize == 1)
+        #expect(config.sessionGap == 0)
+        config.maxSessionSize = 20
+        #expect(config.maxSessionSize == 20)
         #expect(SessionConfig.default == SessionConfig(sessionGap: 900, maxSessionSize: 500))
     }
 

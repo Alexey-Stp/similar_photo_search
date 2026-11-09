@@ -397,21 +397,21 @@
       "comment" : "Scope sheet footer under the session gap picker.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar photos are usually taken minutes apart. A longer time finds slow series, such as a sunset, but compares more photos. Changing it regroups photos without analyzing them again." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar photos are usually taken in a series, minutes apart. A longer pause keeps slow series, such as a sunset, together, but compares more photos. Changing it regroups photos without analyzing them again." } }
       }
     },
     "scope.sessionGap.hint" : {
-      "comment" : "VoiceOver hint for the session gap picker.",
+      "comment" : "VoiceOver hint for the session gap picker. A pause between two neighbouring shots that is longer than the chosen time starts a new series; photos are compared only within a series, which can be longer than this time.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos taken further apart than this are never compared." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "A longer pause between two shots starts a new series. Only photos in the same series are compared." } }
       }
     },
     "scope.sessionGap.label" : {
-      "comment" : "Scope sheet picker label: the longest time between two shots that are still compared.",
+      "comment" : "Scope sheet picker label: the longest pause between two neighbouring shots that keeps them in one series. Not a limit on the time between any two compared photos.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Compare Shots Taken Within" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Longest Pause Between Shots" } }
       }
     },
     "scope.sessionGap.relaxed" : {

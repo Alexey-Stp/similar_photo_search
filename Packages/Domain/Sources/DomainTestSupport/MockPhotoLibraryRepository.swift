@@ -9,6 +9,8 @@ import Foundation
 ///   (the first in `PhotoAsset.libraryOrder`; PhotoKit's own pick may differ);
 /// - delivers assets in `PhotoAsset.libraryOrder`, in pages of `pageSize` that grow only to keep photos with the
 ///   same timestamp together; photos without a date start a new page;
+/// - hands out pages on demand (`AsyncThrowingStream(unfolding:)`): a page is delivered only when the consumer asks
+///   for it, so the stream never runs ahead of its consumer;
 /// - `assetCount` counts a photo once per selected album it is in, like the real per-album sum.
 public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
     /// Every asset in the fake library.
@@ -97,32 +99,13 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
     }
 
     /// Streams the matching assets, de-duplicated across albums, failing as configured by `pageFailure`.
+    /// Pages are handed out one per request; cancelling the consuming task ends the stream with `CancellationError`.
     public nonisolated func assetPages(
         scope: ScanScope,
         pageSize: Int
     ) -> AsyncThrowingStream<[PhotoAsset], Error> {
-        AsyncThrowingStream { continuation in
-            let task = Task {
-                let (pages, failure) = await self.startPaging(scope: scope, pageSize: pageSize)
-                for (index, page) in pages.enumerated() {
-                    if let failure, failure.afterPages == index {
-                        continuation.finish(throwing: failure.error)
-                        return
-                    }
-                    if Task.isCancelled {
-                        continuation.finish(throwing: CancellationError())
-                        return
-                    }
-                    continuation.yield(page)
-                }
-                if let failure, failure.afterPages >= pages.count {
-                    continuation.finish(throwing: failure.error)
-                } else {
-                    continuation.finish()
-                }
-            }
-            continuation.onTermination = { _ in task.cancel() }
-        }
+        let cursor = MockPageCursor(repository: self, scope: scope, pageSize: pageSize)
+        return AsyncThrowingStream(unfolding: { try await cursor.nextPage() })
     }
 
     /// Returns `albumSummaries`.
@@ -132,7 +115,7 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
     }
 
     /// Records the request and splits the matching assets into pages.
-    private func startPaging(
+    fileprivate func startPaging(
         scope: ScanScope,
         pageSize: Int
     ) -> (pages: [[PhotoAsset]], failure: (afterPages: Int, error: any Error)?) {
@@ -199,5 +182,50 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
             guard let burstID = asset.burstIdentifier else { return true }
             return seenBursts.insert(burstID).inserted
         }
+    }
+}
+
+/// Hands out one stream's pages on request. Paging starts (and is counted) on the first request.
+private actor MockPageCursor {
+    private let repository: MockPhotoLibraryRepository
+    private let scope: ScanScope
+    private let pageSize: Int
+    private var pages: [[PhotoAsset]]?
+    private var failure: (afterPages: Int, error: any Error)?
+    private var nextIndex = 0
+    private var isFinished = false
+
+    /// Creates a cursor for one `assetPages` call.
+    init(repository: MockPhotoLibraryRepository, scope: ScanScope, pageSize: Int) {
+        self.repository = repository
+        self.scope = scope
+        self.pageSize = pageSize
+    }
+
+    /// The next page, or `nil` at the end. Throws the injected failure in place of page `afterPages`
+    /// (or at the end, if `afterPages` is past the last page), and `CancellationError` if the task is cancelled.
+    func nextPage() async throws -> [PhotoAsset]? {
+        guard !isFinished else { return nil }
+        if Task.isCancelled {
+            isFinished = true
+            throw CancellationError()
+        }
+        if pages == nil {
+            let started = await repository.startPaging(scope: scope, pageSize: pageSize)
+            pages = started.pages
+            failure = started.failure
+        }
+        let pages = pages ?? []
+        if let failure,
+           failure.afterPages == nextIndex || (nextIndex == pages.count && failure.afterPages > nextIndex) {
+            isFinished = true
+            throw failure.error
+        }
+        guard nextIndex < pages.count else {
+            isFinished = true
+            return nil
+        }
+        defer { nextIndex += 1 }
+        return pages[nextIndex]
     }
 }

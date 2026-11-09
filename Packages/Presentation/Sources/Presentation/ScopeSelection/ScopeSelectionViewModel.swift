@@ -41,7 +41,7 @@ public final class ScopeSelectionViewModel {
     public private(set) var customEnd: Date
     /// Whether screenshots are skipped. On by default.
     public private(set) var excludeScreenshots = true
-    /// How far apart two shots may be and still be compared. Balanced (15 min) by default.
+    /// The longest pause between neighbouring shots that keeps them in one session. Balanced (15 min) by default.
     /// Changing it does not change which photos are scanned, so it doesn't trigger a new count.
     public private(set) var sessionGap: SessionGapPreset = .balanced
     /// Photo count for the current choice, or `nil` before the first count finishes.

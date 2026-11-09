@@ -12,6 +12,7 @@ public struct OSLogSessionSegmentationLogger: SessionSegmentationLogging {
     /// Creates the logger.
     public init() {}
 
+    /// Logs the run size and the part sizes at `notice` level.
     public func didSplitOversizedSession(assetCount: Int, partSizes: [Int]) {
         let sizes = partSizes.map(String.init).joined(separator: ", ")
         Self.logger.notice(
@@ -19,6 +20,7 @@ public struct OSLogSessionSegmentationLogger: SessionSegmentationLogging {
         )
     }
 
+    /// Logs the counts at `debug` level in debug builds; does nothing in release builds.
     public func didFinish(_ summary: SessionSegmentationSummary) {
         #if DEBUG
         Self.logger.debug("""

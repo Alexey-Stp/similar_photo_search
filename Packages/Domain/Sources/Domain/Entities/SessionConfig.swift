@@ -6,9 +6,15 @@ import Foundation
 /// depend on it and stay cached.
 public struct SessionConfig: Sendable, Hashable {
     /// The largest gap between neighbouring shots that still keeps them in one session, in seconds.
-    public var sessionGap: TimeInterval
+    /// Never negative: a negative value is stored as 0.
+    public var sessionGap: TimeInterval {
+        didSet { sessionGap = max(0, sessionGap) }
+    }
     /// The largest number of photos in one session. Bigger runs are split at their largest internal gap.
-    public var maxSessionSize: Int
+    /// Always at least 1: a smaller value is stored as 1.
+    public var maxSessionSize: Int {
+        didSet { maxSessionSize = max(1, maxSessionSize) }
+    }
 
     /// Creates a config. A negative `sessionGap` is treated as 0, a `maxSessionSize` below 1 as 1.
     public init(sessionGap: TimeInterval = SessionGapPreset.balanced.interval, maxSessionSize: Int = 500) {

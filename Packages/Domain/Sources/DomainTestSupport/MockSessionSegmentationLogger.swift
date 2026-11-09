@@ -30,10 +30,12 @@ public final class MockSessionSegmentationLogger: SessionSegmentationLogging, @u
         lock.withLock { recordedSummaries }
     }
 
+    /// Records the split in `splits`.
     public func didSplitOversizedSession(assetCount: Int, partSizes: [Int]) {
         lock.withLock { recordedSplits.append(Split(assetCount: assetCount, partSizes: partSizes)) }
     }
 
+    /// Records the summary in `summaries`.
     public func didFinish(_ summary: SessionSegmentationSummary) {
         lock.withLock { recordedSummaries.append(summary) }
     }

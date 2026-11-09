@@ -13,7 +13,8 @@ public struct ScopePreferences: Sendable, Hashable, Codable {
     public var excludeScreenshots: Bool
     /// Whether every photo of a burst is scanned. When `false`, only each burst's representative is.
     public var includeBursts: Bool
-    /// How far apart two shots may be and still be compared. Changing it invalidates clusters, not feature prints.
+    /// The longest pause between neighbouring shots that keeps them in one session. Changing it invalidates
+    /// clusters, not feature prints.
     public var sessionGap: SessionGapPreset
 
     /// Creates preferences. The defaults scan the whole library at any date, without screenshots or extra burst

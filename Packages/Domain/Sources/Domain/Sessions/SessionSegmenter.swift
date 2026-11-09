@@ -6,8 +6,8 @@ import Foundation
 /// - Two neighbouring photos are in the same session when their `creationDate`s are at most `sessionGap` apart.
 ///   Only the gap counts: not the calendar day, and not `burstIdentifier`.
 /// - A run larger than `maxSessionSize` is split at its largest internal gap, again and again, until every part
-///   fits.
-///   A part with no gap left (all timestamps equal) is cut into chunks of `maxSessionSize` in `PhotoAsset.libraryOrder`.
+///   fits. A part with no gap left (all timestamps equal) is cut into chunks of `maxSessionSize` in
+///   `PhotoAsset.libraryOrder`.
 /// - Photos without a `creationDate` are not put into any session; they are counted in the summary.
 ///
 /// The input must be in `PhotoAsset.libraryOrder` (newest first), as the repository guarantees.
@@ -22,10 +22,14 @@ public struct SessionSegmenter: Sendable {
 
     /// The sessions in `pages`, newest first, followed by one `.finished` event with the summary.
     ///
-    /// The sequence pulls a page only when the consumer asks for an event it can't produce yet, so it never reads
-    /// ahead: a session is emitted as soon as a later photo shows a gap larger than `sessionGap`, and the last one
-    /// when the input ends. It runs in the consuming task: cancelling that task makes the next step throw
-    /// `CancellationError`. Errors from `pages` are rethrown.
+    /// The sequence pulls a page only when the consumer asks for an event it can't produce yet, and stops reading a
+    /// page at the first session boundary: a session is emitted as soon as a later photo shows a gap larger than
+    /// `sessionGap`, and the last one when the input ends. The segmenter itself never reads ahead; whether the whole
+    /// pipeline does depends on `pages`. An on-demand producer such as `AsyncThrowingStream(unfolding:)` (what
+    /// `PhotoLibraryRepository` returns) builds a page only when it is asked for; a buffering stream may run ahead.
+    ///
+    /// It runs in the consuming task: cancelling that task makes the next step throw `CancellationError`, also while
+    /// waiting for a page. Errors from `pages` are rethrown.
     public func sessions(
         from pages: AsyncThrowingStream<[PhotoAsset], Error>,
         config: SessionConfig = .default
@@ -75,6 +79,7 @@ public struct SessionSequence: AsyncSequence, Sendable {
     let config: SessionConfig
     let logger: any SessionSegmentationLogging
 
+    /// Creates an iterator. An `AsyncThrowingStream` can be iterated only once, so make one iterator per sequence.
     public func makeAsyncIterator() -> Iterator {
         Iterator(pages: pages.makeAsyncIterator(), accumulator: SessionAccumulator(config: config, logger: logger))
     }
@@ -83,26 +88,40 @@ public struct SessionSequence: AsyncSequence, Sendable {
     public struct Iterator: AsyncIteratorProtocol {
         private var pages: AsyncThrowingStream<[PhotoAsset], Error>.Iterator
         private var accumulator: SessionAccumulator
+        /// The page being read, and the index of its first photo not yet added to a run.
+        private var page: [PhotoAsset] = []
+        private var pageOffset = 0
         private var isInputFinished = false
         private var isDone = false
 
+        /// Creates an iterator over `pages` that collects photos in `accumulator`.
         init(pages: AsyncThrowingStream<[PhotoAsset], Error>.Iterator, accumulator: SessionAccumulator) {
             self.pages = pages
             self.accumulator = accumulator
         }
 
+        /// The next session, then the summary, then `nil`.
+        ///
+        /// Reads the current page only up to the next session boundary, and asks for the next page only when the
+        /// current one is used up. Throws `CancellationError` if the task is cancelled; rethrows errors from the pages.
         public mutating func next() async throws -> SessionSegmentationEvent? {
             while !isDone {
                 try Task.checkCancellation()
                 if let session = accumulator.nextReadySession() {
                     return .session(session)
                 }
+                if pageOffset < page.count {
+                    pageOffset = try accumulator.append(page, from: pageOffset)
+                    continue
+                }
                 if isInputFinished {
                     isDone = true
                     return .finished(accumulator.finish())
                 }
-                if let page = try await pages.next() {
-                    try accumulator.append(page)
+                page = []
+                pageOffset = 0
+                if let nextPage = try await pages.next() {
+                    page = nextPage
                 } else {
                     try accumulator.closeCurrentRun()
                     isInputFinished = true
@@ -122,15 +141,21 @@ struct SessionAccumulator {
     private var readyIndex = 0
     private var summary = SessionSegmentationSummary()
 
+    /// Creates an empty accumulator.
     init(config: SessionConfig, logger: any SessionSegmentationLogging) {
         self.config = config
         self.logger = logger
     }
 
-    /// Adds a page of photos in `PhotoAsset.libraryOrder`. Checks cancellation before every photo.
-    mutating func append(_ page: [PhotoAsset]) throws {
-        for asset in page {
+    /// Adds photos of `page` (in `PhotoAsset.libraryOrder`) from index `start` on, and stops right after a photo
+    /// that closes the current run, so that run's sessions can be emitted before the rest of the page is read.
+    /// Returns the index of the first photo not yet added. Checks cancellation before every photo.
+    mutating func append(_ page: [PhotoAsset], from start: Int) throws -> Int {
+        var index = start
+        while index < page.count {
             try Task.checkCancellation()
+            let asset = page[index]
+            index += 1
             guard let date = asset.creationDate else {
                 summary.skippedNoDateCount += 1
                 continue
@@ -138,9 +163,12 @@ struct SessionAccumulator {
             if let previousDate = currentRun.last?.creationDate,
                previousDate.timeIntervalSince(date) > config.sessionGap {
                 try closeCurrentRun()
+                currentRun.append(asset)
+                return index
             }
             currentRun.append(asset)
         }
+        return index
     }
 
     /// Ends the current run, splitting it if it is too large, and queues its sessions.
@@ -183,40 +211,94 @@ struct SessionAccumulator {
     /// Splits a run (dated photos in `PhotoAsset.libraryOrder`) into parts of at most `maxSize`, keeping the order.
     ///
     /// An oversized part is cut at its largest gap between neighbours (the newest such gap on ties); a part without
-    /// any gap is cut into chunks of `maxSize`. Uses an explicit stack, so a long run can't overflow the call stack.
+    /// any gap is cut into chunks of `maxSize`. Each largest-gap lookup is O(log n) through `GapIndex`, so even a run
+    /// whose gaps grow steadily (one photo split off per step) costs O(n log n), not O(n²). Uses an explicit stack,
+    /// so a long run can't overflow the call stack.
     static func split(_ run: [PhotoAsset], maxSize: Int) throws -> [[PhotoAsset]] {
         guard run.count > maxSize else { return [run] }
+        let gaps = GapIndex(run)
         var parts: [[PhotoAsset]] = []
-        var pending: [ArraySlice<PhotoAsset>] = [run[...]]
+        var pending: [Range<Int>] = [run.indices]
         while let part = pending.popLast() {
             try Task.checkCancellation()
             guard part.count > maxSize else {
-                parts.append(Array(part))
+                parts.append(Array(run[part]))
                 continue
             }
-            if let cut = largestGapIndex(in: part) {
+            if let cut = gaps.largestGapCut(in: part) {
                 // Older half first onto the stack, so the newer half is handled (and emitted) first.
-                pending.append(part[cut...])
-                pending.append(part[..<cut])
+                pending.append(cut..<part.upperBound)
+                pending.append(part.lowerBound..<cut)
             } else {
-                for start in stride(from: part.startIndex, to: part.endIndex, by: maxSize) {
-                    parts.append(Array(part[start..<min(start + maxSize, part.endIndex)]))
+                for start in stride(from: part.lowerBound, to: part.upperBound, by: maxSize) {
+                    parts.append(Array(run[start..<min(start + maxSize, part.upperBound)]))
                 }
             }
         }
         return parts
     }
+}
 
-    /// The index of the first photo after the largest positive gap in `part`, or `nil` if all timestamps are equal.
-    private static func largestGapIndex(in part: ArraySlice<PhotoAsset>) -> Int? {
-        var best: (index: Int, gap: TimeInterval)?
-        for index in part.indices.dropFirst() {
-            guard let newer = part[index - 1].creationDate, let older = part[index].creationDate else { continue }
-            let gap = newer.timeIntervalSince(older)
-            if gap > (best?.gap ?? 0) {
-                best = (index, gap)
-            }
+/// Finds the largest gap between neighbouring photos in any part of a run in O(log n).
+///
+/// A segment tree over the gaps (`gaps[k]` is the time between photo `k` and photo `k + 1`, newest first). Each node
+/// holds the index of the largest gap below it, the lowest index (the newest gap) on ties. Built in O(n).
+struct GapIndex {
+    private let gaps: [TimeInterval]
+    private let leafCount: Int
+    private let tree: [Int]
+
+    /// Indexes the gaps of `run`, dated photos in `PhotoAsset.libraryOrder`.
+    init(_ run: [PhotoAsset]) {
+        let dates = run.map { $0.creationDate ?? .distantPast }
+        let gaps = zip(dates, dates.dropFirst()).map { newer, older in newer.timeIntervalSince(older) }
+        var leafCount = 1
+        while leafCount < gaps.count {
+            leafCount *= 2
         }
-        return best?.index
+        var tree = Array(repeating: -1, count: 2 * leafCount)
+        for index in gaps.indices {
+            tree[leafCount + index] = index
+        }
+        for node in stride(from: leafCount - 1, through: 1, by: -1) {
+            tree[node] = Self.better(tree[2 * node], tree[2 * node + 1], gaps: gaps)
+        }
+        self.gaps = gaps
+        self.leafCount = leafCount
+        self.tree = tree
+    }
+
+    /// For the photos `part` of the run, the index of the first photo after their largest positive gap, or `nil`
+    /// if all their timestamps are equal.
+    func largestGapCut(in part: Range<Int>) -> Int? {
+        guard part.count >= 2 else { return nil }
+        // The gaps between the photos of `part` are gaps[lowerBound ..< upperBound - 1].
+        var low = part.lowerBound + leafCount
+        var high = part.upperBound - 1 + leafCount
+        var best = -1
+        while low < high {
+            if low % 2 == 1 {
+                best = Self.better(best, tree[low], gaps: gaps)
+                low += 1
+            }
+            if high % 2 == 1 {
+                high -= 1
+                best = Self.better(best, tree[high], gaps: gaps)
+            }
+            low /= 2
+            high /= 2
+        }
+        guard best >= 0, gaps[best] > 0 else { return nil }
+        return best + 1
+    }
+
+    /// The gap index with the larger gap; on equal gaps the lower (newer) index. `-1` means "none".
+    private static func better(_ lhs: Int, _ rhs: Int, gaps: [TimeInterval]) -> Int {
+        if lhs < 0 { return rhs }
+        if rhs < 0 { return lhs }
+        if gaps[lhs] != gaps[rhs] {
+            return gaps[lhs] > gaps[rhs] ? lhs : rhs
+        }
+        return min(lhs, rhs)
     }
 }

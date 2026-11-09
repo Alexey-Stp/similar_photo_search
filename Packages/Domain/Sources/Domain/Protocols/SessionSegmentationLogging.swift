@@ -17,7 +17,9 @@ public struct SilentSessionSegmentationLogger: SessionSegmentationLogging {
     /// Creates the logger.
     public init() {}
 
+    /// Ignores the split.
     public func didSplitOversizedSession(assetCount: Int, partSizes: [Int]) {}
 
+    /// Ignores the summary.
     public func didFinish(_ summary: SessionSegmentationSummary) {}
 }

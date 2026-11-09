@@ -62,8 +62,10 @@ cost. Unstable session IDs make cached results unusable.
 - API: `SessionSegmenter(logger:).sessions(from: pages, config:)` returns `SessionSequence`, an `AsyncSequence` of
   `SessionSegmentationEvent`: `.session(PhotoSession)` for each session, newest first, then exactly one
   `.finished(SessionSegmentationSummary)` (session count, single-photo sessions, skipped (no date), oversized splits).
-  It is a custom sequence, not an `AsyncThrowingStream`, so it pulls a page only when the consumer needs one (no read-ahead) and
-  runs in the consuming task: cancellation throws `CancellationError` on the next step, also while waiting for a page.
+  It is a custom sequence, not an `AsyncThrowingStream`: it pulls a page only when the consumer needs one, stops reading a page
+  at the first session boundary, and runs in the consuming task, so cancellation throws `CancellationError` on the next step,
+  also while waiting for a page. The no-read-ahead property holds end to end only with an on-demand producer
+  (`AsyncThrowingStream(unfolding:)`): the PhotoKit repository and, since this ticket, `MockPhotoLibraryRepository` are.
 - `SessionSegmenter` is a concrete Domain struct without a protocol (pure, deterministic; tests use the real one). It is built
   in `AppContainer` with `OSLogSessionSegmentationLogger` (Data). Domain can't use `os.Logger` (it must build on Linux), so
   logging goes through `SessionSegmentationLogging`; the mock is `MockSessionSegmentationLogger`. Splits are always logged
@@ -71,14 +73,16 @@ cost. Unstable session IDs make cached results unusable.
 - `PhotoSession.id` is `"<newest localIdentifier>@<creationDate ms since 1970>"`. It names the newest photo, not the full
   membership: removing an older photo keeps the ID, and a new, newer photo changes it.
 - `PhotoSession.assets` are in `PhotoAsset.libraryOrder` (newest first), not oldest first.
-- Oversized runs split at the largest gap (the newest one on ties), then chunk in library order when no gap is left. The run is
-  buffered until it closes, so a run of thousands of photos all within `sessionGap` of each other is held in memory as
+- Oversized runs split at the largest gap (the newest one on ties), then chunk in library order when no gap is left. The
+  largest gap of a part is found with a segment tree (`GapIndex`), O(n log n) for the whole split even when gaps grow
+  steadily. The run is buffered until it closes, so a run of thousands of photos all within `sessionGap` of each other is held in memory as
   metadata (no pixels) before it is split.
 - Undated photos are counted, never sessioned. With a date range in the scope they are filtered out by the fetch (SPS-7 note),
   so the count is 0 then. Added `SkipReason.noDate` for the scan summary.
 - Settings: there is no Settings screen yet, so the Strict / Balanced / Relaxed picker is a "Grouping" section in the scan
   scope sheet. The choice is saved as `ScopePreferences.sessionGap`; `ScopePreferences.sessionConfig` gives the
-  `SessionConfig`. Values saved before this ticket decode as Balanced. Changing it does not trigger a photo recount.
+  `SessionConfig` (its `sessionGap` and `maxSessionSize` are clamped on every assignment, not only in `init`). Values saved before this ticket decode as Balanced. The UI calls it the "longest pause between shots": it
+  bounds neighbouring shots, not the time between any two compared photos (a series can be longer). Changing it does not trigger a photo recount.
 - "Changing `sessionGap` invalidates clusters but not the feature-print cache" is structural only: nothing stores clusters
   yet, and the gap is not part of the cache key. SPS-14 must drop clusters when `sessionConfig` changes.
 - Not verified on this branch (Windows, no Swift toolchain): every Swift build and test, SwiftLint, and
