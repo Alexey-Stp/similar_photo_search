@@ -61,7 +61,8 @@ struct VisionFeaturePrintExtractorTests {
         let extracted = try extractor.extract(from: image(0))
         #expect(extracted.revision == VNGenerateImageFeaturePrintRequestRevision2)
         #expect(!extracted.vector.isEmpty)
-        #expect(extracted.vector.allSatisfy(\.isFinite))
+        let allFinite = extracted.vector.allSatisfy { $0.isFinite }
+        #expect(allFinite)
     }
 
     @Test func vDSPDistanceMatchesVisionWithin1e4() throws {
