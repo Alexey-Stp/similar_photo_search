@@ -1,3 +1,4 @@
+import Domain
 import SwiftUI
 
 /// Builds view models with their dependencies.
@@ -8,6 +9,12 @@ import SwiftUI
 public protocol ViewModelFactory: AnyObject, Sendable {
     /// Creates the view model that owns photo access state and top-level routing.
     func makePermissionViewModel() -> PermissionViewModel
+
+    /// Creates the view model for the "Scan scope" sheet.
+    /// - Parameter onApply: Called after the chosen scope has been saved.
+    func makeScopeSelectionViewModel(
+        onApply: @escaping @MainActor (ScopePreferences) -> Void
+    ) -> ScopeSelectionViewModel
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

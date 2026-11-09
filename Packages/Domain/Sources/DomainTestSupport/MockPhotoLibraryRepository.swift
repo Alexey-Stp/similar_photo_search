@@ -52,18 +52,48 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
         pageFailure = (afterPages, error)
     }
 
+    /// Whether the next `assetCount(scope:)` call should wait until `releaseHeldAssetCount()`.
+    private var holdsNextAssetCount = false
+    /// The suspended `assetCount(scope:)` call, if one is being held.
+    private var heldAssetCount: CheckedContinuation<Void, Never>?
+
+    /// Whether an `assetCount(scope:)` call is currently suspended by `holdNextAssetCount()`.
+    public var isHoldingAssetCount: Bool {
+        heldAssetCount != nil
+    }
+
+    /// Makes the next `assetCount(scope:)` call suspend until `releaseHeldAssetCount()`,
+    /// so tests can control the order in which overlapping counts finish.
+    public func holdNextAssetCount() {
+        holdsNextAssetCount = true
+    }
+
+    /// Resumes the held `assetCount(scope:)` call, if any.
+    public func releaseHeldAssetCount() {
+        heldAssetCount?.resume()
+        heldAssetCount = nil
+    }
+
     /// Number of matching assets; with albums selected, the sum of each distinct album's matching assets.
-    public func assetCount(scope: ScanScope) -> Int {
+    /// The count is taken when the call starts, then the call waits if a hold is set.
+    public func assetCount(scope: ScanScope) async -> Int {
         assetCountCallCount += 1
         requestedScopes.append(scope)
-        guard let albumIDs = scope.albumIDs else {
-            return matchingAssets(in: scope).count
+        let count: Int
+        if let albumIDs = scope.albumIDs {
+            count = Set(albumIDs).reduce(0) { total, albumID in
+                var singleAlbum = scope
+                singleAlbum.albumIDs = [albumID]
+                return total + matchingAssets(in: singleAlbum).count
+            }
+        } else {
+            count = matchingAssets(in: scope).count
         }
-        return Set(albumIDs).reduce(0) { total, albumID in
-            var singleAlbum = scope
-            singleAlbum.albumIDs = [albumID]
-            return total + matchingAssets(in: singleAlbum).count
+        if holdsNextAssetCount {
+            holdsNextAssetCount = false
+            await withCheckedContinuation { heldAssetCount = $0 }
         }
+        return count
     }
 
     /// Streams the matching assets, de-duplicated across albums, failing as configured by `pageFailure`.

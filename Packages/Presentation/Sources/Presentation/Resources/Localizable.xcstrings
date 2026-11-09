@@ -15,6 +15,20 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "No similar photos yet" } }
       }
     },
+    "home.scope" : {
+      "comment" : "Home toolbar button that opens the scan scope sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan Scope" } }
+      }
+    },
+    "home.scope.hint" : {
+      "comment" : "VoiceOver hint for the Home scan scope button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose which albums and dates to scan." } }
+      }
+    },
     "home.title" : {
       "comment" : "Home screen navigation title.",
       "extractionState" : "manual",
@@ -188,6 +202,195 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo access is restricted" } }
+      }
+    },
+    "scope.album.count %lld" : {
+      "comment" : "Scope sheet: estimated number of items in an album. The argument is the count.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos" } }
+            }
+          }
+        }
+      }
+    },
+    "scope.album.favorites" : {
+      "comment" : "Scope sheet: fallback name of the Favorites smart album.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Favorites" } }
+      }
+    },
+    "scope.album.hint" : {
+      "comment" : "VoiceOver hint for an album row in the scope sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-tap to select or deselect." } }
+      }
+    },
+    "scope.album.portrait" : {
+      "comment" : "Scope sheet: fallback name of the Portrait smart album.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Portrait" } }
+      }
+    },
+    "scope.album.selfies" : {
+      "comment" : "Scope sheet: fallback name of the Selfies smart album.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Selfies" } }
+      }
+    },
+    "scope.album.untitled" : {
+      "comment" : "Scope sheet: name of a user album that has no title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Untitled Album" } }
+      }
+    },
+    "scope.allPhotos" : {
+      "comment" : "Scope sheet row that selects the whole library.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All Photos" } }
+      }
+    },
+    "scope.apply" : {
+      "comment" : "Scope sheet button that saves the chosen scope.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply" } }
+      }
+    },
+    "scope.apply.hint" : {
+      "comment" : "VoiceOver hint for the scope sheet Apply button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saves this scope for the next scan." } }
+      }
+    },
+    "scope.cancel" : {
+      "comment" : "Scope sheet button that closes it without saving.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
+      }
+    },
+    "scope.date.anyTime" : {
+      "comment" : "Scope sheet date preset: no date filter.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Any Time" } }
+      }
+    },
+    "scope.date.custom" : {
+      "comment" : "Scope sheet date preset: a range the user picks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Custom" } }
+      }
+    },
+    "scope.date.from" : {
+      "comment" : "Scope sheet: label of the first day of a custom date range.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "From" } }
+      }
+    },
+    "scope.date.label" : {
+      "comment" : "Scope sheet: label of the date preset picker.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Date Range" } }
+      }
+    },
+    "scope.date.last30Days" : {
+      "comment" : "Scope sheet date preset: today and the 29 days before.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last 30 Days" } }
+      }
+    },
+    "scope.date.thisYear" : {
+      "comment" : "Scope sheet date preset: since January 1.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This Year" } }
+      }
+    },
+    "scope.date.to" : {
+      "comment" : "Scope sheet: label of the last day of a custom date range.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "To" } }
+      }
+    },
+    "scope.footer.count %lld" : {
+      "comment" : "Scope sheet footer: estimated number of photos the scan will cover (an upper bound when albums overlap).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "About %lld photo will be scanned." } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "About %lld photos will be scanned." } }
+            }
+          }
+        }
+      }
+    },
+    "scope.footer.counting" : {
+      "comment" : "VoiceOver label for the spinner shown while photos are counted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Counting photos" } }
+      }
+    },
+    "scope.section.dates" : {
+      "comment" : "Scope sheet section header for the date filter.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dates" } }
+      }
+    },
+    "scope.section.library" : {
+      "comment" : "Scope sheet section header for All Photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Library" } }
+      }
+    },
+    "scope.section.myAlbums" : {
+      "comment" : "Scope sheet section header for the user's own albums.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "My Albums" } }
+      }
+    },
+    "scope.section.smartAlbums" : {
+      "comment" : "Scope sheet section header for smart albums (Favorites, Selfies, Portrait).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart Albums" } }
+      }
+    },
+    "scope.skipScreenshots" : {
+      "comment" : "Scope sheet toggle that leaves screenshots out of the scan.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Skip Screenshots" } }
+      }
+    },
+    "scope.title" : {
+      "comment" : "Scope sheet navigation title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan Scope" } }
       }
     }
   },

@@ -37,3 +37,9 @@ of albums on the main thread causes UI lag.
   gone, the scope falls back to All Photos.
 - Deduplication across albums is done by the repository (SPS-7). The footer count is the per-album sum, an upper bound, so it reads "About N photos".
 - `includeBursts` has no UI yet; its saved value is kept.
+- Under limited access, saved album IDs that aren't listed are kept (not dropped): PhotoKit can't tell a hidden album from a
+  deleted one there. Only full access drops them. "All Photos" clears them.
+- A saved custom range is used exactly as saved until the user edits its days, so opening the sheet in another time zone
+  doesn't shift it. Loading re-saves the scope only when album IDs were dropped or de-duplicated.
+- A custom range ends at the last instant before the next day starts (`nextDown`), so photos with fractional-second
+  timestamps late on the last day are included. "This year" always starts on January 1 (Gregorian), whatever calendar is set.
