@@ -6,6 +6,7 @@ import Observation
 ///
 /// No selected album means All Photos. Album IDs that no longer exist (for example albums deleted
 /// outside the app) are dropped silently when the sheet loads, and the cleaned choice is saved.
+/// Under limited access an album that can't be fetched may still exist, so its ID is kept, not dropped.
 @Observable
 @MainActor
 public final class ScopeSelectionViewModel {
@@ -20,6 +21,7 @@ public final class ScopeSelectionViewModel {
         /// A range the user picks.
         case custom
 
+        /// Stable identity for `ForEach` and `Picker`.
         public var id: String { rawValue }
     }
 
@@ -47,12 +49,14 @@ public final class ScopeSelectionViewModel {
 
     /// Whether the whole library is selected.
     public var isAllPhotos: Bool {
-        selectedAlbumIDs.isEmpty
+        selectedAlbumIDs.isEmpty && unverifiedAlbumIDs.isEmpty
     }
 
-    /// The current choice, with albums in list order (smart albums, then the user's albums).
+    /// The current choice, with albums in list order (smart albums, then the user's albums), followed by
+    /// saved albums that can't be checked under limited access.
     public var preferences: ScopePreferences {
-        let orderedIDs = (smartAlbums + userAlbums).map(\.id).filter(selectedAlbumIDs.contains)
+        let listedIDs = (smartAlbums + userAlbums).map(\.id).filter(selectedAlbumIDs.contains)
+        let orderedIDs = listedIDs + unverifiedAlbumIDs.sorted()
         return ScopePreferences(
             albumIDs: orderedIDs.isEmpty ? nil : orderedIDs,
             dateFilter: dateFilter,
@@ -62,6 +66,7 @@ public final class ScopeSelectionViewModel {
     }
 
     private let library: any PhotoLibraryRepository
+    private let permissions: any PhotoPermissionService
     private let store: any ScopePreferencesStore
     private let onApply: @MainActor (ScopePreferences) -> Void
     private let now: @Sendable () -> Date
@@ -69,11 +74,18 @@ public final class ScopeSelectionViewModel {
     private let countDebounce: Duration
     /// Not shown in the sheet; kept so saving does not reset it.
     private var includeBursts = false
+    /// Saved album IDs that weren't listed while access is limited. They may belong to albums the app can't see
+    /// right now, so they are kept until full access shows whether they still exist. Cleared by "All Photos".
+    private var unverifiedAlbumIDs: Set<String> = []
+    /// The saved custom range, used unchanged until the user edits the custom days, so loading the sheet in
+    /// another time zone neither shifts nor widens it.
+    private var savedCustomRange: ClosedRange<Date>?
     private var countTask: Task<Void, Never>?
 
     /// Creates the view model.
     /// - Parameters:
     ///   - library: Lists albums and counts photos.
+    ///   - permissions: Tells whether access is full, so missing albums can be treated as deleted.
     ///   - store: Loads and saves the choice.
     ///   - onApply: Called after Apply has saved the choice, for example to close the sheet.
     ///   - now: The current time; injectable for tests.
@@ -81,6 +93,7 @@ public final class ScopeSelectionViewModel {
     ///   - countDebounce: How long to wait after the last change before counting photos.
     public init(
         library: any PhotoLibraryRepository,
+        permissions: any PhotoPermissionService,
         store: any ScopePreferencesStore,
         onApply: @escaping @MainActor (ScopePreferences) -> Void = { _ in },
         now: @escaping @Sendable () -> Date = { Date() },
@@ -88,6 +101,7 @@ public final class ScopeSelectionViewModel {
         countDebounce: Duration = .milliseconds(300)
     ) {
         self.library = library
+        self.permissions = permissions
         self.store = store
         self.onApply = onApply
         self.now = now
@@ -99,22 +113,29 @@ public final class ScopeSelectionViewModel {
     }
 
     /// Loads the saved choice and the albums, drops albums that no longer exist, and starts counting.
-    /// If the saved choice had to be cleaned up, the cleaned version is saved right away.
+    /// If album IDs had to be cleaned up, the saved choice is updated right away; nothing else is re-saved on load.
     public func load() async {
         let stored = await store.load()
         let albums = await library.albums()
+        // Under limited access a missing album may just be invisible, so only full access can prove it was deleted.
+        let canVerifyAlbums = await permissions.currentStatus() == .authorized
         smartAlbums = albums.filter { $0.kind != .user && $0.kind != .recents }
         userAlbums = albums.filter { $0.kind == .user }
 
         let knownIDs = Set((smartAlbums + userAlbums).map(\.id))
-        selectedAlbumIDs = Set(stored.albumIDs ?? []).intersection(knownIDs)
+        let storedIDs = Set(stored.albumIDs ?? [])
+        selectedAlbumIDs = storedIDs.intersection(knownIDs)
+        unverifiedAlbumIDs = canVerifyAlbums ? [] : storedIDs.subtracting(knownIDs)
         excludeScreenshots = stored.excludeScreenshots
         includeBursts = stored.includeBursts
         restore(stored.dateFilter)
         isLoaded = true
 
-        let cleaned = preferences
-        if cleaned != stored {
+        // Save only when albums were actually dropped (or duplicates collapsed), never just because the sheet opened.
+        let keptIDs = preferences.albumIDs
+        if (keptIDs ?? []).count != (stored.albumIDs ?? []).count || Set(keptIDs ?? []) != storedIDs {
+            var cleaned = stored
+            cleaned.albumIDs = keptIDs
             await store.save(cleaned)
         }
         scheduleCount()
@@ -133,10 +154,11 @@ public final class ScopeSelectionViewModel {
         scheduleCount()
     }
 
-    /// Selects the whole library.
+    /// Selects the whole library, also dropping albums kept only because access is limited.
     public func selectAllPhotos() {
-        guard !selectedAlbumIDs.isEmpty else { return }
+        guard !isAllPhotos else { return }
         selectedAlbumIDs.removeAll()
+        unverifiedAlbumIDs.removeAll()
         scheduleCount()
     }
 
@@ -149,6 +171,7 @@ public final class ScopeSelectionViewModel {
 
     /// Changes the first day of the custom range; moves the last day forward if needed.
     public func setCustomStart(_ date: Date) {
+        savedCustomRange = nil
         customStart = calendar.startOfDay(for: date)
         if customEnd < customStart {
             customEnd = customStart
@@ -160,6 +183,7 @@ public final class ScopeSelectionViewModel {
 
     /// Changes the last day of the custom range; moves the first day back if needed.
     public func setCustomEnd(_ date: Date) {
+        savedCustomRange = nil
         customEnd = calendar.startOfDay(for: date)
         if customStart > customEnd {
             customStart = customEnd
@@ -183,12 +207,20 @@ public final class ScopeSelectionViewModel {
         onApply(chosen)
     }
 
+    /// Stops a count that is waiting or running. Call when the sheet is dismissed.
+    public func cancelPendingCount() {
+        countTask?.cancel()
+        countTask = nil
+        isCounting = false
+    }
+
     /// Waits until the latest scheduled count has finished or was cancelled. For tests.
     public func waitForPendingCount() async {
         await countTask?.value
     }
 
-    /// The date filter for the current preset; the custom range covers whole days.
+    /// The date filter for the current preset. A custom range covers whole days: from the start of the first day
+    /// up to the last instant before the day after the last one starts, so fractional seconds are included.
     private var dateFilter: DateFilter {
         switch datePreset {
         case .anyTime:
@@ -198,9 +230,13 @@ public final class ScopeSelectionViewModel {
         case .thisYear:
             return .thisYear
         case .custom:
+            if let savedCustomRange {
+                return .custom(savedCustomRange)
+            }
             let start = calendar.startOfDay(for: customStart)
             let nextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: customEnd))
-            let end = nextDay.map { $0.addingTimeInterval(-1) } ?? customEnd
+            let end = nextDay.map { Date(timeIntervalSinceReferenceDate: $0.timeIntervalSinceReferenceDate.nextDown) }
+                ?? customEnd
             return .custom(start...max(start, end))
         }
     }
@@ -216,6 +252,7 @@ public final class ScopeSelectionViewModel {
             datePreset = .thisYear
         case .custom(let range):
             datePreset = .custom
+            savedCustomRange = range
             customStart = calendar.startOfDay(for: range.lowerBound)
             customEnd = max(customStart, calendar.startOfDay(for: range.upperBound))
         }

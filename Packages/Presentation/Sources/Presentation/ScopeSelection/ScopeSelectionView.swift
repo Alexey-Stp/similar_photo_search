@@ -6,6 +6,7 @@ struct ScopeSelectionView: View {
     let viewModel: ScopeSelectionViewModel
     let onCancel: () -> Void
 
+    /// The sheet: album list, date filter and screenshot toggle, with Cancel and Apply in the toolbar.
     var body: some View {
         NavigationStack {
             content
@@ -31,8 +32,10 @@ struct ScopeSelectionView: View {
                 }
         }
         .task { await viewModel.load() }
+        .onDisappear { viewModel.cancelPendingCount() }
     }
 
+    /// A spinner until the saved choice and the albums are loaded, then the form.
     @ViewBuilder private var content: some View {
         if viewModel.isLoaded {
             form
@@ -42,6 +45,7 @@ struct ScopeSelectionView: View {
         }
     }
 
+    /// All sections of the sheet.
     private var form: some View {
         List {
             Section {
@@ -82,6 +86,7 @@ struct ScopeSelectionView: View {
         }
     }
 
+    /// The date preset picker and, for Custom, the first and last day.
     private var dateSection: some View {
         Section {
             Picker(selection: Binding(
@@ -115,6 +120,7 @@ struct ScopeSelectionView: View {
         }
     }
 
+    /// "About N photos", with a spinner while a new count runs.
     private var countFooter: some View {
         HStack(spacing: 6) {
             if let count = viewModel.estimatedCount {
@@ -129,6 +135,7 @@ struct ScopeSelectionView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// A selectable row for one album, with its estimated count.
     private func albumRow(_ album: AlbumSummary) -> some View {
         selectableRow(
             title: albumTitle(album),
@@ -190,6 +197,7 @@ struct ScopeSelectionView: View {
         }
     }
 
+    /// The localized name of a date preset.
     private func presetTitle(_ preset: ScopeSelectionViewModel.DatePreset) -> Text {
         switch preset {
         case .anyTime:
@@ -211,6 +219,7 @@ struct ScopeSelectionSheet: View {
     @State private var viewModel: ScopeSelectionViewModel?
     let onDismiss: () -> Void
 
+    /// The sheet once the view model exists, a spinner before that.
     var body: some View {
         Group {
             if let viewModel {

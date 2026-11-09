@@ -64,7 +64,10 @@ public enum DateFilter: Sendable, Hashable, Codable {
             let start = calendar.date(byAdding: .day, value: -29, to: today) ?? today
             return start...max(start, now)
         case .thisYear:
-            let start = calendar.dateInterval(of: .year, for: now)?.start ?? calendar.startOfDay(for: now)
+            // Always January 1, even with a non-Gregorian calendar; only the time zone comes from `calendar`.
+            var gregorian = Calendar(identifier: .gregorian)
+            gregorian.timeZone = calendar.timeZone
+            let start = gregorian.dateInterval(of: .year, for: now)?.start ?? gregorian.startOfDay(for: now)
             return start...max(start, now)
         case .custom(let range):
             return range

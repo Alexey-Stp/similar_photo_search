@@ -40,7 +40,9 @@ struct PreviewPhotoLibraryRepository: PhotoLibraryRepository {
 struct PreviewScopePreferencesStore: ScopePreferencesStore {
     let preferences: ScopePreferences
 
+    /// Returns the fixed preferences.
     func load() async -> ScopePreferences { preferences }
+    /// Does nothing; previews never persist.
     func save(_ preferences: ScopePreferences) async {}
 }
 
@@ -51,6 +53,7 @@ extension ScopeSelectionViewModel {
     ) -> ScopeSelectionViewModel {
         ScopeSelectionViewModel(
             library: PreviewPhotoLibraryRepository.sample,
+            permissions: PreviewPermissionService(status: .authorized, photoCount: 0),
             store: PreviewScopePreferencesStore(preferences: preferences)
         )
     }

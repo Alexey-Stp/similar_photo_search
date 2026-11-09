@@ -65,6 +65,8 @@ struct ScopeSelectionViewModelTests {
         library: MockPhotoLibraryRepository? = nil,
         store: MockScopePreferencesStore? = nil,
         recorder: ApplyRecorder? = nil,
+        access: PhotoLibraryAuthorization = .authorized,
+        calendar: Calendar? = nil,
         countDebounce: Duration = .zero
     ) -> ScopeSelectionViewModel {
         let recorder = recorder ?? ApplyRecorder()
@@ -72,10 +74,11 @@ struct ScopeSelectionViewModelTests {
         let fixedNow = Self.now
         return ScopeSelectionViewModel(
             library: library ?? Self.makeLibrary(),
+            permissions: MockPhotoPermissionService(status: access),
             store: store ?? MockScopePreferencesStore(),
             onApply: { recorder.applied.append($0) },
             now: { fixedNow },
-            calendar: Self.calendar,
+            calendar: calendar ?? Self.calendar,
             countDebounce: countDebounce
         )
     }
@@ -202,8 +205,13 @@ struct ScopeSelectionViewModelTests {
         viewModel.setDatePreset(.custom)
         viewModel.setCustomStart(Self.day(2026, 6, 1))
         viewModel.setCustomEnd(Self.day(2026, 6, 3))
-        let lastSecond = Self.day(2026, 6, 4).addingTimeInterval(-1)
-        #expect(viewModel.preferences.dateFilter == .custom(Self.day(2026, 6, 1)...lastSecond))
+        guard case .custom(let range) = viewModel.preferences.dateFilter else {
+            Issue.record("Expected a custom date filter")
+            return
+        }
+        #expect(range.lowerBound == Self.day(2026, 6, 1))
+        #expect(range.contains(Self.day(2026, 6, 4).addingTimeInterval(-0.001)))
+        #expect(!range.contains(Self.day(2026, 6, 4)))
 
         viewModel.setCustomStart(Self.day(2026, 6, 10))
         #expect(viewModel.customEnd == Self.day(2026, 6, 10))
@@ -221,6 +229,66 @@ struct ScopeSelectionViewModelTests {
         #expect(viewModel.customEnd == Self.day(2026, 3, 7))
         #expect(viewModel.preferences.dateFilter == .custom(range))
         #expect(await store.savedPreferences.isEmpty)
+    }
+
+    @Test func savedCustomRangeIsKeptExactlyInAnotherTimeZone() async throws {
+        let range = Self.day(2026, 3, 1)...Self.day(2026, 3, 8).addingTimeInterval(-0.5)
+        let store = MockScopePreferencesStore(preferences: ScopePreferences(dateFilter: .custom(range)))
+        var tokyo = Self.calendar
+        tokyo.timeZone = try #require(TimeZone(identifier: "Asia/Tokyo"))
+        let viewModel = makeViewModel(store: store, calendar: tokyo)
+        await viewModel.load()
+        #expect(viewModel.preferences.dateFilter == .custom(range))
+        #expect(await store.savedPreferences.isEmpty)
+    }
+
+    @Test func underLimitedAccessUnlistedAlbumsAreKeptNotDropped() async {
+        let store = MockScopePreferencesStore(preferences: ScopePreferences(albumIDs: ["hidden", "trip"]))
+        let viewModel = makeViewModel(store: store, access: .limited)
+        await viewModel.load()
+        #expect(viewModel.selectedAlbumIDs == ["trip"])
+        #expect(!viewModel.isAllPhotos)
+        #expect(viewModel.preferences.albumIDs == ["trip", "hidden"])
+        #expect(await store.savedPreferences.isEmpty)
+
+        viewModel.selectAllPhotos()
+        #expect(viewModel.isAllPhotos)
+        #expect(viewModel.preferences.albumIDs == nil)
+    }
+
+    @Test func aSlowerOlderCountNeverOverwritesANewerOne() async throws {
+        let library = Self.makeLibrary()
+        let viewModel = makeViewModel(library: library)
+        await library.holdNextAssetCount()
+        await viewModel.load()
+        var waits = 0
+        while !(await library.isHoldingAssetCount) {
+            waits += 1
+            try #require(waits < 1_000)
+            await Task.yield()
+        }
+
+        viewModel.toggle("trip")
+        await viewModel.waitForPendingCount()
+        #expect(viewModel.estimatedCount == 2)
+
+        await library.releaseHeldAssetCount()
+        for _ in 0..<100 {
+            await Task.yield()
+        }
+        #expect(viewModel.estimatedCount == 2)
+        #expect(!viewModel.isCounting)
+    }
+
+    @Test func dismissingTheSheetCancelsAPendingCount() async {
+        let library = Self.makeLibrary()
+        let viewModel = makeViewModel(library: library, countDebounce: .milliseconds(50))
+        await viewModel.load()
+        viewModel.cancelPendingCount()
+        await viewModel.waitForPendingCount()
+        try? await Task.sleep(for: .milliseconds(100))
+        #expect(await library.assetCountCallCount == 0)
+        #expect(!viewModel.isCounting)
     }
 
     @Test func photoInSeveralSelectedAlbumsIsScannedOnce() async throws {

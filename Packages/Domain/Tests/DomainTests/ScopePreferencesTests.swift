@@ -39,6 +39,13 @@ struct ScopePreferencesTests {
         #expect(DateFilter.thisYear.range(now: now, calendar: Self.calendar) == Self.date(2026, 1, 1)...now)
     }
 
+    @Test func thisYearStartsOnJanuaryFirstEvenWithANonGregorianCalendar() {
+        var hebrew = Calendar(identifier: .hebrew)
+        hebrew.timeZone = Self.calendar.timeZone
+        let now = Self.date(2026, 11, 8, 15, 30)
+        #expect(DateFilter.thisYear.range(now: now, calendar: hebrew) == Self.date(2026, 1, 1)...now)
+    }
+
     @Test func thisYearOnNewYearsMidnightIsASingleInstant() {
         let now = Self.date(2027, 1, 1)
         #expect(DateFilter.thisYear.range(now: now, calendar: Self.calendar) == now...now)

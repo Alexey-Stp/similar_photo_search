@@ -35,7 +35,12 @@ final class AppContainer: ViewModelFactory {
     func makeScopeSelectionViewModel(
         onApply: @escaping @MainActor (ScopePreferences) -> Void
     ) -> ScopeSelectionViewModel {
-        ScopeSelectionViewModel(library: photoLibrary, store: scopePreferencesStore, onApply: onApply)
+        ScopeSelectionViewModel(
+            library: photoLibrary,
+            permissions: permissionService,
+            store: scopePreferencesStore,
+            onApply: onApply
+        )
     }
 
     /// Opens the app's own page in the Settings app.
