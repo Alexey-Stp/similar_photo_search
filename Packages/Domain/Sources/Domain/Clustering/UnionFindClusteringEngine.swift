@@ -199,11 +199,14 @@ private struct PartitionClusterer {
                 if !(distance <= config.exactDuplicateDistance) { isExactDuplicate = false }
             }
         }
-        let members = group.map { items[$0] }.sorted { lhs, rhs in
-            lhs.date == rhs.date ? lhs.id < rhs.id : lhs.date > rhs.date
+        let unordered: [VectorItem] = group.map { (index: Int) -> VectorItem in items[index] }
+        let members: [VectorItem] = unordered.sorted { (lhs: VectorItem, rhs: VectorItem) -> Bool in
+            if lhs.date != rhs.date { return lhs.date > rhs.date }
+            return lhs.id < rhs.id
         }
+        let assetIDs: [String] = members.map { (member: VectorItem) -> String in member.id }
         let cluster = SimilarityCluster(
-            assetIDs: members.map(\.id),
+            assetIDs: assetIDs,
             averageDistance: pairCount > 0 ? Float(distanceSum / Double(pairCount)) : 0,
             isExactDuplicate: isExactDuplicate
         )
