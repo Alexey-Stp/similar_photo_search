@@ -89,6 +89,7 @@ The defaults apply, and `--strict` turns their warning thresholds into hard limi
 | `type_body_length` | 250 lines (any type, comments and blank lines excluded) | Move groups of methods into extensions in separate files (members they share become `internal`, not `private`). |
 | `function_body_length` | 50 lines | Extract named steps (`prepare…`, `make…`, `complete…`). |
 | `type_name` / `identifier_name` | at least 3 characters (`id` is allowed) | No `typealias F = …` or one-letter names; use `Fixture`, `index`, `asset`. |
+| `trailing_newline` | exactly one `\n` at the end of a file | Scripts that write files must end them with `\n` (`'\n'.join(lines)` doesn't). |
 
 Before pushing, check new and changed Swift files: `awk 'length > 120 {print FILENAME":"FNR}'` and `wc -l` (aim for
 ≤ 350 lines per file to leave room).
