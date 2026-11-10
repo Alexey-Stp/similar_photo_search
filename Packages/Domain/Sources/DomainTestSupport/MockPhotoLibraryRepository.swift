@@ -28,6 +28,8 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
     public private(set) var assetPagesCallCount = 0
     /// Number of `albums()` calls.
     public private(set) var albumsCallCount = 0
+    /// Number of `assets(withIDs:)` calls.
+    public private(set) var assetsByIDCallCount = 0
     /// Scopes passed to `assetCount` and `assetPages`, in call order.
     public private(set) var requestedScopes: [ScanScope] = []
 
@@ -112,6 +114,13 @@ public actor MockPhotoLibraryRepository: PhotoLibraryRepository {
     public func albums() -> [AlbumSummary] {
         albumsCallCount += 1
         return albumSummaries
+    }
+
+    /// The assets with these IDs, in `PhotoAsset.libraryOrder`; unknown IDs are left out.
+    public func assets(withIDs assetIDs: [String]) -> [PhotoAsset] {
+        assetsByIDCallCount += 1
+        let wanted = Set(assetIDs)
+        return assets.filter { wanted.contains($0.id) }.sorted(by: PhotoAsset.libraryOrder)
     }
 
     /// Records the request and splits the matching assets into pages.

@@ -1,3 +1,4 @@
+import CoreGraphics
 import DataLayer
 import Domain
 import Presentation
@@ -41,6 +42,10 @@ final class AppContainer: ViewModelFactory {
     let scanViewModel: ScanViewModel
     /// The home dashboard of this app session (SPS-20).
     let homeViewModel: HomeViewModel
+    /// Thumbnails for the group list over `PHCachingImageManager` (SPS-21).
+    let thumbnailLoader: any ThumbnailLoading
+    /// The group list of this app session (SPS-21).
+    let clusterListViewModel: ClusterListViewModel
 
     /// Similarity thresholds per Vision revision. Empty until the calibration spike on the labelled fixture set
     /// (SPS-16): with no threshold, a scan stops with "not calibrated" instead of guessing.
@@ -58,23 +63,18 @@ final class AppContainer: ViewModelFactory {
         assetDeletionService = PhotoKitAssetDeletionService()
         scopePreferencesStore = UserDefaultsScopePreferencesStore(defaults: .standard)
         sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())
-        let changeTracker = PhotoKitLibraryChangeTracker()
-        libraryChangeTracker = changeTracker
-        incrementalScanPreparer = IncrementalScanPreparer(tracker: changeTracker, cache: featurePrintCache)
+        libraryChangeTracker = PhotoKitLibraryChangeTracker()
+        incrementalScanPreparer = IncrementalScanPreparer(tracker: libraryChangeTracker, cache: featurePrintCache)
         libraryObserver = PhotoKitLibraryObserver()
         smartSelection = SmartSelectionUseCase()
-        let sizeEstimator = PhotoKitAssetSizeEstimator()
-        assetSizeEstimator = sizeEstimator
-        let selection = SelectionStore(sizes: sizeEstimator)
-        selectionStore = selection
-        let thermal = ProcessInfoThermalMonitor()
-        thermalMonitor = thermal
-        let results = FileClusterRepository()
-        clusterRepository = results
-        let coordinator = AnalysisCoordinator(
+        assetSizeEstimator = PhotoKitAssetSizeEstimator()
+        selectionStore = SelectionStore(sizes: assetSizeEstimator)
+        thermalMonitor = ProcessInfoThermalMonitor()
+        clusterRepository = FileClusterRepository()
+        scanCoordinator = AnalysisCoordinator(
             library: photoLibrary,
             preparer: incrementalScanPreparer,
-            changeTracker: changeTracker,
+            changeTracker: libraryChangeTracker,
             cache: featurePrintCache,
             featurePrints: featurePrintService,
             segmenter: sessionSegmenter,
@@ -82,19 +82,26 @@ final class AppContainer: ViewModelFactory {
             clusteringConfig: Self.clusteringConfig,
             qualityScorer: qualityScorer,
             smartSelection: smartSelection,
-            thermalMonitor: thermal,
-            results: results
+            thermalMonitor: thermalMonitor,
+            results: clusterRepository
         )
-        scanCoordinator = coordinator
         let lifecycle = UIKitAppLifecycle()
         scanViewModel = ScanViewModel(
-            coordinator: coordinator,
+            coordinator: scanCoordinator,
             preferences: scopePreferencesStore,
-            selection: selection,
+            selection: selectionStore,
             idleTimer: lifecycle,
             backgroundTasks: lifecycle
         )
-        homeViewModel = HomeViewModel(scan: scanViewModel, results: results, libraryChanges: libraryObserver)
+        homeViewModel = HomeViewModel(scan: scanViewModel, results: clusterRepository, libraryChanges: libraryObserver)
+        thumbnailLoader = PhotoKitThumbnailBridge(loader: PhotoKitThumbnailLoader())
+        clusterListViewModel = ClusterListViewModel(
+            scan: scanViewModel,
+            library: photoLibrary,
+            sizes: assetSizeEstimator,
+            thumbnails: thumbnailLoader,
+            libraryChanges: libraryObserver
+        )
     }
 
     /// A view model for the photo-library permission flow.
@@ -122,5 +129,42 @@ final class AppContainer: ViewModelFactory {
     private static func openAppSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
+    }
+}
+
+/// Adapts the Data thumbnail loader (`LoadedImage`, EXIF orientation) to Presentation's `ThumbnailLoading`.
+///
+/// Lives here because only the composition root sees both packages. Ending the returned stream ends the inner one,
+/// which cancels the PhotoKit request.
+private struct PhotoKitThumbnailBridge: ThumbnailLoading {
+    let loader: PhotoKitThumbnailLoader
+
+    /// The Data stream mapped to `Thumbnail`; ending it cancels the request.
+    func thumbnail(for assetID: String, pixelSize: CGSize) -> AsyncStream<Thumbnail> {
+        let images = loader.thumbnail(for: assetID, size: pixelSize)
+        return AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
+            let task = Task {
+                for await image in images {
+                    continuation.yield(Thumbnail(cgImage: image.cgImage, exifOrientation: image.orientation))
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
+
+    /// Forwards to the Data loader.
+    func prefetch(_ assetIDs: [String], pixelSize: CGSize) async {
+        await loader.prefetch(assetIDs, size: pixelSize)
+    }
+
+    /// Forwards to the Data loader.
+    func stopPrefetching(_ assetIDs: [String], pixelSize: CGSize) async {
+        await loader.stopPrefetching(assetIDs, size: pixelSize)
+    }
+
+    /// Forwards to the Data loader.
+    func stopAllPrefetching() async {
+        await loader.stopAllPrefetching()
     }
 }

@@ -23,6 +23,11 @@ public final class ScanViewModel {
     /// Whether a scan of this app session reached `.done`.
     public private(set) var hasCompletedScan = false
 
+    /// The rows of the group list, top first (`ClusterRowOrder`: append-only, groups newer than every row on top).
+    public private(set) var rowOrder = ClusterRowOrder()
+    /// Goes up whenever groups are added, replaced or removed, also when a group is replaced under the same ID.
+    public private(set) var clusterRevision = 0
+
     /// Called on the main actor when a scan ends (after `.finished`). Not called for a scan that a newer
     /// `startScan()` replaced. The final phase may arrive on the progress stream slightly later.
     @ObservationIgnored public var onScanEnded: (@MainActor () -> Void)?
@@ -65,6 +70,7 @@ public final class ScanViewModel {
         scanGeneration += 1
         let generation = scanGeneration
         stopConsuming()
+        rowOrder.scanStarted()
         isScanning = true
         progress = ScanProgress()
         updateIdleTimer()
@@ -90,6 +96,13 @@ public final class ScanViewModel {
                 }
             }
         ]
+    }
+
+    /// Shows the groups stored by an earlier scan (at launch, before the scan re-publishes them).
+    public func showStoredResults(_ selections: [ClusterSelection]) {
+        selection.upsert(selections)
+        rowOrder.add(selections.map(\.id))
+        clusterRevision += 1
     }
 
     /// Cancels the running scan; groups found so far stay.
@@ -202,8 +215,12 @@ public final class ScanViewModel {
         switch update {
         case .added(let selections):
             selection.upsert(selections)
+            rowOrder.add(selections.map(\.id))
+            clusterRevision += 1
         case .removed(let ids):
             selection.remove(clusterIDs: ids)
+            rowOrder.remove(ids)
+            clusterRevision += 1
         case .finished:
             scanEnded()
         }

@@ -1,6 +1,153 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "clusters.action.compare" : {
+      "comment" : "VoiceOver custom action on a thumbnail: opens the comparison of its group.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Compare" } }
+      }
+    },
+    "clusters.action.toggle" : {
+      "comment" : "VoiceOver custom action on a thumbnail: selects the photo for deletion or keeps it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Toggle selection" } }
+      }
+    },
+    "clusters.badge.best" : {
+      "comment" : "Short badge on the thumbnail of the photo suggested to keep. Must stay very short.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Best" } }
+      }
+    },
+    "clusters.deleteAll.confirm" : {
+      "comment" : "Destructive button: selects every photo of the group for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Select All for Deletion" } }
+      }
+    },
+    "clusters.deleteAll.message" : {
+      "comment" : "Confirmation message when the user selects the last kept photo of a group.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No photo of this group will be kept." } }
+      }
+    },
+    "clusters.deleteAll.title" : {
+      "comment" : "Confirmation title when the user selects the last kept photo of a group.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete every photo of this group?" } }
+      }
+    },
+    "clusters.exactDuplicate" : {
+      "comment" : "Chip on a group whose photos are copies of the same image.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Exact duplicates" } }
+      }
+    },
+    "clusters.filter" : {
+      "comment" : "Section title in the filter menu of the group list.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show" } }
+      }
+    },
+    "clusters.filter.all" : {
+      "comment" : "Filter option: every group.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All Groups" } }
+      }
+    },
+    "clusters.filter.empty" : {
+      "comment" : "Group list: no group matches the chosen filter.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No groups match this filter" } }
+      }
+    },
+    "clusters.filter.exactDuplicates" : {
+      "comment" : "Filter option: only groups of exact copies.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Exact Duplicates" } }
+      }
+    },
+    "clusters.filter.needsReview" : {
+      "comment" : "Filter option: only groups flagged Review recommended.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Needs Review" } }
+      }
+    },
+    "clusters.filterAndSort" : {
+      "comment" : "Toolbar menu of the group list with the filter and sort options.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Filter and Sort" } }
+      }
+    },
+    "clusters.footer.scanning %lld %lld" : {
+      "comment" : "Last row of the group list while a scan runs. Argument 1 is the number of photos processed, argument 2 the number in the scan scope.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Still scanning… %1$lld of %2$lld" } }
+      }
+    },
+    "clusters.header.hint" : {
+      "comment" : "VoiceOver hint of a group header.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens the comparison of this group." } }
+      }
+    },
+    "clusters.photo.best" : {
+      "comment" : "Part of a thumbnail VoiceOver label: the photo suggested to keep.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Best shot" } }
+      }
+    },
+    "clusters.photo.kept" : {
+      "comment" : "Part of a thumbnail VoiceOver label: the photo will be kept.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "kept" } }
+      }
+    },
+    "clusters.photo.position %lld %lld" : {
+      "comment" : "Start of a thumbnail VoiceOver label. Argument 1 is the position in the group, argument 2 the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo %1$lld of %2$lld" } }
+      }
+    },
+    "clusters.photo.selected" : {
+      "comment" : "Part of a thumbnail VoiceOver label: the photo is selected for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "selected for deletion" } }
+      }
+    },
+    "clusters.photo.taken %@" : {
+      "comment" : "Part of a thumbnail VoiceOver label. The argument is a date and time, for example 12 May 14:03.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "taken %@" } }
+      }
+    },
+    "clusters.photo.unavailable" : {
+      "comment" : "Part of a thumbnail VoiceOver label: the photo was deleted outside the app.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "no longer in your library" } }
+      }
+    },
     "clusters.row.photos %lld" : {
       "comment" : "Group list row: the number of photos in a group.",
       "extractionState" : "manual",
@@ -15,18 +162,25 @@
         }
       }
     },
-    "clusters.row.selected %lld" : {
-      "comment" : "Group list row: the number of photos of the group selected for deletion.",
+    "clusters.sort" : {
+      "comment" : "Section title in the sort menu of the group list.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld selected for deletion" } },
-              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld selected for deletion" } }
-            }
-          }
-        }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sort By" } }
+      }
+    },
+    "clusters.sort.date" : {
+      "comment" : "Sort option: newest groups first.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Date" } }
+      }
+    },
+    "clusters.sort.size" : {
+      "comment" : "Sort option: groups that free the most space first.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reclaimable Size" } }
       }
     },
     "clusters.title" : {
@@ -34,6 +188,13 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar Groups" } }
+      }
+    },
+    "compare.title" : {
+      "comment" : "Navigation title of the comparison of one group.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Compare" } }
       }
     },
     "home.empty.message" : {
@@ -748,6 +909,69 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan Scope" } }
+      }
+    },
+    "selection.delete %lld %@" : {
+      "comment" : "Delete button in the bottom bar. Argument 1 is the number of selected photos, argument 2 their estimated size, for example 214 MB.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Delete %#@photos@ (%2$@)" },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg photo" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg photos" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "selection.delete.atLeast %lld %@" : {
+      "comment" : "Delete button in the bottom bar when the size of some selected photos is unknown. Argument 1 is the number of selected photos, argument 2 the known part of their size, for example 214 MB.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Delete %#@photos@ (at least %2$@)" },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg photo" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg photos" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "selection.delete.hint" : {
+      "comment" : "VoiceOver hint of the delete button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows what will be deleted before anything is deleted." } }
+      }
+    },
+    "selection.delete.noSize %lld" : {
+      "comment" : "Delete button in the bottom bar while the size is unknown. The argument is the number of selected photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "Delete %lld photo" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "Delete %lld photos" } }
+            }
+          }
+        }
       }
     },
     "selection.deselectAll" : {

@@ -31,6 +31,13 @@ struct MockPhotoLibraryRepositoryTests {
         return pages
     }
 
+    @Test func assetsByIDKeepLibraryOrderAndLeaveOutMissingIDs() async {
+        let repository = MockPhotoLibraryRepository(assets: [asset("old", 10), asset("new", 20), asset("mid", 15)])
+        let found = await repository.assets(withIDs: ["old", "gone", "new", "old"])
+        #expect(found.map(\.id) == ["new", "old"])
+        #expect(await repository.assetsByIDCallCount == 1)
+    }
+
     @Test func emptyLibraryYieldsNoPages() async throws {
         let repository = MockPhotoLibraryRepository()
         #expect(await repository.assetCount(scope: .allPhotos) == 0)

@@ -20,6 +20,7 @@ struct HomeView: View {
 struct HomeDashboard: View {
     @Bindable var home: HomeViewModel
     let permission: PermissionViewModel
+    @Environment(\.viewModelFactory) private var factory
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingScope = false
     @State private var isShowingSkipped = false
@@ -43,12 +44,7 @@ struct HomeDashboard: View {
             .onAppear { home.scan.scanScreenAppeared() }
             .onDisappear { home.scan.scanScreenDisappeared() }
             .navigationTitle(Text("home.title", bundle: .module))
-            .navigationDestination(for: HomeRoute.self) { route in
-                switch route {
-                case .clusters:
-                    ClusterListScreen(scan: home.scan)
-                }
-            }
+            .navigationDestination(for: HomeRoute.self, destination: destination)
             .toolbar { scopeButton }
             .sheet(isPresented: $isShowingScope) {
                 ScopeSelectionSheet { isShowingScope = false }
@@ -69,6 +65,18 @@ struct HomeDashboard: View {
         .task { await home.launch() }
         .onChange(of: scenePhase) { _, phase in
             home.scenePhaseChanged(to: phase)
+        }
+    }
+
+    /// The screens pushed from Home; they share the app session's group list.
+    @ViewBuilder private func destination(_ route: HomeRoute) -> some View {
+        if let list = factory?.clusterListViewModel {
+            switch route {
+            case .clusters:
+                ClusterListScreen(viewModel: list) { home.compare(clusterID: $0) }
+            case .comparison(let clusterID):
+                ClusterComparisonScreen(viewModel: list, clusterID: clusterID)
+            }
         }
     }
 

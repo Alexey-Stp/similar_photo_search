@@ -67,8 +67,8 @@ public final class PhotoKitImageRequester: ImageRequesting, @unchecked Sendable 
         manager.cancelImageRequest(requestID)
     }
 
-    /// Reduces a PhotoKit callback to `Sendable` values.
-    private static func result(image: PlatformImage?, info: [AnyHashable: Any]?) -> ImageRequestResult {
+    /// Reduces a PhotoKit callback to `Sendable` values. Shared with `PhotoKitThumbnailRequester`.
+    static func result(image: PlatformImage?, info: [AnyHashable: Any]?) -> ImageRequestResult {
         ImageRequestResult(
             image: image.flatMap(loadedImage(from:)),
             isInCloud: (info?[PHImageResultIsInCloudKey] as? Bool) ?? false,
@@ -79,7 +79,7 @@ public final class PhotoKitImageRequester: ImageRequesting, @unchecked Sendable 
     }
 
     #if canImport(UIKit)
-    private typealias PlatformImage = UIImage
+    typealias PlatformImage = UIImage
 
     /// The image's pixels and orientation, or `nil` if it has no bitmap.
     private static func loadedImage(from image: UIImage) -> LoadedImage? {
@@ -111,7 +111,7 @@ public final class PhotoKitImageRequester: ImageRequesting, @unchecked Sendable 
         }
     }
     #else
-    private typealias PlatformImage = NSImage
+    typealias PlatformImage = NSImage
 
     /// The image's pixels; on macOS PhotoKit returns images already upright.
     private static func loadedImage(from image: NSImage) -> LoadedImage? {
