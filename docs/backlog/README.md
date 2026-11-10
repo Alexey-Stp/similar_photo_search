@@ -101,7 +101,7 @@ and the list never jumps under the user's finger; full VoiceOver, Dark Mode and 
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-20](SPS-20.md) | Home / scan dashboard | To do | SPS-14 |
+| [SPS-20](SPS-20.md) | Home / scan dashboard | Review | SPS-14 |
 | [SPS-21](SPS-21.md) | Cluster list with efficient thumbnail loading | To do | SPS-18, SPS-20 |
 | [SPS-22](SPS-22.md) | Photo comparison screen | To do | SPS-18, SPS-21 |
 

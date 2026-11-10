@@ -7,9 +7,10 @@ import Testing
 struct OnboardingViewModelTests {
     private func makeViewModel(
         _ service: MockPhotoPermissionService,
+        library: MockPhotoLibraryRepository = MockPhotoLibraryRepository(),
         completions: CompletionCounter = CompletionCounter()
     ) async -> (OnboardingViewModel, PermissionViewModel) {
-        let permission = PermissionViewModel(permissions: service, openSettings: {})
+        let permission = PermissionViewModel(permissions: service, library: library, openSettings: {})
         await permission.refresh()
         let onboarding = OnboardingViewModel(permission: permission) { completions.count += 1 }
         return (onboarding, permission)
@@ -83,11 +84,12 @@ struct OnboardingViewModelTests {
         // Limited access makes the request wait on the photo count, which the mock can hold.
         let service = MockPhotoPermissionService(status: .notDetermined, statusAfterRequest: .limited)
         let completions = CompletionCounter()
-        let (viewModel, _) = await makeViewModel(service, completions: completions)
-        await service.holdNextPhotoCount()
+        let library = MockPhotoLibraryRepository()
+        let (viewModel, _) = await makeViewModel(service, library: library, completions: completions)
+        await library.holdNextAssetCount()
 
         let firstTap = Task { await viewModel.performPrimaryAction() }
-        while await !service.isHoldingPhotoCount {
+        while await !library.isHoldingAssetCount {
             await Task.yield()
         }
         #expect(viewModel.isWorking)
@@ -96,7 +98,7 @@ struct OnboardingViewModelTests {
         #expect(await service.requestAccessCallCount == 1)
         #expect(completions.count == 0)
 
-        await service.releaseHeldPhotoCount()
+        await library.releaseHeldAssetCount()
         await firstTap.value
         #expect(await service.requestAccessCallCount == 1)
         #expect(completions.count == 1)

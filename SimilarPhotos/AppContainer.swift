@@ -39,6 +39,8 @@ final class AppContainer: ViewModelFactory {
     let scanCoordinator: any ScanCoordinating
     /// The scan of this app session, shared by every screen that shows it (SPS-14).
     let scanViewModel: ScanViewModel
+    /// The home dashboard of this app session (SPS-20).
+    let homeViewModel: HomeViewModel
 
     /// Similarity thresholds per Vision revision. Empty until the calibration spike on the labelled fixture set
     /// (SPS-16): with no threshold, a scan stops with "not calibrated" instead of guessing.
@@ -92,11 +94,16 @@ final class AppContainer: ViewModelFactory {
             idleTimer: lifecycle,
             backgroundTasks: lifecycle
         )
+        homeViewModel = HomeViewModel(scan: scanViewModel, results: results, libraryChanges: libraryObserver)
     }
 
     /// A view model for the photo-library permission flow.
     func makePermissionViewModel() -> PermissionViewModel {
-        PermissionViewModel(permissions: permissionService, openSettings: Self.openAppSettings)
+        PermissionViewModel(
+            permissions: permissionService,
+            library: photoLibrary,
+            openSettings: Self.openAppSettings
+        )
     }
 
     /// A view model for the album and scope sheet; `onApply` receives the saved choice.

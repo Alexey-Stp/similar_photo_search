@@ -213,6 +213,56 @@ struct ScanViewModelTests {
         #expect(await harness.coordinator.cancelCallCount == 1)
     }
 
+    /// During a navigation push the next screen can appear before the previous one disappears.
+    @Test func overlappingScanScreensKeepTheScreenAwake() async {
+        let harness = makeHarness()
+        await harness.viewModel.startScan()
+        harness.viewModel.scanScreenAppeared()
+        harness.viewModel.scanScreenAppeared()
+        harness.viewModel.scanScreenDisappeared()
+        #expect(harness.lifecycle.idleTimerDisabled, "One scan screen is still visible")
+        harness.viewModel.scanScreenDisappeared()
+        harness.viewModel.scanScreenDisappeared()
+        #expect(!harness.lifecycle.idleTimerDisabled)
+        harness.viewModel.scanScreenAppeared()
+        #expect(harness.lifecycle.idleTimerDisabled, "Extra disappearances never go below zero")
+    }
+
+    @Test func theEndOfAScanIsReportedAndADoneScanIsRemembered() async {
+        let harness = makeHarness()
+        let ends = CallCount()
+        harness.viewModel.onScanEnded = { ends.value += 1 }
+        await harness.viewModel.startScan()
+        #expect(!harness.viewModel.hasCompletedScan)
+        await harness.coordinator.send(ScanProgress(phase: .done))
+        await harness.coordinator.finish()
+        #expect(await eventually { ends.value == 1 && harness.viewModel.hasCompletedScan })
+    }
+
+    @Test func aCancelledScanIsNotCompleted() async {
+        let harness = makeHarness()
+        await harness.viewModel.startScan()
+        harness.viewModel.cancelScan()
+        #expect(await eventually { !harness.viewModel.isScanning })
+        #expect(!harness.viewModel.hasCompletedScan)
+    }
+
+    @Test func voiceOverProgressMovesInTenPercentSteps() async {
+        let harness = makeHarness()
+        await harness.viewModel.startScan()
+        await harness.coordinator.send(ScanProgress(processed: 43, total: 100, phase: .analyzing))
+        #expect(await eventually { harness.viewModel.progress?.processed == 43 })
+        let at43 = harness.viewModel.accessibilityProgressText
+        await harness.coordinator.send(ScanProgress(processed: 49, total: 100, phase: .analyzing))
+        #expect(await eventually { harness.viewModel.progress?.processed == 49 })
+        #expect(harness.viewModel.accessibilityProgressText == at43, "No new announcement inside a 10 % step")
+        #expect(at43 == 0.4.formatted(.percent.precision(.fractionLength(0))))
+
+        await harness.coordinator.send(ScanProgress(processed: 100, total: 100, phase: .done))
+        #expect(await eventually { harness.viewModel.progress?.processed == 100 })
+        #expect(harness.viewModel.accessibilityProgressText == 1.0.formatted(.percent.precision(.fractionLength(0))))
+    }
+
     @Test func deletedPhotosAreForwarded() async {
         let harness = makeHarness()
         harness.viewModel.photosDeleted(["X", "Y"])
@@ -224,4 +274,9 @@ struct ScanViewModelTests {
         }
         #expect(excluded == [["X", "Y"]])
     }
+}
+
+@MainActor
+private final class CallCount {
+    var value = 0
 }

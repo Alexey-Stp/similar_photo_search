@@ -25,13 +25,6 @@ public final class PhotoKitPermissionService: PhotoPermissionService {
         Self.map(await PHPhotoLibrary.requestAuthorization(for: .readWrite))
     }
 
-    /// Counts the images the app can see. Under limited access this is the user's selection.
-    public func accessiblePhotoCount() async -> Int {
-        // The fetch result is lazy: counting does not load assets or pixel data.
-        // Hidden assets are excluded by default.
-        PHAsset.fetchAssets(with: .image, options: nil).count
-    }
-
     /// Shows the system limited-library picker and returns when it is dismissed.
     /// Returns immediately if access is not limited or there is nothing to present from.
     public func presentLimitedPicker() async {
