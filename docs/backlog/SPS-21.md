@@ -45,3 +45,4 @@ memory. Large `@Observable` selection dictionaries invalidate every cell unless 
 - `ClusterListViewModel`: filter/sort, append-only live updates with stable IDs, prefetch rows ±10 on `.onAppear`.
 - Accessibility: `accessibilityElement(children: .ignore)` + label + `accessibilityActions` per thumbnail.
 - Previews with a mock loader returning SF Symbol images.
+- From SPS-18: nobody runs Smart Selection yet. On each `ClusterUpdate`, rank with `SmartSelectionUseCase.suggest(for:signals:)` and `selectionStore.upsert(_:)` the result (removed clusters: `remove(clusterIDs:)`). Cells read `store.state(for: clusterID)`, never the store's totals; a `.needsConfirmation` toggle shows a confirmation, then `confirmDeleteAll(_:)`. `SelectionSummaryBar` already has Smart Select All / Deselect All and the summary text; add the delete button to it. Badge strings: `selection.keepBest`, `selection.reviewRecommended`.

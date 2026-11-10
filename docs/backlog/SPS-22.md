@@ -35,3 +35,4 @@ pixels. Synchronized gestures are fiddly; test with VoiceOver and Reduce Motion.
 - Side-by-side when `horizontalSizeClass == .regular` or landscape; two `ZoomableImage`s bound to one `@Observable ZoomState`.
 - Keep only current ±1 full-size images in memory.
 - Accessibility: zoom via `accessibilityZoomAction`, labels on all buttons. Previews.
+- From SPS-18: `SelectionStore` has no "Mark as Best" or "Keep this one" yet; add them there (keeping the at-least-one-kept invariant and override recording) instead of toggling member by member. Reasons come from `ClusterSelection.ranking`.

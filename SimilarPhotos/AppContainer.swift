@@ -25,6 +25,12 @@ final class AppContainer: ViewModelFactory {
     let incrementalScanPreparer: IncrementalScanPreparer
     /// Debounced (1 s) library changes while the app runs, for refreshing visible results (SPS-10).
     let libraryObserver: any LibraryChangeObserving
+    /// Suggests keep / delete per cluster (SPS-18); the scan coordinator (SPS-14) runs it on ranked clusters.
+    let smartSelection: SmartSelectionUseCase
+    /// File-size estimates for the "will be deleted" summary (SPS-18).
+    let assetSizeEstimator: any AssetSizeEstimator
+    /// The user's keep / delete choice for the whole app session (SPS-18).
+    let selectionStore: SelectionStore
 
     /// Builds every service once.
     init() {
@@ -42,6 +48,10 @@ final class AppContainer: ViewModelFactory {
         libraryChangeTracker = changeTracker
         incrementalScanPreparer = IncrementalScanPreparer(tracker: changeTracker, cache: featurePrintCache)
         libraryObserver = PhotoKitLibraryObserver()
+        smartSelection = SmartSelectionUseCase()
+        let sizeEstimator = PhotoKitAssetSizeEstimator()
+        assetSizeEstimator = sizeEstimator
+        selectionStore = SelectionStore(sizes: sizeEstimator)
     }
 
     /// A view model for the photo-library permission flow.
