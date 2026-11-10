@@ -44,3 +44,4 @@ reconciles deleted IDs on the next launch. `photos-redirect://` is undocumented 
 - Unit tests for state transitions and cache/cluster cleanup with mocks.
 - From SPS-13: the method is `FeaturePrintCache.purge(assetIDs:)`.
 - From SPS-18: the review sheet can use `selectionStore.summary` (count + estimated bytes, `.text`). Recomputed clusters with fewer members are new member sets, so `upsert` drops their overrides and applies the new suggestion: decide whether surviving members should keep the user's choice. The `.cancelledByUser` path must leave the store untouched.
+- From SPS-14: after a successful deletion call `ScanViewModel.photosDeleted(_:)` (forwards to `ScanCoordinating.excludeDeleted`); it does not touch the groups already shown. `FileClusterRepository` needs no cleanup: the next scan sees the shrunk sessions through their fingerprints and replaces or removes their stored clusters.

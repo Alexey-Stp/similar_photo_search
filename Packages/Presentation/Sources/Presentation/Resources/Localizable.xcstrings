@@ -239,6 +239,132 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo access is restricted" } }
       }
     },
+    "scan.cancel" : {
+      "comment" : "Button that stops the running scan.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } }
+      }
+    },
+    "scan.cancel.hint" : {
+      "comment" : "VoiceOver hint for the Cancel scan button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stops the scan. Groups found so far are kept." } }
+      }
+    },
+    "scan.count %lld %lld" : {
+      "comment" : "Scan progress. Argument 1 is the number of photos processed, argument 2 the number of photos in the scan scope.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%1$lld of %#@photos@" },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 2,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg photo" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg photos" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "scan.error.library" : {
+      "comment" : "Shown when the scan stopped because the photo library could not be read.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The photo library could not be read. Try again." } }
+      }
+    },
+    "scan.error.notCalibrated" : {
+      "comment" : "Shown when the scan stopped because no similarity threshold is calibrated for the device's Vision version.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar-photo detection is not calibrated for this iOS version yet, so the scan stopped." } }
+      }
+    },
+    "scan.eta %@" : {
+      "comment" : "Estimated time left in a scan. The argument is a short duration, for example 2 min.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "About %@ left" } }
+      }
+    },
+    "scan.groupsFound %lld" : {
+      "comment" : "Shown after a finished scan. The argument is the number of groups of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld group of similar photos found" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld groups of similar photos found" } }
+            }
+          }
+        }
+      }
+    },
+    "scan.groupsSoFar %lld" : {
+      "comment" : "Live counter while scanning. The argument is the number of groups found so far.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld group found so far" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld groups found so far" } }
+            }
+          }
+        }
+      }
+    },
+    "scan.lowPowerMode" : {
+      "comment" : "Notice while scanning with Low Power Mode on.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Low Power Mode is on, so the scan runs slower." } }
+      }
+    },
+    "scan.noGroups" : {
+      "comment" : "Shown after a finished scan that found no groups.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No similar photos found" } }
+      }
+    },
+    "scan.pausedToCoolDown" : {
+      "comment" : "Notice while the scan is paused because the device is too hot.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Paused to cool down" } }
+      }
+    },
+    "scan.scanning" : {
+      "comment" : "Title of the scan progress while scanning.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scanning your library…" } }
+      }
+    },
+    "scan.start" : {
+      "comment" : "Button that starts a scan of the photo library.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Scan" } }
+      }
+    },
+    "scan.start.hint" : {
+      "comment" : "VoiceOver hint for the Start Scan button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Looks for similar photos on this device. Nothing leaves your iPhone." } }
+      }
+    },
     "scope.album.count %lld" : {
       "comment" : "Scope sheet: estimated number of items in an album. The argument is the count.",
       "extractionState" : "manual",
