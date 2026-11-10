@@ -63,23 +63,18 @@ final class AppContainer: ViewModelFactory {
         assetDeletionService = PhotoKitAssetDeletionService()
         scopePreferencesStore = UserDefaultsScopePreferencesStore(defaults: .standard)
         sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())
-        let changeTracker = PhotoKitLibraryChangeTracker()
-        libraryChangeTracker = changeTracker
-        incrementalScanPreparer = IncrementalScanPreparer(tracker: changeTracker, cache: featurePrintCache)
+        libraryChangeTracker = PhotoKitLibraryChangeTracker()
+        incrementalScanPreparer = IncrementalScanPreparer(tracker: libraryChangeTracker, cache: featurePrintCache)
         libraryObserver = PhotoKitLibraryObserver()
         smartSelection = SmartSelectionUseCase()
-        let sizeEstimator = PhotoKitAssetSizeEstimator()
-        assetSizeEstimator = sizeEstimator
-        let selection = SelectionStore(sizes: sizeEstimator)
-        selectionStore = selection
-        let thermal = ProcessInfoThermalMonitor()
-        thermalMonitor = thermal
-        let results = FileClusterRepository()
-        clusterRepository = results
-        let coordinator = AnalysisCoordinator(
+        assetSizeEstimator = PhotoKitAssetSizeEstimator()
+        selectionStore = SelectionStore(sizes: assetSizeEstimator)
+        thermalMonitor = ProcessInfoThermalMonitor()
+        clusterRepository = FileClusterRepository()
+        scanCoordinator = AnalysisCoordinator(
             library: photoLibrary,
             preparer: incrementalScanPreparer,
-            changeTracker: changeTracker,
+            changeTracker: libraryChangeTracker,
             cache: featurePrintCache,
             featurePrints: featurePrintService,
             segmenter: sessionSegmenter,
@@ -87,26 +82,24 @@ final class AppContainer: ViewModelFactory {
             clusteringConfig: Self.clusteringConfig,
             qualityScorer: qualityScorer,
             smartSelection: smartSelection,
-            thermalMonitor: thermal,
-            results: results
+            thermalMonitor: thermalMonitor,
+            results: clusterRepository
         )
-        scanCoordinator = coordinator
         let lifecycle = UIKitAppLifecycle()
         scanViewModel = ScanViewModel(
-            coordinator: coordinator,
+            coordinator: scanCoordinator,
             preferences: scopePreferencesStore,
-            selection: selection,
+            selection: selectionStore,
             idleTimer: lifecycle,
             backgroundTasks: lifecycle
         )
-        homeViewModel = HomeViewModel(scan: scanViewModel, results: results, libraryChanges: libraryObserver)
-        let thumbnails = PhotoKitThumbnailBridge(loader: PhotoKitThumbnailLoader())
-        thumbnailLoader = thumbnails
+        homeViewModel = HomeViewModel(scan: scanViewModel, results: clusterRepository, libraryChanges: libraryObserver)
+        thumbnailLoader = PhotoKitThumbnailBridge(loader: PhotoKitThumbnailLoader())
         clusterListViewModel = ClusterListViewModel(
             scan: scanViewModel,
             library: photoLibrary,
-            sizes: sizeEstimator,
-            thumbnails: thumbnails,
+            sizes: assetSizeEstimator,
+            thumbnails: thumbnailLoader,
             libraryChanges: libraryObserver
         )
     }

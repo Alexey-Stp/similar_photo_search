@@ -17,26 +17,7 @@ struct ClusterListScreen: View {
 
     var body: some View {
         let scan = viewModel.scan
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(viewModel.rows, id: \.self) { clusterID in
-                    row(clusterID)
-                }
-            }
-            .scrollTargetLayout()
-            .padding(.horizontal)
-            .padding(.top, 8)
-            footer
-        }
-        .scrollPosition(id: $topRowID, anchor: .top)
-        .modifier(ScrollInteractionTracking { viewModel.interactionChanged(isInteracting: $0) })
-        .overlay {
-            if viewModel.rows.isEmpty, !scan.isScanning {
-                ContentUnavailableView {
-                    Text("clusters.filter.empty", bundle: .module)
-                }
-            }
-        }
+        list
         .navigationTitle(Text("clusters.title", bundle: .module))
         .toolbar { ClusterListToolbar(viewModel: viewModel) }
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -73,6 +54,30 @@ struct ClusterListScreen: View {
         .onDisappear {
             scan.scanScreenDisappeared()
             viewModel.stopPrefetching()
+        }
+    }
+
+    /// The cards, the scanning footer, and the empty-filter message.
+    private var list: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(viewModel.rows, id: \.self) { clusterID in
+                    row(clusterID)
+                }
+            }
+            .scrollTargetLayout()
+            .padding(.horizontal)
+            .padding(.top, 8)
+            footer
+        }
+        .scrollPosition(id: $topRowID, anchor: .top)
+        .modifier(ScrollInteractionTracking { viewModel.interactionChanged(isInteracting: $0) })
+        .overlay {
+            if viewModel.rows.isEmpty, !viewModel.scan.isScanning {
+                ContentUnavailableView {
+                    Text("clusters.filter.empty", bundle: .module)
+                }
+            }
         }
     }
 
