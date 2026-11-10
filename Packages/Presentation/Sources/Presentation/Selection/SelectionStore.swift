@@ -5,7 +5,7 @@ import Observation
 /// The user's keep / delete choice for every cluster of the current session, and its total before deletion.
 ///
 /// - Every cluster starts from its Smart Selection suggestion (`SmartSelectionUseCase`); the user can override any
-///   photo with `toggle(_:in:)`.
+///   photo with `toggle(_:in:)`, and the Best photo with `markAsBest(_:in:)` or `keepOnly(_:in:excluding:)`.
 /// - Overrides last for the app session. When a cluster with the same ID and the **same members** arrives again (a
 ///   re-cluster, a rescan), the user's choice is restored; when its members changed, the new suggestion applies.
 /// - Invariant: a cluster always keeps at least one photo. Selecting the last kept photo returns
@@ -36,7 +36,7 @@ public final class SelectionStore {
     /// The count and the estimated size of the photos selected for deletion, shown before any deletion.
     public private(set) var summary = DeletionSummary.empty
 
-    private var states: [String: ClusterSelectionState] = [:]
+    var states: [String: ClusterSelectionState] = [:]
     private var clusterIDByAsset: [String: String] = [:]
 
     /// The user's choices by cluster ID, kept even while the cluster is gone (session-long).
@@ -107,10 +107,12 @@ public final class SelectionStore {
             let members = Set(selection.cluster.assetIDs)
             var selected = selection.suggestedForDeletion.intersection(members)
             var confirmed = false
+            var keeper: String?
             if let override = overrides[selection.id] {
                 if override.members == members {
                     selected = override.selectedIDs
                     confirmed = override.isDeleteAllConfirmed
+                    keeper = override.keeperID
                 } else {
                     overrides[selection.id] = nil
                 }
@@ -122,7 +124,8 @@ public final class SelectionStore {
             let state = ClusterSelectionState(
                 suggestion: selection,
                 selectedIDs: selected,
-                isDeleteAllConfirmed: confirmed
+                isDeleteAllConfirmed: confirmed,
+                chosenKeeperID: keeper
             )
             states[selection.id] = state
             for id in selection.cluster.assetIDs {
@@ -177,7 +180,7 @@ public final class SelectionStore {
         refreshTotals()
     }
 
-    /// Resets every cluster to its Smart Selection suggestion and forgets all overrides.
+    /// Resets every cluster to its Smart Selection suggestion (keeper included) and forgets all overrides.
     public func selectSmartAll() {
         overrides.removeAll()
         for state in states.values {
@@ -187,6 +190,9 @@ public final class SelectionStore {
             }
             if state.isDeleteAllConfirmed {
                 state.isDeleteAllConfirmed = false
+            }
+            if state.chosenKeeperID != nil {
+                state.chosenKeeperID = nil
             }
         }
         refreshTotals()
@@ -218,6 +224,7 @@ public final class SelectionStore {
         let members: Set<String>
         let selectedIDs: Set<String>
         let isDeleteAllConfirmed: Bool
+        let keeperID: String?
     }
 
     private func unindex(_ state: ClusterSelectionState) {
@@ -226,12 +233,13 @@ public final class SelectionStore {
         }
     }
 
-    private func recordOverride(of state: ClusterSelectionState) {
+    func recordOverride(of state: ClusterSelectionState) {
         if state.isOverridden {
             overrides[state.id] = Override(
                 members: Set(state.memberIDs),
                 selectedIDs: state.selectedIDs,
-                isDeleteAllConfirmed: state.isDeleteAllConfirmed
+                isDeleteAllConfirmed: state.isDeleteAllConfirmed,
+                keeperID: state.chosenKeeperID
             )
         } else {
             overrides[state.id] = nil
@@ -239,7 +247,7 @@ public final class SelectionStore {
     }
 
     /// Updates the count and the summary, and starts estimating sizes that are not known yet.
-    private func refreshTotals() {
+    func refreshTotals() {
         let selected = selectedAssetIDs
         if selectedCount != selected.count {
             selectedCount = selected.count

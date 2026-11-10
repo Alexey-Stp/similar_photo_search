@@ -190,11 +190,151 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar Groups" } }
       }
     },
-    "compare.title" : {
-      "comment" : "Navigation title of the comparison of one group.",
+    "compare.action.delete" : {
+      "comment" : "Comparison: button that selects the shown photo for deletion.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Compare" } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } }
+      }
+    },
+    "compare.action.focus" : {
+      "comment" : "VoiceOver action on a photo pane in the side-by-side mode: the info panel and filmstrip act on this photo.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Select This Photo" } }
+      }
+    },
+    "compare.action.keep" : {
+      "comment" : "Comparison: button that keeps the shown photo (it was selected for deletion).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep" } }
+      }
+    },
+    "compare.action.keepOnly" : {
+      "comment" : "Comparison: button that keeps the shown photo and selects every other photo of the group for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep This One" } }
+      }
+    },
+    "compare.action.keepOnly.hint" : {
+      "comment" : "VoiceOver hint of the Keep This One button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Selects every other photo of this group for deletion." } }
+      }
+    },
+    "compare.action.markBest" : {
+      "comment" : "Comparison: button that makes the shown photo the group's best photo (manual override).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mark as Best" } }
+      }
+    },
+    "compare.badge.edited" : {
+      "comment" : "Comparison info badge: the photo has edits.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Edited" } }
+      }
+    },
+    "compare.badge.favorite" : {
+      "comment" : "Comparison info badge: the user marked the photo as a favorite.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Favorite" } }
+      }
+    },
+    "compare.badge.live" : {
+      "comment" : "Comparison info badge: the photo is a Live Photo.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Live" } }
+      }
+    },
+    "compare.close" : {
+      "comment" : "VoiceOver label of the button that closes the comparison.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Close" } }
+      }
+    },
+    "compare.filmstrip.hint" : {
+      "comment" : "VoiceOver hint of a filmstrip thumbnail in the comparison.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shows this photo." } }
+      }
+    },
+    "compare.groupGone" : {
+      "comment" : "Comparison: the group no longer exists (for example after a rescan).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This group is no longer available." } }
+      }
+    },
+    "compare.iCloudOriginal" : {
+      "comment" : "Label on a photo whose original is only in iCloud: a local preview is shown instead.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Original in iCloud" } }
+      }
+    },
+    "compare.info.resolution %lld %lld %@" : {
+      "comment" : "Comparison info: width x height in pixels, then the megapixels already formatted (for example 12.2).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld × %2$lld · %3$@ MP" } }
+      }
+    },
+    "compare.info.sizeUnavailable" : {
+      "comment" : "Comparison info: the file size of the photo is not known.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Size unavailable" } }
+      }
+    },
+    "compare.photo.failed" : {
+      "comment" : "Comparison: the photo could not be loaded.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This photo can't be shown." } }
+      }
+    },
+    "compare.photo.missing" : {
+      "comment" : "Comparison: the photo was deleted outside the app.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This photo is no longer in your library." } }
+      }
+    },
+    "compare.position %lld %lld" : {
+      "comment" : "Comparison title: the position of the shown photo. Argument 1 is the position, argument 2 the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld of %2$lld" } }
+      }
+    },
+    "compare.sideBySide" : {
+      "comment" : "Comparison: toggle that shows two photos side by side.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Side by Side" } }
+      }
+    },
+    "compare.status.kept" : {
+      "comment" : "Comparison info badge: the photo will be kept.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kept" } }
+      }
+    },
+    "compare.status.selected" : {
+      "comment" : "Comparison info badge: the photo is selected for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Will Be Deleted" } }
       }
     },
     "home.empty.message" : {

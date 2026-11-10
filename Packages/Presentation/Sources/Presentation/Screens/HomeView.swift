@@ -52,6 +52,9 @@ struct HomeDashboard: View {
             .sheet(isPresented: $isShowingSkipped) {
                 SkippedPhotosSheet(summary: home.summary.skipped) { isShowingSkipped = false }
             }
+            .fullScreenCover(item: $home.comparison) { request in
+                PhotoComparisonHost(clusterID: request.clusterID)
+            }
             .safeAreaInset(edge: .top) {
                 if permission.isLimited, let count = permission.accessiblePhotoCount {
                     LimitedAccessBanner(
@@ -74,8 +77,6 @@ struct HomeDashboard: View {
             switch route {
             case .clusters:
                 ClusterListScreen(viewModel: list) { home.compare(clusterID: $0) }
-            case .comparison(let clusterID):
-                ClusterComparisonScreen(viewModel: list, clusterID: clusterID)
             }
         }
     }

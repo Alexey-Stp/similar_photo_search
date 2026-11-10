@@ -30,6 +30,9 @@ public protocol ViewModelFactory: AnyObject, Sendable {
     /// The group list of the current app session (SPS-21). One instance, so filter, sort and the looked-up dates
     /// and sizes survive navigation.
     var clusterListViewModel: ClusterListViewModel { get }
+
+    /// Creates the full-screen comparison of one group (SPS-22), over `clusterListViewModel`.
+    func makePhotoComparisonViewModel(clusterID: String) -> PhotoComparisonViewModel
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

@@ -46,6 +46,12 @@ final class AppContainer: ViewModelFactory {
     let thumbnailLoader: any ThumbnailLoading
     /// The group list of this app session (SPS-21).
     let clusterListViewModel: ClusterListViewModel
+    /// Screen-size images for the comparison, local only, never the original size (SPS-22).
+    let screenImageLoader: any ScreenImageLoading = PhotoKitScreenImageBridge(loader: PhotoKitScreenImageLoader())
+    /// Which photos have edits, for the comparison's "Edited" badge (SPS-22).
+    let editStatusProvider: any PhotoEditStatusProviding = PhotoKitEditStatusProvider(
+        inspector: PhotoKitAssetEditInspector()
+    )
 
     /// Similarity thresholds per Vision revision. Empty until the calibration spike on the labelled fixture set
     /// (SPS-16): with no threshold, a scan stops with "not calibrated" instead of guessing.
@@ -125,6 +131,16 @@ final class AppContainer: ViewModelFactory {
         )
     }
 
+    /// The full-screen comparison of one group over the session's group list.
+    func makePhotoComparisonViewModel(clusterID: String) -> PhotoComparisonViewModel {
+        PhotoComparisonViewModel(
+            clusterID: clusterID,
+            list: clusterListViewModel,
+            screenImages: screenImageLoader,
+            edits: editStatusProvider
+        )
+    }
+
     /// Opens the app's own page in the Settings app.
     private static func openAppSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
@@ -166,5 +182,27 @@ private struct PhotoKitThumbnailBridge: ThumbnailLoading {
     /// Forwards to the Data loader.
     func stopAllPrefetching() async {
         await loader.stopAllPrefetching()
+    }
+}
+
+/// Adapts the Data screen-image loader (`ScreenImageOutcome`, EXIF orientation) to Presentation's
+/// `ScreenImageLoading`. Cancelling the calling task cancels the PhotoKit request.
+private struct PhotoKitScreenImageBridge: ScreenImageLoading {
+    let loader: PhotoKitScreenImageLoader
+
+    /// The Data outcome mapped to `ScreenImage`; a local preview is flagged "Original in iCloud".
+    func screenImage(for assetID: String, pixelSize: CGSize) async -> ScreenImage? {
+        switch await loader.screenImage(for: assetID, size: pixelSize) {
+        case .original(let image):
+            ScreenImage(image: Self.thumbnail(image), isOriginalInCloud: false)
+        case .localPreview(let image):
+            ScreenImage(image: Self.thumbnail(image), isOriginalInCloud: true)
+        case .unavailable:
+            nil
+        }
+    }
+
+    private static func thumbnail(_ image: LoadedImage) -> Thumbnail {
+        Thumbnail(cgImage: image.cgImage, exifOrientation: image.orientation)
     }
 }
