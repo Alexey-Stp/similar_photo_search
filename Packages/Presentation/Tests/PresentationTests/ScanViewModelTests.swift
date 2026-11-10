@@ -83,6 +83,16 @@ struct ScanViewModelTests {
         return condition()
     }
 
+    @Test func hasStartedScanSeparatesNeverScannedFromRunningAndFinished() async {
+        let harness = makeHarness()
+        #expect(!harness.viewModel.hasStartedScan)
+        await harness.viewModel.startScan()
+        #expect(harness.viewModel.hasStartedScan)
+        await harness.coordinator.finish()
+        #expect(await eventually { !harness.viewModel.isScanning })
+        #expect(harness.viewModel.hasStartedScan, "A finished scan with no groups is not \"never scanned\"")
+    }
+
     @Test func startUsesTheSavedScopeAndSessionGap() async throws {
         let saved = ScopePreferences(dateFilter: .last30Days, excludeScreenshots: false, sessionGap: .relaxed)
         let harness = makeHarness(preferences: saved)

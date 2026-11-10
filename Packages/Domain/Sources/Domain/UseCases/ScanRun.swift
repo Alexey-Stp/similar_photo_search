@@ -29,6 +29,7 @@ actor ScanRun {
     var pendingRemovals: Set<String> = []
     var sessionsSinceFlush = 0
 
+    /// Creates a run; nothing happens until `execute()`.
     init(
         dependencies: AnalysisCoordinator.Dependencies,
         scope: ScanScope,

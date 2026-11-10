@@ -7,10 +7,12 @@ import Foundation
 /// The notifications arrive on arbitrary threads; the callback only reads the new conditions and yields them to the
 /// open streams (once per actual change). Neither API is a required-reason API.
 public final class ProcessInfoThermalMonitor: ThermalMonitor, @unchecked Sendable {
-    // @unchecked: `last` and `continuations` are guarded by `lock`; the rest is immutable.
+    // @unchecked: `last` and `continuations` are guarded by `lock`; `refreshLock` serializes `refresh()`;
+    // the rest is immutable.
     private let readConditions: @Sendable () -> ScanConditions
     private let notificationCenter: NotificationCenter
     private let lock = NSLock()
+    private let refreshLock = NSLock()
     private var observers: [any NSObjectProtocol] = []
     private var last: ScanConditions
     private var continuations: [UInt64: AsyncStream<ScanConditions>.Continuation] = [:]
@@ -45,11 +47,9 @@ public final class ProcessInfoThermalMonitor: ThermalMonitor, @unchecked Sendabl
         }
     }
 
-    /// The conditions right now.
+    /// The conditions right now. Doesn't touch the change tracking, so open streams still get every change.
     public func currentConditions() async -> ScanConditions {
-        let conditions = readConditions()
-        lock.withLock { last = conditions }
-        return conditions
+        readConditions()
     }
 
     /// A new stream of changes.
@@ -71,18 +71,25 @@ public final class ProcessInfoThermalMonitor: ThermalMonitor, @unchecked Sendabl
     }
 
     /// Reads the conditions and yields them if they changed.
+    ///
+    /// Notifications can arrive on several threads at once: `refreshLock` serializes read and publication, so an
+    /// older reading is never published after a newer one. The yields happen outside `lock`, which `removeStream`
+    /// takes when a stream ends, so a stream terminating during a yield cannot deadlock.
     private func refresh() {
-        let conditions = readConditions()
-        let open: [AsyncStream<ScanConditions>.Continuation] = lock.withLock {
-            guard conditions != last else { return [] }
-            last = conditions
-            return Array(continuations.values)
-        }
-        for continuation in open {
-            continuation.yield(conditions)
+        refreshLock.withLock {
+            let conditions = readConditions()
+            let open: [AsyncStream<ScanConditions>.Continuation] = lock.withLock {
+                guard conditions != last else { return [] }
+                last = conditions
+                return Array(continuations.values)
+            }
+            for continuation in open {
+                continuation.yield(conditions)
+            }
         }
     }
 
+    /// Forgets the continuation of a stream whose consumer has stopped.
     private func removeStream(_ id: UInt64) {
         lock.withLock { continuations[id] = nil }
     }

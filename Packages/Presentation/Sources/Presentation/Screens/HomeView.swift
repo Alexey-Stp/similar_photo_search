@@ -16,7 +16,9 @@ struct HomeView: View {
                     ScanStatusSection(viewModel: scan)
                         .padding(.horizontal)
                 }
-                if (factory?.scanViewModel.groupCount ?? 0) == 0 {
+                // "Scan your library" only before any scan: while scanning or after a scan, the section above shows
+                // progress or the result ("No similar photos found").
+                if factory?.scanViewModel.hasStartedScan != true {
                     ContentUnavailableView {
                         Label {
                             Text("home.empty.title", bundle: .module)

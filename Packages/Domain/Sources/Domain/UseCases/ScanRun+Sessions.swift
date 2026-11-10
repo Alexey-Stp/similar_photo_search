@@ -12,6 +12,7 @@ extension ScanRun {
         let previousByContent: [SessionFingerprint.Content: StoredSessionResult]
         var planner: SessionChangePlanner
 
+        /// Creates the context of one scan.
         init(
             resultsKey: String,
             storedByID: [String: StoredSessionResult],
@@ -89,6 +90,7 @@ extension ScanRun {
         /// Photos already added to `progress.processed`.
         var countedPhotos = 0
 
+        /// Starts the work on the session's remaining photos.
         init(assets: [PhotoAsset]) {
             self.assets = assets
         }

@@ -80,7 +80,8 @@ Vision feature prints and performance numbers must be checked on a **physical de
 ### SwiftLint limits (CI runs `swiftlint --strict`, so every warning fails the build)
 
 The defaults apply, and `--strict` turns their warning thresholds into hard limits. They count tests and
-`DomainTestSupport` too. Stay under them while writing; SwiftLint doesn't run on Windows, so CI is the first check there.
+`DomainTestSupport` too. Stay under them while writing. SwiftLint ships Windows builds (MSI/zip) since 0.64.0, so
+`swiftlint --strict` can run there too, within the limitations its release notes document; CI stays the final check.
 
 | Rule | Limit | How to stay under |
 |---|---|---|
@@ -91,5 +92,11 @@ The defaults apply, and `--strict` turns their warning thresholds into hard limi
 | `type_name` / `identifier_name` | at least 3 characters (`id` is allowed) | No `typealias F = …` or one-letter names; use `Fixture`, `index`, `asset`. |
 | `trailing_newline` | exactly one `\n` at the end of a file | Scripts that write files must end them with `\n` (`'\n'.join(lines)` doesn't). |
 
-Before pushing, check new and changed Swift files: `awk 'length > 120 {print FILENAME":"FNR}'` and `wc -l` (aim for
-≤ 350 lines per file to leave room).
+Before pushing, check the new and changed Swift files (aim for ≤ 350 lines per file to leave room):
+
+```bash
+files=$( { git diff --name-only --diff-filter=d main...HEAD -- '*.swift'; git diff --name-only --diff-filter=d -- '*.swift';
+          git ls-files --others --exclude-standard -- '*.swift'; } | sort -u)
+[ -n "$files" ] && awk 'length > 120 {print FILENAME":"FNR}' $files   # lines over 120 characters
+[ -n "$files" ] && wc -l $files                                       # file lengths
+```

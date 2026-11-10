@@ -57,6 +57,7 @@ public actor FileClusterRepository: ClusterRepository {
 
     // MARK: - File
 
+    /// The results in memory, read from the file on first use.
     private func loaded() -> [String: StoredSessionResult] {
         if let cache { return cache }
         let results = read()
@@ -64,6 +65,7 @@ public actor FileClusterRepository: ClusterRepository {
         return results
     }
 
+    /// Decodes the file; a missing, unreadable or other-version file gives no results.
     private func read() -> [String: StoredSessionResult] {
         guard let data = try? Data(contentsOf: fileURL) else { return [:] }
         do {
@@ -81,6 +83,7 @@ public actor FileClusterRepository: ClusterRepository {
         }
     }
 
+    /// Rewrites the file atomically, creating the directory and excluding it from backup first.
     private func write(_ results: [String: StoredSessionResult]) throws {
         let sessions = results.values
             .sorted { $0.sessionID < $1.sessionID }
@@ -110,6 +113,7 @@ private struct StoredSessionDTO: Codable {
     let resultsKey: String
     let clusters: [ClusterDTO]
 
+    /// The file form of a stored result.
     init(_ result: StoredSessionResult) {
         sessionID = result.sessionID
         memberCount = result.fingerprint.content.memberCount
@@ -136,6 +140,7 @@ private struct ClusterDTO: Codable {
     let averageDistance: Float
     let isExactDuplicate: Bool
 
+    /// The file form of a cluster (without a keeper, which is never stored).
     init(_ cluster: SimilarityCluster) {
         id = cluster.id
         assetIDs = cluster.assetIDs

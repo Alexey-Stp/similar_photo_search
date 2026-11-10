@@ -84,6 +84,7 @@ struct ScanStatusSection: View {
         .accessibilityHint(Text("scan.start.hint", bundle: .module))
     }
 
+    /// An orange notice line with an icon, such as "Paused to cool down".
     private func notice(_ key: LocalizedStringKey, systemImage: String) -> some View {
         Label {
             Text(key, bundle: .module)

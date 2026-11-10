@@ -161,6 +161,12 @@ public final class ScanViewModel {
         isScanning && progress?.conditions.isLowPowerModeEnabled == true
     }
 
+    /// Whether a scan was started in this app session (running, finished, cancelled or failed). `false` means the
+    /// "never scanned" state.
+    public var hasStartedScan: Bool {
+        progress != nil
+    }
+
     /// Groups found so far.
     public var groupCount: Int {
         selection.clusterIDs.count
@@ -179,6 +185,7 @@ public final class ScanViewModel {
 
     // MARK: - Private
 
+    /// Applies one group change to the selection store.
     private func apply(_ update: ClusterUpdate) {
         switch update {
         case .added(let selections):
@@ -190,12 +197,14 @@ public final class ScanViewModel {
         }
     }
 
+    /// The scan finished: lets the screen sleep again and gives back background time.
     private func scanEnded() {
         isScanning = false
         updateIdleTimer()
         endBackgroundTask()
     }
 
+    /// Stops reading the streams of the previous scan.
     private func stopConsuming() {
         for consumer in consumers {
             consumer.cancel()
@@ -203,10 +212,12 @@ public final class ScanViewModel {
         consumers = []
     }
 
+    /// Keeps the screen awake only while the scan screen is visible and a scan runs.
     private func updateIdleTimer() {
         idleTimer.setIdleTimerDisabled(isScanScreenVisible && isScanning)
     }
 
+    /// Asks for background time if a scan runs; on expiry the scan is cancelled.
     private func beginBackgroundTaskIfNeeded() {
         guard isScanning, backgroundTask == nil else { return }
         backgroundTask = backgroundTasks.beginBackgroundTask(named: "SimilarPhotos.scan") { [weak self] in
@@ -216,6 +227,7 @@ public final class ScanViewModel {
         }
     }
 
+    /// Gives back the background time, if any was granted.
     private func endBackgroundTask() {
         guard let token = backgroundTask else { return }
         backgroundTask = nil

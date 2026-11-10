@@ -6,10 +6,12 @@ import Foundation
 actor PreviewScanCoordinator: ScanCoordinating {
     private let snapshot: ScanProgress
 
+    /// Creates a coordinator that shows `snapshot`.
     init(snapshot: ScanProgress) {
         self.snapshot = snapshot
     }
 
+    /// Returns streams that publish the snapshot once.
     func start(scope: ScanScope, sessionConfig: SessionConfig) -> ScanStreams {
         let (progress, progressContinuation) = AsyncStream.makeStream(of: ScanProgress.self)
         let (clusters, _) = AsyncStream.makeStream(of: ClusterUpdate.self)
@@ -17,16 +19,20 @@ actor PreviewScanCoordinator: ScanCoordinating {
         return ScanStreams(progress: progress, clusters: clusters)
     }
 
+    /// Does nothing.
     func cancel() {}
 
+    /// Does nothing.
     func excludeDeleted(_ assetIDs: Set<String>) {}
 }
 
 /// Idle timer and background tasks that do nothing, for previews.
 @MainActor
 final class PreviewAppLifecycle: IdleTimerControlling, BackgroundTaskRunning {
+    /// Does nothing.
     func setIdleTimerDisabled(_ disabled: Bool) {}
 
+    /// Grants no time.
     func beginBackgroundTask(
         named name: String,
         expiration: @escaping @MainActor @Sendable () -> Void
@@ -34,6 +40,7 @@ final class PreviewAppLifecycle: IdleTimerControlling, BackgroundTaskRunning {
         nil
     }
 
+    /// Does nothing.
     func endBackgroundTask(_ token: BackgroundTaskToken) {}
 }
 
