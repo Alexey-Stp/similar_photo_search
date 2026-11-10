@@ -31,6 +31,18 @@ final class AppContainer: ViewModelFactory {
     let assetSizeEstimator: any AssetSizeEstimator
     /// The user's keep / delete choice for the whole app session (SPS-18).
     let selectionStore: SelectionStore
+    /// Thermal state and Low Power Mode, which throttle the scan (SPS-14).
+    let thermalMonitor: any ThermalMonitor
+    /// Clusters of analysed sessions with their fingerprints, reused by the next scan (SPS-14).
+    let clusterRepository: any ClusterRepository
+    /// Runs scans session by session and publishes groups while scanning (SPS-14).
+    let scanCoordinator: any ScanCoordinating
+    /// The scan of this app session, shared by every screen that shows it (SPS-14).
+    let scanViewModel: ScanViewModel
+
+    /// Similarity thresholds per Vision revision. Empty until the calibration spike on the labelled fixture set
+    /// (SPS-16): with no threshold, a scan stops with "not calibrated" instead of guessing.
+    static let clusteringConfig = ClusteringConfig(thresholds: [:])
 
     /// Builds every service once.
     init() {
@@ -51,7 +63,35 @@ final class AppContainer: ViewModelFactory {
         smartSelection = SmartSelectionUseCase()
         let sizeEstimator = PhotoKitAssetSizeEstimator()
         assetSizeEstimator = sizeEstimator
-        selectionStore = SelectionStore(sizes: sizeEstimator)
+        let selection = SelectionStore(sizes: sizeEstimator)
+        selectionStore = selection
+        let thermal = ProcessInfoThermalMonitor()
+        thermalMonitor = thermal
+        let results = FileClusterRepository()
+        clusterRepository = results
+        let coordinator = AnalysisCoordinator(
+            library: photoLibrary,
+            preparer: incrementalScanPreparer,
+            changeTracker: changeTracker,
+            cache: featurePrintCache,
+            featurePrints: featurePrintService,
+            segmenter: sessionSegmenter,
+            clustering: clusteringEngine,
+            clusteringConfig: Self.clusteringConfig,
+            qualityScorer: qualityScorer,
+            smartSelection: smartSelection,
+            thermalMonitor: thermal,
+            results: results
+        )
+        scanCoordinator = coordinator
+        let lifecycle = UIKitAppLifecycle()
+        scanViewModel = ScanViewModel(
+            coordinator: coordinator,
+            preferences: scopePreferencesStore,
+            selection: selection,
+            idleTimer: lifecycle,
+            backgroundTasks: lifecycle
+        )
     }
 
     /// A view model for the photo-library permission flow.

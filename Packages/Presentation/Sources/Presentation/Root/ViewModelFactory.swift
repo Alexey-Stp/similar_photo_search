@@ -19,6 +19,9 @@ public protocol ViewModelFactory: AnyObject, Sendable {
     /// The keep / delete choice of the current app session (SPS-18). One instance for the whole session, so
     /// overrides survive a rescan.
     var selectionStore: SelectionStore { get }
+
+    /// The scan of the current app session (SPS-14). One instance, so a running scan survives navigation.
+    var scanViewModel: ScanViewModel { get }
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

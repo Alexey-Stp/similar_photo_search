@@ -78,7 +78,7 @@ within 5 s on a 10k library; second launch with an unchanged library reaches clu
 |---|---|---|---|
 | [SPS-12](SPS-12.md) | Feature print extraction via Vision | Review | SPS-9 |
 | [SPS-13](SPS-13.md) | SwiftData feature print cache | Review | SPS-12 |
-| [SPS-14](SPS-14.md) | Analysis orchestrator: progress, cancellation, resume, thermal | To do | SPS-9, SPS-12, SPS-13, SPS-16, SPS-26 (SPS-10, SPS-17 when available) |
+| [SPS-14](SPS-14.md) | Analysis orchestrator: progress, cancellation, resume, thermal | Review | SPS-9, SPS-12, SPS-13, SPS-16, SPS-26 (SPS-10, SPS-17 when available) |
 
 ### Epic SPS-15 — Clustering and smart selection
 

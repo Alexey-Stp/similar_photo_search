@@ -76,3 +76,27 @@ Vision feature prints and performance numbers must be checked on a **physical de
 - User-facing strings go into `Localizable.xcstrings`. Every interactive view has VoiceOver labels and supports Dynamic Type and Dark Mode.
 - Logging via `os.Logger`; asset identifiers and any user data use `privacy: .private`.
 - Commit messages reference the ticket key, e.g. `SPS-12: add feature print service`.
+
+### SwiftLint limits (CI runs `swiftlint --strict`, so every warning fails the build)
+
+The defaults apply, and `--strict` turns their warning thresholds into hard limits. They count tests and
+`DomainTestSupport` too. Stay under them while writing. SwiftLint ships Windows builds (MSI/zip) since 0.64.0, so
+`swiftlint --strict` can run there too, within the limitations its release notes document; CI stays the final check.
+
+| Rule | Limit | How to stay under |
+|---|---|---|
+| `line_length` | 120 characters | Wrap arguments one per line; pull long expressions into a `let`. |
+| `file_length` | 400 lines | Split by responsibility: `Type+Feature.swift` extensions, one test suite per behaviour. |
+| `type_body_length` | 250 lines (any type, comments and blank lines excluded) | Move groups of methods into extensions in separate files (members they share become `internal`, not `private`). |
+| `function_body_length` | 50 lines | Extract named steps (`prepare…`, `make…`, `complete…`). |
+| `type_name` / `identifier_name` | at least 3 characters (`id` is allowed) | No `typealias F = …` or one-letter names; use `Fixture`, `index`, `asset`. |
+| `trailing_newline` | exactly one `\n` at the end of a file | Scripts that write files must end them with `\n` (`'\n'.join(lines)` doesn't). |
+
+Before pushing, check the new and changed Swift files (aim for ≤ 350 lines per file to leave room):
+
+```bash
+files=$( { git diff --name-only --diff-filter=d main...HEAD -- '*.swift'; git diff --name-only --diff-filter=d -- '*.swift';
+          git ls-files --others --exclude-standard -- '*.swift'; } | sort -u)
+[ -n "$files" ] && awk 'length > 120 {print FILENAME":"FNR}' $files   # lines over 120 characters
+[ -n "$files" ] && wc -l $files                                       # file lengths
+```

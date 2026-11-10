@@ -1,23 +1,39 @@
 import SwiftUI
 
-/// Main screen. Placeholder content until the scan ticket.
+/// Main screen: the scan controls (SPS-14) above a placeholder until SPS-20 builds the dashboard.
 /// Under limited access a persistent banner sits at the top.
 /// The toolbar's "Scan scope" button opens the scope sheet.
 struct HomeView: View {
     let viewModel: PermissionViewModel
+    @Environment(\.viewModelFactory) private var factory
+    @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingScope = false
 
     var body: some View {
         NavigationStack {
-            ContentUnavailableView {
-                Label {
-                    Text("home.empty.title", bundle: .module)
-                } icon: {
-                    Image(systemName: "square.on.square")
-                        .accessibilityHidden(true)
+            VStack(spacing: 16) {
+                if let scan = factory?.scanViewModel {
+                    ScanStatusSection(viewModel: scan)
+                        .padding(.horizontal)
                 }
-            } description: {
-                Text("home.empty.message", bundle: .module)
+                // "Scan your library" only before any scan: while scanning or after a scan, the section above shows
+                // progress or the result ("No similar photos found").
+                if factory?.scanViewModel.hasStartedScan != true {
+                    ContentUnavailableView {
+                        Label {
+                            Text("home.empty.title", bundle: .module)
+                        } icon: {
+                            Image(systemName: "square.on.square")
+                                .accessibilityHidden(true)
+                        }
+                    } description: {
+                        Text("home.empty.message", bundle: .module)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .onChange(of: scenePhase) { _, phase in
+                factory?.scanViewModel.scenePhaseChanged(to: phase)
             }
             .navigationTitle(Text("home.title", bundle: .module))
             .toolbar {

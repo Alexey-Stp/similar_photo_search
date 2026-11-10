@@ -66,3 +66,54 @@ iOS kills the app. `cancel()` during a half-done SwiftData save needs transactio
   cancellation). Store hits with `record.withQuality(measurement)` in the same session `upsert` as the prints (don't
   cache skipped or failed measurements), then rank each cluster with
   `QualityRanker().rank(members.mapValues { QualitySignals(measurement:asset:) })`, using the current `PhotoAsset`.
+
+## Implementation notes
+
+- **Where things live.** `AnalysisCoordinator` (Domain `actor`, `ScanCoordinating`) only manages runs; each scan is a
+  `ScanRun` actor, so `cancel()` and `excludeDeleted(_:)` never wait behind clustering. Pure Domain, so it is tested on
+  Windows/Linux. `ThermalMonitor` (Domain protocol) → `ProcessInfoThermalMonitor` (Data); `ClusterRepository` (Domain,
+  the name SPS-20 uses) → `FileClusterRepository` (Data, one JSON file in `Application Support/Results`, excluded from
+  backup, `.completeFileProtectionUntilFirstUserAuthentication`, whole file rewritten per `apply`, results batched every
+  20 sessions and at the end/cancel). `ScanViewModel` + `ScanStatusSection` (Presentation); `UIKitAppLifecycle` (app
+  target) implements the Presentation protocols `IdleTimerControlling` and `BackgroundTaskRunning`.
+- **API deviations from the hints.** `start(scope:sessionConfig:)` (the session config comes from `ScopePreferences`,
+  not from inside the coordinator) returns `ScanStreams`. `ClusterUpdate.added` carries **`[ClusterSelection]`**, not
+  `[SimilarityCluster]`: the coordinator runs `SmartSelectionUseCase` itself (it has the quality signals), so
+  `SelectionStore.upsert` takes the payload as is. `.removed` carries `[String]`; `.finished` has no payload (the final
+  `ScanProgress.phase` says done / cancelled / failed). `ScanPhase` adds `.failed(ScanFailure)`
+  (`missingThreshold(revision:)`, `libraryUnavailable`); `ScanProgress` adds `failed`, `conditions` and `clusterCount`.
+- **No delta expansion.** Every scan enumerates the whole scope (metadata only) and segments it; `SessionChangePlanner`
+  then marks each multi-photo session unchanged/changed against the stored fingerprints, as the SPS-10 notes suggest.
+  That covers "rebuild a session joined or grown by a new photo as a whole" without re-enumerating neighbours, and also
+  finds sessions that only lost photos.
+- **Stored results.** Only sessions of ≥ 2 photos are stored, also those with no cluster. Clusters are stored without a
+  keeper; every scan recomputes the suggestion from cached measurements and the current favorite flags. Results are keyed
+  by `ScanResultsKey` (session config + clustering config + feature-print revision): a change of any of them recomputes
+  every cluster (prints stay cached) and drops the old results. Every scan re-publishes **all** current groups, reused ones
+  too (same IDs, so `SelectionStore` keeps overrides). An ID published in a scan is never also removed in that scan.
+- **Throttling.** Width = `ScanConditions.recommendedConcurrency(fullConcurrency: 4)`: nominal/fair 4, Low Power 2,
+  serious 1, critical 0 = pause (phase `.throttled`; a cancel still ends it). The width is re-read before each new photo.
+  The UI shows "Paused to cool down" and a Low Power notice from `ScanProgress.conditions`.
+- **Persistence.** New prints are written every 200 photos of a session (`persistBatchSize`); the last batch goes in one
+  `upsert` with the quality measurements. On cancel or failure the work finished so far is upserted first. Cache and
+  repository write errors are ignored (they only cost a re-analysis). The change token is committed only after a
+  successful scan; an unusable history (preparer error) falls back to fingerprint-only comparison and does not commit.
+- **Progress.** `total` is `assetCount(scope:)` (an upper bound for overlapping albums, clamped to `processed`, set to
+  `processed` when done). Single-photo sessions, skips and undated photos count as processed. ETA is the average rate
+  since analysis began, so cached and single photos make the early estimate optimistic. Throttled by
+  `ScanProgressThrottle` (100 ms, phase and condition changes forced); the stream keeps only the newest snapshot.
+- **Lifecycle.** The idle timer is off only while `ScanStatusSection` is on screen and a scan runs. Going to the
+  background during a scan starts `beginBackgroundTask`; on expiry the scan is cancelled and the task ended inside the
+  handler. `BGProcessingTaskRequest` (optional) was **not** added, so Info.plist is unchanged.
+- **Thresholds.** `AppContainer.clusteringConfig` has **no threshold** (calibration spike still open, SPS-16), so on a
+  device every scan currently stops at the first session with two analysed photos and shows "not calibrated".
+- **Verified on Windows:** Domain tests (203, incl. `AnalysisCoordinatorTests` (20: publish order, single-photo skip,
+  resume from cache, reuse of unchanged sessions, removal of shrunk sessions, config change, cancel < 500 ms with saved
+  work, deleted-during-scan, serious/critical/Low Power throttling, batched saves, missing threshold) and
+  `ScanProgressTests`), `-warnings-as-errors`; `check-domain-imports.sh`, `check-concrete-construction.sh`,
+  `check-privacy-manifest.sh`; `FileClusterRepository` type-checked in a scratch package (Darwin-only calls stubbed).
+  **Not run (need macOS CI):** `Packages/Data` tests (`FileClusterRepositoryTests`, `ProcessInfoThermalMonitorTests`),
+  Presentation tests (`ScanViewModelTests`), the app build, SwiftLint.
+- **Device QA still open:** cancel latency with real Vision (≤ 500 ms), thermal throttling (Xcode ▸ Devices ▸ Condition
+  ▸ Thermal State), Low Power notice, background expiry stops cleanly, idle timer, kill mid-scan and relaunch (only the
+  rest is analysed), and the zero-network checklist over a full scan, which needs a calibrated threshold first.

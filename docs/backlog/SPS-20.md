@@ -35,3 +35,4 @@ Progress updates arriving too often cause re-render spam; honour the SPS-14 thro
 - Routes: `.clusters`, `.settings`, `.scope`. `ByteCountFormatter` for sizes.
 - Accessibility: progress announced via `.accessibilityValue`, rate-limited.
 - `#Preview`s for every state with mock data.
+- From SPS-14: `factory.scanViewModel` (one per app session) drives the scan (`startScan`, `cancelScan`, `progress`, `etaText`, `isPausedToCoolDown`, `isSlowedByLowPowerMode`, `errorText`, `groupCount`); `ScanStatusSection` is the stopgap UI to replace. Cached clusters at launch: `ClusterRepository.storedResults()` (clusters only, no suggestion; the next scan re-publishes them with suggestions under the same IDs). Skipped breakdown: `ScanProgress.skipped`. Nothing consumes `LibraryChangeObserving.changes()` yet: run `startScan()` on each event while Home is in the foreground. Until the threshold is calibrated every device scan ends in `.failed(.missingThreshold)`.
