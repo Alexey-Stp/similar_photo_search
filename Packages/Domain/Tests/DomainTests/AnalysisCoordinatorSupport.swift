@@ -42,6 +42,22 @@ enum ScanFixture {
 
     static let clusteringConfig = ClusteringConfig(thresholds: [revision: threshold])
 
+    /// Three two-photo sessions on three days (s3 newest) and one single photo on another day.
+    static let library: [PhotoAsset] = [
+        photo("s1-a", session: 1, second: 0), photo("s1-b", session: 1, second: 5),
+        photo("s2-a", session: 2, second: 0), photo("s2-b", session: 2, second: 5),
+        photo("s3-a", session: 3, second: 0), photo("s3-b", session: 3, second: 5),
+        photo("single", session: 5, second: 0)
+    ]
+
+    /// Each session's two photos show the same scene.
+    static let prints: [FeaturePrint] = [
+        print("s1-a", scene: 0), print("s1-b", scene: 0, jitter: 0.1),
+        print("s2-a", scene: 1), print("s2-b", scene: 1, jitter: 0.1),
+        print("s3-a", scene: 2), print("s3-b", scene: 2, jitter: 0.1),
+        print("single", scene: 3)
+    ]
+
     /// Collects both streams of a scan until they end.
     static func collect(_ streams: ScanStreams) async -> (updates: [ClusterUpdate], progress: [ScanProgress]) {
         async let updates: [ClusterUpdate] = {

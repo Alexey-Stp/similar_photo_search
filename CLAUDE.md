@@ -76,3 +76,19 @@ Vision feature prints and performance numbers must be checked on a **physical de
 - User-facing strings go into `Localizable.xcstrings`. Every interactive view has VoiceOver labels and supports Dynamic Type and Dark Mode.
 - Logging via `os.Logger`; asset identifiers and any user data use `privacy: .private`.
 - Commit messages reference the ticket key, e.g. `SPS-12: add feature print service`.
+
+### SwiftLint limits (CI runs `swiftlint --strict`, so every warning fails the build)
+
+The defaults apply, and `--strict` turns their warning thresholds into hard limits. They count tests and
+`DomainTestSupport` too. Stay under them while writing; SwiftLint doesn't run on Windows, so CI is the first check there.
+
+| Rule | Limit | How to stay under |
+|---|---|---|
+| `line_length` | 120 characters | Wrap arguments one per line; pull long expressions into a `let`. |
+| `file_length` | 400 lines | Split by responsibility: `Type+Feature.swift` extensions, one test suite per behaviour. |
+| `type_body_length` | 250 lines (any type, comments and blank lines excluded) | Move groups of methods into extensions in separate files (members they share become `internal`, not `private`). |
+| `function_body_length` | 50 lines | Extract named steps (`prepare…`, `make…`, `complete…`). |
+| `type_name` / `identifier_name` | at least 3 characters (`id` is allowed) | No `typealias F = …` or one-letter names; use `Fixture`, `index`, `asset`. |
+
+Before pushing, check new and changed Swift files: `awk 'length > 120 {print FILENAME":"FNR}'` and `wc -l` (aim for
+≤ 350 lines per file to leave room).
