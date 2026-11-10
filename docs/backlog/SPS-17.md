@@ -89,7 +89,7 @@ low-light photos mistakes noise for sharpness; use a light Gaussian pre-blur. Fa
   shared image loader and a `PhotoKitAssetEditInspector`.
 - Tests: `QualityRankerTests` and `AnalysisRecordTests` (Domain); `SharpnessMeterTests` (sharp vs blurred, flat,
   rotation, noise), `VisionQualityScorerTests` (mocks: outcomes, skips, failures, concurrency, cancellation),
-  cache round trip and V1 → V2 migration in `SwiftDataFeaturePrintCacheTests` (Data, macOS CI).
+  cache round trip in `SwiftDataFeaturePrintCacheTests` and V1 → V2 migration in `AnalysisMigrationTests` (Data, macOS CI).
 - **Device-only, still open:** `QualityScoringDeviceTests` on an iPhone: real Vision gives `faceQuality == nil` for
   a picture without faces (and aesthetics on iOS 18), and the mean per-image time is under 60 ms on an iPhone 13
   (`RUN_DEVICE_PERFORMANCE_TESTS=1`). Also open: tuning the weights on the labelled fixture set, like the threshold.
