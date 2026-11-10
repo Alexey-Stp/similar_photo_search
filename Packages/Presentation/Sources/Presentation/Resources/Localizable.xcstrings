@@ -476,6 +476,125 @@
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan Scope" } }
       }
+    },
+    "selection.deselectAll" : {
+      "comment" : "Button that keeps every photo in every group (nothing selected for deletion).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Deselect All" } }
+      }
+    },
+    "selection.deselectAll.hint" : {
+      "comment" : "VoiceOver hint for the Deselect All button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keeps every photo. Nothing will be deleted." } }
+      }
+    },
+    "selection.keepBest" : {
+      "comment" : "Badge on the photo suggested as the best one to keep in its group of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep (Best)" } }
+      }
+    },
+    "selection.reviewRecommended" : {
+      "comment" : "Badge on a group where the app could not clearly pick the best photo, so the user should look before deleting.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Review recommended" } }
+      }
+    },
+    "selection.smartSelectAll" : {
+      "comment" : "Button that resets every group to the suggested choice: keep the best photo, select the others for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart Select All" } }
+      }
+    },
+    "selection.smartSelectAll.hint" : {
+      "comment" : "VoiceOver hint for the Smart Select All button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keeps the best photo of each group and selects the others for deletion. Favorites are always kept." } }
+      }
+    },
+    "selection.summary %lld %@" : {
+      "comment" : "Shown before deletion. Argument 1 is the number of selected photos, argument 2 their estimated total size, for example 214 MB.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%#@photos@, about %2$@ will be deleted" },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg photo" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg photos" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "selection.summary.atLeast %lld %@" : {
+      "comment" : "Shown before deletion when the size of some photos is unknown. Argument 1 is the number of selected photos, argument 2 the known part of their size.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "%#@photos@, at least %2$@ will be deleted" },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg photo" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg photos" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "selection.summary.estimating %lld" : {
+      "comment" : "Shown before deletion while the size of the selected photos is being estimated. The argument is the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo will be deleted. Estimating size…" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos will be deleted. Estimating size…" } }
+            }
+          }
+        }
+      }
+    },
+    "selection.summary.none" : {
+      "comment" : "Shown in the selection bar when no photo is selected for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No photos selected" } }
+      }
+    },
+    "selection.summary.sizeUnavailable %lld" : {
+      "comment" : "Shown before deletion when the size of the selected photos is unknown. The argument is the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo will be deleted (size unavailable)" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos will be deleted (size unavailable)" } }
+            }
+          }
+        }
+      }
     }
   },
   "version" : "1.0"
