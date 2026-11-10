@@ -8,13 +8,23 @@ import SwiftUI
 /// Reads only the store's totals, so toggling a photo re-renders this bar and that photo's cluster, nothing else.
 public struct SelectionSummaryBar: View {
     private let store: SelectionStore
+    private let excluded: Set<String>
     private let onDelete: (() -> Void)?
 
     /// Creates the bar for a store.
-    /// - Parameter onDelete: Called by the delete button; without it the bar has no delete button.
-    public init(store: SelectionStore, onDelete: (() -> Void)? = nil) {
+    /// - Parameters:
+    ///   - excluding: Selected photos to leave out of the count and size (photos deleted outside the app).
+    ///   - onDelete: Called by the delete button; without it the bar has no delete button.
+    public init(store: SelectionStore, excluding: Set<String> = [], onDelete: (() -> Void)? = nil) {
         self.store = store
+        excluded = excluding
         self.onDelete = onDelete
+    }
+
+    /// What the bar shows. Reads `store.summary` first, so the bar also updates when sizes arrive.
+    private var summary: DeletionSummary {
+        let base = store.summary
+        return excluded.isEmpty ? base : store.summary(excluding: excluded)
     }
 
     /// "Delete 38 photos (214 MB)", or without the size while it is unknown.
@@ -26,9 +36,10 @@ public struct SelectionSummaryBar: View {
         return String(localized: "selection.delete \(summary.photoCount) \(size)", bundle: .module)
     }
 
+    /// The summary, the bulk actions and, with `onDelete`, the delete button.
     public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(store.summary.text)
+            Text(summary.text)
                 .font(.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityAddTraits(.updatesFrequently)
@@ -38,12 +49,12 @@ public struct SelectionSummaryBar: View {
             }
             if let onDelete {
                 Button(role: .destructive, action: onDelete) {
-                    Text(Self.deleteTitle(for: store.summary))
+                    Text(Self.deleteTitle(for: summary))
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.red)
-                .disabled(store.selectedCount == 0)
+                .disabled(summary.photoCount == 0)
                 .accessibilityHint(Text("selection.delete.hint", bundle: .module))
             }
         }

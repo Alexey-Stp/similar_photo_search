@@ -15,6 +15,7 @@ struct ClusterListScreen: View {
     @Environment(\.displayScale) private var displayScale
     @State private var topRowID: String?
 
+    /// The list with its bars, toolbar, dialog and lifecycle hooks.
     var body: some View {
         let scan = viewModel.scan
         list
@@ -26,7 +27,9 @@ struct ClusterListScreen: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            SelectionSummaryBar(store: scan.selection) { viewModel.requestDeletion() }
+            SelectionSummaryBar(store: scan.selection, excluding: viewModel.missingAssetIDs) {
+                viewModel.requestDeletion()
+            }
         }
         .confirmationDialog(
             Text("clusters.deleteAll.title", bundle: .module),
@@ -81,6 +84,7 @@ struct ClusterListScreen: View {
         }
     }
 
+    /// The card of one group; appearing moves the prefetch window.
     @ViewBuilder private func row(_ clusterID: String) -> some View {
         if let card = viewModel.card(for: clusterID), let state = viewModel.selection.state(for: clusterID) {
             ClusterCardView(
@@ -110,6 +114,7 @@ struct ClusterListScreen: View {
         }
     }
 
+    /// Presents the delete-all dialog while a group waits for it.
     private var deleteAllBinding: Binding<Bool> {
         Binding(
             get: { viewModel.pendingDeleteAllClusterID != nil },
@@ -122,6 +127,7 @@ struct ClusterListScreen: View {
 private struct ClusterListToolbar: ToolbarContent {
     @Bindable var viewModel: ClusterListViewModel
 
+    /// A menu with the filter and sort pickers.
     var body: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Menu {
@@ -155,6 +161,7 @@ private struct ScrollInteractionTracking: ViewModifier {
     let onChange: (Bool) -> Void
     @GestureState private var isDragging = false
 
+    /// Reports the interaction through `onChange`.
     func body(content: Content) -> some View {
         if #available(iOS 18.0, macOS 15.0, *) {
             content.onScrollPhaseChange { _, phase in

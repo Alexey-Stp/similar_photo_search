@@ -120,6 +120,7 @@ extension ClusterListViewModel {
 
     // MARK: - Private
 
+    /// Looks up dates and existence of these photos.
     private func loadMetadata(for ids: [String]) {
         guard !ids.isEmpty else { return }
         requestedMetadata.formUnion(ids)
@@ -130,6 +131,7 @@ extension ClusterListViewModel {
         })
     }
 
+    /// Stores the dates found and marks requested photos that were not found as missing.
     private func recordMetadata(_ found: [PhotoAsset], requested: [String]) {
         var dates = photoDates
         var missing = missingAssetIDs
@@ -147,6 +149,7 @@ extension ClusterListViewModel {
         }
     }
 
+    /// Estimates the file sizes of these photos.
     private func loadSizes(for ids: [String]) {
         guard !ids.isEmpty else { return }
         requestedSizes.formUnion(ids)
@@ -157,6 +160,7 @@ extension ClusterListViewModel {
         })
     }
 
+    /// Stores the sizes found (unavailable for the rest) and re-sorts if idle.
     private func recordSizes(_ found: [String: Int64], requested: [String]) {
         for id in requested {
             if let size = found[id], size >= 0 {
@@ -168,6 +172,7 @@ extension ClusterListViewModel {
         applySizeOrderIfIdle()
     }
 
+    /// The IDs without repeats, in their first order.
     private func unique(_ ids: [String]) -> [String] {
         var seen = Set<String>()
         return ids.filter { seen.insert($0).inserted }

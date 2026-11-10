@@ -1,6 +1,7 @@
 import Presentation
 import Testing
 
+/// Append-only row order with groups newer than every row on top.
 struct ClusterRowOrderTests {
     @Test func theFirstScanAppendsInPublishingOrder() {
         var order = ClusterRowOrder()

@@ -139,6 +139,7 @@ final class AppContainer: ViewModelFactory {
 private struct PhotoKitThumbnailBridge: ThumbnailLoading {
     let loader: PhotoKitThumbnailLoader
 
+    /// The Data stream mapped to `Thumbnail`; ending it cancels the request.
     func thumbnail(for assetID: String, pixelSize: CGSize) -> AsyncStream<Thumbnail> {
         let images = loader.thumbnail(for: assetID, size: pixelSize)
         return AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
@@ -152,14 +153,17 @@ private struct PhotoKitThumbnailBridge: ThumbnailLoading {
         }
     }
 
+    /// Forwards to the Data loader.
     func prefetch(_ assetIDs: [String], pixelSize: CGSize) async {
         await loader.prefetch(assetIDs, size: pixelSize)
     }
 
+    /// Forwards to the Data loader.
     func stopPrefetching(_ assetIDs: [String], pixelSize: CGSize) async {
         await loader.stopPrefetching(assetIDs, size: pixelSize)
     }
 
+    /// Forwards to the Data loader.
     func stopAllPrefetching() async {
         await loader.stopAllPrefetching()
     }

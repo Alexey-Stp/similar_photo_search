@@ -15,10 +15,12 @@ struct ClusterCardView: View, Equatable {
     let onToggle: (String) -> Void
     let onCompare: () -> Void
 
+    /// Equal when the content, the selection object and the size are; the closures are ignored.
     nonisolated static func == (lhs: ClusterCardView, rhs: ClusterCardView) -> Bool {
         lhs.card == rhs.card && lhs.state === rhs.state && lhs.pixelSize == rhs.pixelSize
     }
 
+    /// The header above the thumbnail strip.
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
@@ -36,6 +38,7 @@ struct ClusterCardView: View, Equatable {
         .accessibilityElement(children: .contain)
     }
 
+    /// Date, count and chips; tapping it opens the comparison.
     private var header: some View {
         Button(action: onCompare) {
             HStack(alignment: .firstTextBaseline) {
@@ -83,6 +86,7 @@ struct ClusterCardView: View, Equatable {
         }
     }
 
+    /// One thumbnail with its overlays, VoiceOver label and actions; tapping it toggles the photo.
     private func thumbnail(_ photo: ClusterCardModel.Photo, position: Int) -> some View {
         let isSelected = state.isSelected(photo.id)
         let isBest = state.keeperID == photo.id
@@ -130,6 +134,7 @@ struct ClusterCardView: View, Equatable {
 
 /// The "Best" badge on the suggested keeper.
 private struct BestBadge: View {
+    /// A green capsule with "Best".
     var body: some View {
         Text("clusters.badge.best", bundle: .module)
             .font(.caption2.weight(.semibold))
@@ -149,6 +154,7 @@ private struct ClusterChip: View {
     let systemImage: String
     let tint: Color
 
+    /// The icon and text in the tint colour.
     var body: some View {
         Label {
             text

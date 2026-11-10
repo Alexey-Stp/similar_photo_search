@@ -15,18 +15,22 @@ private final class FakeThumbnailCache: ThumbnailCaching, @unchecked Sendable {
     var stopped: [[String]] { locked { stoppedIDs } }
     var stopAllCalls: Int { locked { stopAllCount } }
 
+    /// Records the IDs.
     func startCaching(assetIDs: [String], targetSize: CGSize) {
         locked { startedIDs.append(assetIDs) }
     }
 
+    /// Records the IDs.
     func stopCaching(assetIDs: [String], targetSize: CGSize) {
         locked { stoppedIDs.append(assetIDs) }
     }
 
+    /// Counts the call.
     func stopCachingAll() {
         locked { stopAllCount += 1 }
     }
 
+    /// Runs `body` while holding the lock.
     private func locked<T>(_ body: () -> T) -> T {
         lock.lock()
         defer { lock.unlock() }
@@ -34,9 +38,11 @@ private final class FakeThumbnailCache: ThumbnailCaching, @unchecked Sendable {
     }
 }
 
+/// Streams, cancellation and the bounded prefetch window of `PhotoKitThumbnailLoader`.
 struct PhotoKitThumbnailLoaderTests {
     private let size = CGSize(width: 264, height: 264)
 
+    /// A first `.opportunistic` callback: a small image marked degraded.
     private func degraded() throws -> ImageRequestResult {
         var result = try ImageTestSupport.success()
         result.isDegraded = true

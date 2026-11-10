@@ -171,6 +171,7 @@ public final class ClusterListViewModel {
         applySizeOrder()
     }
 
+    /// Sorts by reclaimable size (unknown last), ties in row order. Does nothing under date sort.
     private func applySizeOrder() {
         guard sort == .reclaimableSize else { return }
         let order = displayOrder
@@ -190,6 +191,7 @@ public final class ClusterListViewModel {
         }
     }
 
+    /// Whether the group exists and passes the filter.
     private func matchesFilter(_ clusterID: String) -> Bool {
         guard let state = selection.state(for: clusterID) else { return false }
         switch filter {
@@ -220,9 +222,10 @@ public final class ClusterListViewModel {
         selection.confirmDeleteAll(clusterID)
     }
 
-    /// The bottom bar's delete button: records what is selected for the deletion flow (SPS-25). Nothing is deleted.
+    /// The bottom bar's delete button: records what is selected for the deletion flow (SPS-25), without photos
+    /// that no longer exist. Nothing is deleted.
     public func requestDeletion() {
-        let selected = selection.selectedAssetIDs
+        let selected = selection.selectedAssetIDs.filter { !missingAssetIDs.contains($0) }
         guard !selected.isEmpty else { return }
         deletionRequest = DeletionRequest(assetIDs: selected)
     }

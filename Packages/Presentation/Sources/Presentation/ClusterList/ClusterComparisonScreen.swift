@@ -9,6 +9,7 @@ struct ClusterComparisonScreen: View {
 
     @Environment(\.displayScale) private var displayScale
 
+    /// The group's photos one below the other, with the summary bar.
     var body: some View {
         ScrollView {
             if let card = viewModel.card(for: clusterID), let state = viewModel.selection.state(for: clusterID) {
@@ -26,6 +27,7 @@ struct ClusterComparisonScreen: View {
         }
     }
 
+    /// One large photo with its badges; tapping it toggles the photo.
     private func photoRow(
         _ photo: ClusterCardModel.Photo,
         position: Int,

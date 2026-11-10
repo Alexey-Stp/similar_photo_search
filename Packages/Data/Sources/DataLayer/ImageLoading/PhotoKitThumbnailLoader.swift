@@ -110,6 +110,7 @@ public actor PhotoKitThumbnailLoader {
         let width: Int
         let height: Int
 
+        /// The key of a size, rounded to whole pixels.
         init(_ size: CGSize) {
             width = Int(size.width.rounded())
             height = Int(size.height.rounded())
@@ -124,6 +125,7 @@ private final class PendingThumbnail: @unchecked Sendable {
     private var requestID: ImageRequestID?
     private var isCancelled = false
 
+    /// Creates the holder for one request of `requester`.
     init(requester: any ImageRequesting) {
         self.requester = requester
     }

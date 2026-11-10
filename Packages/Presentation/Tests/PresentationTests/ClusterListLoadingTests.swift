@@ -5,6 +5,7 @@ import Foundation
 @testable import Presentation
 import Testing
 
+/// Dates, missing photos, the prefetch window and the list's texts.
 @MainActor
 struct ClusterListLoadingTests {
     private typealias Harness = ClusterListHarness
@@ -37,6 +38,21 @@ struct ClusterListLoadingTests {
 
         harness.list.toggle("A2", in: "A1")
         #expect(harness.list.selection.isSelected("A2"), "A missing photo can't be toggled")
+        observing.cancel()
+    }
+
+    @Test func aDeleteRequestLeavesOutPhotosThatNoLongerExist() async {
+        let harness = Harness(photos: ["A1": 3_000, "A2": 2_000, "A3": 1_000])
+        await harness.scan.startScan()
+        await harness.publish([Harness.group(["A1", "A2", "A3"])])
+        let observing = Task { await harness.list.observeLibraryChanges() }
+        _ = await harness.eventually { harness.changes.changesCallCount == 1 }
+
+        await harness.library.setAssets([Harness.asset("A1", 3_000), Harness.asset("A2", 2_000)])
+        harness.changes.signal()
+        _ = await harness.eventually { harness.list.missingAssetIDs == ["A3"] }
+        harness.list.requestDeletion()
+        #expect(harness.list.deletionRequest?.assetIDs == ["A2"])
         observing.cancel()
     }
 

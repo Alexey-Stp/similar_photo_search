@@ -178,6 +178,17 @@ struct SelectionStoreTests {
 
     // MARK: - Summary
 
+    @Test func aSummaryCanLeaveOutPhotosThatNoLongerExist() async {
+        let (store, _) = makeStore(sizes: ["B": 1_000, "C": 2_000])
+        store.upsert([suggestion(["A", "B", "C"], delete: ["B", "C"])])
+        await store.waitForSizeEstimate()
+        let summary = store.summary(excluding: ["C"])
+        #expect(summary.photoCount == 1)
+        #expect(summary.estimatedBytes == 1_000)
+        #expect(store.summary(excluding: []) == store.summary)
+        #expect(store.summary.photoCount == 2, "The store's own total is unchanged")
+    }
+
     @Test func theSummaryAddsTheEstimatedSizesOfSelectedPhotos() async {
         let (store, estimator) = makeStore(sizes: ["B": 1_000, "C": 2_000, "E": 500])
         store.upsert([suggestion(["A", "B", "C"], delete: ["B", "C"]), suggestion(["D", "E"], delete: ["E"])])

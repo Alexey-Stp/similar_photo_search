@@ -14,6 +14,7 @@ struct AsyncThumbnail: View {
     @State private var thumbnail: Thumbnail?
     @State private var loadedID: String?
 
+    /// The image once loaded, a placeholder before that or when the photo is missing.
     var body: some View {
         ZStack {
             Rectangle()
@@ -34,6 +35,7 @@ struct AsyncThumbnail: View {
         }
     }
 
+    /// Restarts the load when the photo, the size or its availability changes.
     private struct LoadKey: Hashable {
         let assetID: String
         let width: CGFloat
@@ -41,6 +43,7 @@ struct AsyncThumbnail: View {
         let isMissing: Bool
     }
 
+    /// Shows each image the stream delivers; returns when it ends or is cancelled.
     private func load() async {
         if loadedID != assetID {
             thumbnail = nil

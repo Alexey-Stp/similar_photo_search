@@ -85,6 +85,13 @@ public final class SelectionStore {
         return result
     }
 
+    /// The summary of the selected photos except `excluded` (for example photos deleted outside the app, which
+    /// can't be deleted again). Equals `summary` when nothing is excluded.
+    public func summary(excluding excluded: Set<String>) -> DeletionSummary {
+        guard !excluded.isEmpty else { return summary }
+        return makeSummary(for: selectedAssetIDs.filter { !excluded.contains($0) })
+    }
+
     // MARK: - Clusters
 
     /// Adds clusters, or replaces those with the same ID. A cluster whose members equal those of a previous choice
@@ -263,7 +270,16 @@ public final class SelectionStore {
         updateSummary(for: selectedAssetIDs)
     }
 
+    /// Publishes the summary of `selected` if it changed.
     private func updateSummary(for selected: [String]) {
+        let new = makeSummary(for: selected)
+        if summary != new {
+            summary = new
+        }
+    }
+
+    /// The count and known size of `selected`, from the sizes estimated so far.
+    private func makeSummary(for selected: [String]) -> DeletionSummary {
         var bytes: Int64 = 0
         var unavailable = 0
         var pending = 0
@@ -276,14 +292,11 @@ public final class SelectionStore {
                 pending += 1
             }
         }
-        let new = DeletionSummary(
+        return DeletionSummary(
             photoCount: selected.count,
             knownBytes: bytes,
             unavailableCount: unavailable,
             pendingCount: pending
         )
-        if summary != new {
-            summary = new
-        }
     }
 }

@@ -21,10 +21,12 @@ final class MockThumbnailLoader: ThumbnailLoading, @unchecked Sendable {
     /// Pixel sizes passed to `prefetch`.
     var prefetchSizes: [CGSize] { locked { sizes } }
 
+    /// A stream that ends at once.
     func thumbnail(for assetID: String, pixelSize: CGSize) -> AsyncStream<Thumbnail> {
         AsyncStream { $0.finish() }
     }
 
+    /// Records the IDs and the size.
     func prefetch(_ assetIDs: [String], pixelSize: CGSize) async {
         locked {
             prefetchedIDs.append(assetIDs)
@@ -32,14 +34,17 @@ final class MockThumbnailLoader: ThumbnailLoading, @unchecked Sendable {
         }
     }
 
+    /// Records the IDs.
     func stopPrefetching(_ assetIDs: [String], pixelSize: CGSize) async {
         locked { stoppedIDs.append(assetIDs) }
     }
 
+    /// Counts the call.
     func stopAllPrefetching() async {
         locked { stopAllCount += 1 }
     }
 
+    /// Runs `body` while holding the lock.
     private func locked<T>(_ body: () -> T) -> T {
         lock.lock()
         defer { lock.unlock() }
@@ -50,8 +55,10 @@ final class MockThumbnailLoader: ThumbnailLoading, @unchecked Sendable {
 /// Idle timer and background tasks that do nothing.
 @MainActor
 final class ListTestLifecycle: IdleTimerControlling, BackgroundTaskRunning {
+    /// Does nothing.
     func setIdleTimerDisabled(_ disabled: Bool) {}
 
+    /// Grants no time.
     func beginBackgroundTask(
         named name: String,
         expiration: @escaping @MainActor @Sendable () -> Void
@@ -59,6 +66,7 @@ final class ListTestLifecycle: IdleTimerControlling, BackgroundTaskRunning {
         nil
     }
 
+    /// Does nothing.
     func endBackgroundTask(_ token: BackgroundTaskToken) {}
 }
 
@@ -107,6 +115,7 @@ struct ClusterListHarness {
         )
     }
 
+    /// A photo taken `seconds` after 1970.
     static func asset(_ id: String, _ seconds: TimeInterval) -> PhotoAsset {
         PhotoAsset(
             id: id,

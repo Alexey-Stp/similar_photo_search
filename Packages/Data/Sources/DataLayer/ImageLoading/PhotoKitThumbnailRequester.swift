@@ -106,6 +106,7 @@ public final class PhotoKitThumbnailRequester: ImageRequesting, ThumbnailCaching
         manager.stopCachingImagesForAllAssets()
     }
 
+    /// The assets with these identifiers that still exist, in PhotoKit order.
     private static func fetch(_ assetIDs: [String]) -> [PHAsset] {
         let result = PHAsset.fetchAssets(withLocalIdentifiers: assetIDs, options: nil)
         var assets: [PHAsset] = []

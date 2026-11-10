@@ -4,6 +4,7 @@ import Foundation
 import Presentation
 import Testing
 
+/// Live updates, filters, size sort and selection of the group list.
 @MainActor
 struct ClusterListViewModelTests {
     private typealias Harness = ClusterListHarness

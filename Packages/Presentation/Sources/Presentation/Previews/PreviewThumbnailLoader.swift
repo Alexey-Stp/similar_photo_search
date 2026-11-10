@@ -29,6 +29,7 @@ struct PreviewThumbnailLoader: ThumbnailLoading {
     /// Does nothing.
     func stopAllPrefetching() async {}
 
+    /// Renders the symbol of `assetID` into a square bitmap.
     @MainActor
     private static func render(assetID: String, pixelSize: CGSize) -> Thumbnail? {
         let index = assetID.unicodeScalars.reduce(0) { $0 + Int($1.value) } % symbols.count
