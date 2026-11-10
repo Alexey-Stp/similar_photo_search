@@ -27,12 +27,16 @@ public struct SelectionSummaryBar: View {
         return excluded.isEmpty ? base : store.summary(excluding: excluded)
     }
 
-    /// "Delete 38 photos (214 MB)", or without the size while it is unknown.
+    /// "Delete 38 photos (214 MB)"; "(at least 214 MB)" when some sizes are unavailable; without the size while
+    /// it is unknown.
     static func deleteTitle(for summary: DeletionSummary) -> String {
         guard let bytes = summary.estimatedBytes, summary.photoCount > 0 else {
             return String(localized: "selection.delete.noSize \(summary.photoCount)", bundle: .module)
         }
         let size = bytes.formatted(.byteCount(style: .file))
+        if summary.isLowerBound {
+            return String(localized: "selection.delete.atLeast \(summary.photoCount) \(size)", bundle: .module)
+        }
         return String(localized: "selection.delete \(summary.photoCount) \(size)", bundle: .module)
     }
 

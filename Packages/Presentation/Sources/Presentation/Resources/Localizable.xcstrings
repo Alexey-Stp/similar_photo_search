@@ -932,6 +932,27 @@
         }
       }
     },
+    "selection.delete.atLeast %lld %@" : {
+      "comment" : "Delete button in the bottom bar when the size of some selected photos is unknown. Argument 1 is the number of selected photos, argument 2 the known part of their size, for example 214 MB.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : { "state" : "translated", "value" : "Delete %#@photos@ (at least %2$@)" },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : { "stringUnit" : { "state" : "translated", "value" : "%arg photo" } },
+                  "other" : { "stringUnit" : { "state" : "translated", "value" : "%arg photos" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "selection.delete.hint" : {
       "comment" : "VoiceOver hint of the delete button.",
       "extractionState" : "manual",

@@ -107,6 +107,9 @@ struct ClusterListLoadingTests {
     @Test func theDeleteButtonNamesCountAndSize() {
         let known = DeletionSummary(photoCount: 3, knownBytes: 3_000_000, unavailableCount: 0, pendingCount: 0)
         #expect(SelectionSummaryBar.deleteTitle(for: known).hasPrefix("Delete 3 photos ("))
+        #expect(!SelectionSummaryBar.deleteTitle(for: known).contains("at least"))
+        let partial = DeletionSummary(photoCount: 2, knownBytes: 1_000_000, unavailableCount: 1, pendingCount: 0)
+        #expect(SelectionSummaryBar.deleteTitle(for: partial).hasPrefix("Delete 2 photos (at least "))
         let estimating = DeletionSummary(photoCount: 1, knownBytes: 0, unavailableCount: 0, pendingCount: 1)
         #expect(SelectionSummaryBar.deleteTitle(for: estimating) == "Delete 1 photo")
         #expect(SelectionSummaryBar.deleteTitle(for: .empty) == "Delete 0 photos")
