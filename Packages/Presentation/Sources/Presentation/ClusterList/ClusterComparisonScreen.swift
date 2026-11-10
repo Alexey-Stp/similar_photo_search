@@ -76,9 +76,8 @@ struct ClusterComparisonScreen: View {
             position: position,
             count: count,
             dateText: photo.date.map(ClusterCardModel.photoDateText),
-            isSelected: isSelected,
-            isBest: isBest,
-            isMissing: photo.isMissing
+            status: ClusterCardModel.PhotoStatus(isSelected: isSelected, isMissing: photo.isMissing),
+            isBest: isBest
         ))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityHint(Text("clusters.action.toggle", bundle: .module))

@@ -53,31 +53,49 @@ public struct ClusterCardModel: Hashable, Sendable, Identifiable {
         date.formatted(.dateTime.day().month(.abbreviated).hour().minute())
     }
 
+    /// What will happen to a photo, as VoiceOver reads it.
+    public enum PhotoStatus: Sendable, Hashable {
+        /// The photo is kept.
+        case kept
+        /// The photo is selected for deletion.
+        case selected
+        /// The photo no longer exists in the library.
+        case missing
+
+        /// The status of a photo from its selection and availability; a missing photo is never selected.
+        public init(isSelected: Bool, isMissing: Bool) {
+            if isMissing {
+                self = .missing
+            } else {
+                self = isSelected ? .selected : .kept
+            }
+        }
+    }
+
     /// The VoiceOver label of a thumbnail: "Photo 2 of 5, taken 12 May 14:03, selected for deletion, Best shot".
     /// - Parameters:
     ///   - position: 1-based position in the group.
     ///   - count: Number of photos in the group.
     ///   - dateText: The formatted date (`photoDateText(_:)`), or `nil` if unknown.
-    ///   - isSelected: Whether the photo is selected for deletion.
+    ///   - status: Kept, selected for deletion, or missing.
     ///   - isBest: Whether it is the suggested keeper.
-    ///   - isMissing: Whether the photo no longer exists.
     public static func photoAccessibilityLabel(
         position: Int,
         count: Int,
         dateText: String?,
-        isSelected: Bool,
-        isBest: Bool,
-        isMissing: Bool
+        status: PhotoStatus,
+        isBest: Bool
     ) -> String {
         var parts = [String(localized: "clusters.photo.position \(position) \(count)", bundle: .module)]
         if let dateText {
             parts.append(String(localized: "clusters.photo.taken \(dateText)", bundle: .module))
         }
-        if isMissing {
+        switch status {
+        case .missing:
             parts.append(String(localized: "clusters.photo.unavailable", bundle: .module))
-        } else if isSelected {
+        case .selected:
             parts.append(String(localized: "clusters.photo.selected", bundle: .module))
-        } else {
+        case .kept:
             parts.append(String(localized: "clusters.photo.kept", bundle: .module))
         }
         if isBest {

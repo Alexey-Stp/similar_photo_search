@@ -73,9 +73,8 @@ struct ClusterListLoadingTests {
             position: 2,
             count: 5,
             dateText: "12 May 14:03",
-            isSelected: true,
-            isBest: true,
-            isMissing: false
+            status: .selected,
+            isBest: true
         )
         #expect(label == "Photo 2 of 5, taken 12 May 14:03, selected for deletion, Best shot")
 
@@ -83,9 +82,8 @@ struct ClusterListLoadingTests {
             position: 1,
             count: 2,
             dateText: nil,
-            isSelected: false,
-            isBest: false,
-            isMissing: false
+            status: .kept,
+            isBest: false
         )
         #expect(kept == "Photo 1 of 2, kept")
     }
