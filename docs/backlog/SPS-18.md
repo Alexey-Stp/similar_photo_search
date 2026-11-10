@@ -36,3 +36,4 @@ Deleting a photo the user wanted is the worst possible outcome, so be conservati
   off-main, optional), `isKept(assetID)`, overrides kept across re-cluster when member IDs are equal.
 - Reads must be scoped per cell (fine-grained `@Observable` properties), or every thumbnail re-renders on each toggle (SPS-21).
 - Tests: favorites never selected, tie handling, invariant enforcement, override preservation.
+- From SPS-16: `SimilarityCluster` is immutable, with `id: String` (the newest member's ID, the same for the same members), `isExactDuplicate` and `averageDistance`; set `suggestedKeeperID` by creating a copy with the same `id`. Members arrive in library order (newest first), not ranked.

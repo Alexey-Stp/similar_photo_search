@@ -57,3 +57,37 @@ small, a real series is split and never compared.
   Performance test with a 500-item session of random 768-dim vectors.
 - From SPS-26: `PhotoSession.assets` arrive newest first (`PhotoAsset.libraryOrder`), not oldest first; sort as needed and keep the determinism rule.
 - From SPS-12: use `VectorMath.euclideanDistanceSquared` (Domain/Clustering, vDSP) for the hot loop; it is checked against Vision's `computeDistance`.
+
+## Implementation notes
+
+- **The engine lives in Domain**, not Data: `UnionFindClusteringEngine` is a stateless `struct` in
+  `Domain/Clustering/` (the only Domain folder allowed to import Accelerate; it uses `VectorMath`, so it also builds and
+  is tested on Linux/Windows). The Data placeholder was removed. `AppContainer` still constructs it; the
+  `ClusteringEngine` protocol stays for mocks (`MockClusteringEngine`, now a lock-guarded class that records `calls` and
+  can throw).
+- **Contract:** `clusters(in: [VectorItem], config: ClusteringConfig) throws(ClusteringError) -> [SimilarityCluster]`,
+  synchronous. `VectorItem(asset:featurePrint:)` builds an item (nil without a `creationDate` or for another photo's
+  print). Items are deduplicated by ID and partitioned by **revision and vector length**; input order does not matter.
+- **The threshold is keyed by revision** (`ClusteringConfig.thresholds: [Int: Float]`) and has **no default**: no
+  labelled set exists yet, and a guessed number would be the single most important product parameter. A partition of
+  two or more items whose revision has no threshold throws `ClusteringError.missingThreshold(revision:)`, so a missing
+  calibration is never a silent "no duplicates found". The Strict / Balanced / Relaxed setting from the risks is not
+  built: it needs calibrated values per revision first.
+- Other parameters (defaults): `maxPairInterval` 60 min (inclusive), `maxChainSize` 12, `burstSlack` 1.1,
+  `chainLinkageSlack` 1.15, `exactDuplicateDistance` 1e-4 (float noise only).
+- **Chaining guard:** components larger than `maxChainSize` are re-clustered with agglomerative complete linkage (closest
+  pair first, first pair in date/ID order on ties) while every pair stays within `chainLinkageSlack` × its threshold
+  (× `burstSlack` too for burst pairs). Every pair counts there, also pairs further apart in time than
+  `maxPairInterval`, so a long series of the same scene can be split. A component whose pairs are all within the slack
+  is kept whole without agglomeration (O(k²)); otherwise it is O(k³) comparisons, acceptable for session-sized input.
+- **`SimilarityCluster` changed:** `id` is now a `String` (default: the newest member's ID, unique within a scan and
+  equal for equal input) instead of a random `UUID`, so results are deterministic and comparable. Added
+  `averageDistance` (mean over all member pairs; only comparable within one revision) and `isExactDuplicate` (all pairs
+  within `exactDuplicateDistance`). Members are in `PhotoAsset.libraryOrder`; clusters newest first, ties by ID.
+- Performance tests (`ClusteringPerformanceTests`, 500-photo session < 200 ms, 20k library in sessions < 3 s) are
+  device-only (`RUN_DEVICE_PERFORMANCE_TESTS=1`). On Windows, in a debug build without vDSP, the 500-photo session took
+  1.06 s and the 20k library passed, so the numbers mean nothing until they run on a device.
+- **Still open:** both performance tests on an iPhone 13; the calibration spike (labelled fixture set → threshold for
+  revision 2, then Strict / Balanced / Relaxed); `swift test` for `Packages/Data` (the placeholder-conformance test
+  changed), the app build and SwiftLint, which need macOS. Verified here: Domain tests on Windows (Swift 6.4.2,
+  `-warnings-as-errors`), `check-domain-imports.sh`, `check-concrete-construction.sh`.
