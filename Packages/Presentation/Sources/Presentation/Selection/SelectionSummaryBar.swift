@@ -2,15 +2,28 @@ import Domain
 import SwiftUI
 
 /// Bottom bar with the global "Smart Select All" and "Deselect All" actions and what would be deleted right now
-/// ("38 photos, about 214 MB will be deleted"). It never deletes anything itself; the delete button comes with SPS-25.
+/// ("38 photos, about 214 MB will be deleted"), and with `onDelete` the "Delete N photos (X MB)" button, disabled
+/// while nothing is selected. It never deletes anything itself: `onDelete` starts the deletion flow (SPS-25).
 ///
 /// Reads only the store's totals, so toggling a photo re-renders this bar and that photo's cluster, nothing else.
 public struct SelectionSummaryBar: View {
     private let store: SelectionStore
+    private let onDelete: (() -> Void)?
 
     /// Creates the bar for a store.
-    public init(store: SelectionStore) {
+    /// - Parameter onDelete: Called by the delete button; without it the bar has no delete button.
+    public init(store: SelectionStore, onDelete: (() -> Void)? = nil) {
         self.store = store
+        self.onDelete = onDelete
+    }
+
+    /// "Delete 38 photos (214 MB)", or without the size while it is unknown.
+    static func deleteTitle(for summary: DeletionSummary) -> String {
+        guard let bytes = summary.estimatedBytes, summary.photoCount > 0 else {
+            return String(localized: "selection.delete.noSize \(summary.photoCount)", bundle: .module)
+        }
+        let size = bytes.formatted(.byteCount(style: .file))
+        return String(localized: "selection.delete \(summary.photoCount) \(size)", bundle: .module)
     }
 
     public var body: some View {
@@ -22,6 +35,16 @@ public struct SelectionSummaryBar: View {
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 12) { buttons }
                 VStack(alignment: .leading, spacing: 8) { buttons }
+            }
+            if let onDelete {
+                Button(role: .destructive, action: onDelete) {
+                    Text(Self.deleteTitle(for: store.summary))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .disabled(store.selectedCount == 0)
+                .accessibilityHint(Text("selection.delete.hint", bundle: .module))
             }
         }
         .padding()
@@ -51,7 +74,11 @@ public struct SelectionSummaryBar: View {
 
 #if DEBUG
 #Preview("Light") {
-    SelectionSummaryBar(store: .preview())
+    SelectionSummaryBar(store: .preview()) {}
+}
+
+#Preview("Nothing selected") {
+    SelectionSummaryBar(store: .empty()) {}
 }
 
 #Preview("Dark") {

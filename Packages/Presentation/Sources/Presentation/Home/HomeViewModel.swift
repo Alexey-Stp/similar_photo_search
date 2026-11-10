@@ -5,8 +5,10 @@ import SwiftUI
 
 /// Screens pushed from Home.
 public enum HomeRoute: Hashable, Sendable {
-    /// The groups of similar photos (SPS-21 builds the full list).
+    /// The groups of similar photos.
     case clusters
+    /// The comparison of one group's photos (SPS-22 builds the full screen).
+    case comparison(clusterID: String)
 }
 
 /// The home dashboard: which state to show, the results summary, and when to scan.
@@ -115,7 +117,7 @@ public final class HomeViewModel {
         // The user may have started a scan while the results were loading: that scan publishes them itself.
         guard !stored.isEmpty, !scan.hasStartedScan, scan.selection.clusterIDs.isEmpty else { return }
         hasStoredResults = true
-        scan.selection.upsert(StoredSessionResult.launchSelections(from: stored))
+        scan.showStoredResults(StoredSessionResult.launchSelections(from: stored))
         await startScan(silently: true)
     }
 
@@ -134,6 +136,12 @@ public final class HomeViewModel {
     public func review() {
         guard path.last != .clusters else { return }
         path.append(.clusters)
+    }
+
+    /// Opens the comparison of one group (the header of its card, or the VoiceOver action "Compare").
+    public func compare(clusterID: String) {
+        guard path.last != .comparison(clusterID: clusterID) else { return }
+        path.append(.comparison(clusterID: clusterID))
     }
 
     /// Follows the scene phase (background time for the scan, library changes made in the background).

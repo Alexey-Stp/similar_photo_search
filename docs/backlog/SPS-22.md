@@ -36,3 +36,4 @@ pixels. Synchronized gestures are fiddly; test with VoiceOver and Reduce Motion.
 - Keep only current ±1 full-size images in memory.
 - Accessibility: zoom via `accessibilityZoomAction`, labels on all buttons. Previews.
 - From SPS-18: `SelectionStore` has no "Mark as Best" or "Keep this one" yet; add them there (keeping the at-least-one-kept invariant and override recording) instead of toggling member by member. Reasons come from `ClusterSelection.ranking`.
+- From SPS-21: open from `HomeRoute.comparison(clusterID:)` (`HomeViewModel.compare(clusterID:)`, called by the card header and the VoiceOver action "Compare"); replace the interim `ClusterComparisonScreen` (ClusterList/). `ClusterListViewModel` has the members' dates and missing photos (`card(for:)`), `toggle(_:in:)` with the delete-all confirmation, and the thumbnail loader (`ThumbnailLoading`, for the filmstrip and the "high-quality local thumbnail" fallback).

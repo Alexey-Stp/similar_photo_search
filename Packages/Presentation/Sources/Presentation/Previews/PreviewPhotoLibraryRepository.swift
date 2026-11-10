@@ -23,6 +23,21 @@ struct PreviewPhotoLibraryRepository: PhotoLibraryRepository {
     /// Returns `albumList`.
     func albums() async -> [AlbumSummary] { albumList }
 
+    /// One photo per ID, taken a minute apart (newest first), so cards and VoiceOver labels have dates.
+    func assets(withIDs assetIDs: [String]) async -> [PhotoAsset] {
+        let newest = Date(timeIntervalSince1970: 1_780_000_000)
+        return assetIDs.enumerated().map { index, id in
+            PhotoAsset(
+                id: id,
+                creationDate: newest.addingTimeInterval(TimeInterval(-60 * index)),
+                pixelWidth: 4_032,
+                pixelHeight: 3_024,
+                isFavorite: false,
+                mediaSubtypes: []
+            )
+        }
+    }
+
     /// A typical small library with smart and user albums.
     static let sample = PreviewPhotoLibraryRepository(
         albumList: [

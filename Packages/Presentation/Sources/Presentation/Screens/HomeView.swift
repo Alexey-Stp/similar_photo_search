@@ -20,6 +20,7 @@ struct HomeView: View {
 struct HomeDashboard: View {
     @Bindable var home: HomeViewModel
     let permission: PermissionViewModel
+    @Environment(\.viewModelFactory) private var factory
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingScope = false
     @State private var isShowingSkipped = false
@@ -46,7 +47,13 @@ struct HomeDashboard: View {
             .navigationDestination(for: HomeRoute.self) { route in
                 switch route {
                 case .clusters:
-                    ClusterListScreen(scan: home.scan)
+                    if let list = factory?.clusterListViewModel {
+                        ClusterListScreen(viewModel: list) { home.compare(clusterID: $0) }
+                    }
+                case .comparison(let clusterID):
+                    if let list = factory?.clusterListViewModel {
+                        ClusterComparisonScreen(viewModel: list, clusterID: clusterID)
+                    }
                 }
             }
             .toolbar { scopeButton }

@@ -26,6 +26,10 @@ public protocol ViewModelFactory: AnyObject, Sendable {
     /// The home dashboard of the current app session (SPS-20). One instance, so the stored results are loaded and
     /// the launch scan is started once.
     var homeViewModel: HomeViewModel { get }
+
+    /// The group list of the current app session (SPS-21). One instance, so filter, sort and the looked-up dates
+    /// and sizes survive navigation.
+    var clusterListViewModel: ClusterListViewModel { get }
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

@@ -101,6 +101,20 @@ final class MockImageRequester: ImageRequesting, @unchecked Sendable {
         return request.assetID
     }
 
+    /// Calls the oldest held request's handler but keeps it held, like the first (degraded) `.opportunistic`
+    /// callback. Returns its asset ID, or `nil` if none is held.
+    @discardableResult
+    func answerFirstHeld(with result: ImageRequestResult) -> String? {
+        lock.lock()
+        guard let request = held.first else {
+            lock.unlock()
+            return nil
+        }
+        lock.unlock()
+        request.handler(result)
+        return request.assetID
+    }
+
     /// Answers every held request, for example to deliver late callbacks after a cancellation.
     func releaseAllHeld(with result: ImageRequestResult) {
         lock.lock()

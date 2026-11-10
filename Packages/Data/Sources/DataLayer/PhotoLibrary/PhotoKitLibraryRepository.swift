@@ -54,6 +54,33 @@ public final class PhotoKitLibraryRepository: PhotoLibraryRepository {
         return summaries
     }
 
+    /// The photos with these IDs that still exist, in `PhotoAsset.libraryOrder`. Fetched in batches of
+    /// `idBatchSize`, each in its own `autoreleasepool`; burst members are included, hidden photos are not.
+    public func assets(withIDs assetIDs: [String]) async -> [PhotoAsset] {
+        var seen = Set<String>()
+        let ids = assetIDs.filter { seen.insert($0).inserted }
+        let options = PHFetchOptions()
+        options.predicate = NSPredicate(format: "mediaType == %@", NSNumber(value: PHAssetMediaType.image.rawValue))
+        options.includeHiddenAssets = false
+        options.includeAllBurstAssets = true
+        var found: [PhotoAsset] = []
+        var start = 0
+        while start < ids.count {
+            let batch = Array(ids[start..<min(start + Self.idBatchSize, ids.count)])
+            autoreleasepool {
+                let result = PHAsset.fetchAssets(withLocalIdentifiers: batch, options: options)
+                result.enumerateObjects { asset, _, _ in
+                    found.append(PhotoKitAssetMapper.asset(from: asset))
+                }
+            }
+            start += Self.idBatchSize
+        }
+        return found.sorted(by: PhotoAsset.libraryOrder)
+    }
+
+    /// How many identifiers `assets(withIDs:)` passes to one `PHAsset.fetchAssets` call.
+    static let idBatchSize = 500
+
     /// One fetch result per selected album, or one for the whole library.
     private static func fetchResults(for scope: ScanScope) -> [PHFetchResult<PHAsset>] {
         let options = PhotoKitFetchOptions.make(scope: scope)

@@ -25,4 +25,10 @@ public protocol PhotoLibraryRepository: Sendable {
 
     /// Albums the user can choose as scan scope: Favorites, Recents, Selfies, Portrait and the user's own albums.
     func albums() async -> [AlbumSummary]
+
+    /// The photos with these `localIdentifier`s that still exist, in `PhotoAsset.libraryOrder`, each once.
+    ///
+    /// Burst members are found too. A photo that was deleted (or is hidden, or no longer shared under limited
+    /// access) is missing from the result, so callers can tell which of their IDs are gone.
+    func assets(withIDs assetIDs: [String]) async -> [PhotoAsset]
 }
