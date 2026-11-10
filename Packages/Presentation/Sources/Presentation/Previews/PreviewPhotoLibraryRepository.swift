@@ -53,7 +53,7 @@ extension ScopeSelectionViewModel {
     ) -> ScopeSelectionViewModel {
         ScopeSelectionViewModel(
             library: PreviewPhotoLibraryRepository.sample,
-            permissions: PreviewPermissionService(status: .authorized, photoCount: 0),
+            permissions: PreviewPermissionService(status: .authorized),
             store: PreviewScopePreferencesStore(preferences: preferences)
         )
     }

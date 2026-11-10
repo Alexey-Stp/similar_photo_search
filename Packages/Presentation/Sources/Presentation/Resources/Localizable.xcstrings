@@ -1,18 +1,130 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "home.empty.message" : {
-      "comment" : "Home screen placeholder description.",
+    "clusters.row.photos %lld" : {
+      "comment" : "Group list row: the number of photos in a group.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan your library to find similar photos." } }
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos" } }
+            }
+          }
+        }
       }
     },
-    "home.empty.title" : {
-      "comment" : "Home screen placeholder title.",
+    "clusters.row.selected %lld" : {
+      "comment" : "Group list row: the number of photos of the group selected for deletion.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "No similar photos yet" } }
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld selected for deletion" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld selected for deletion" } }
+            }
+          }
+        }
+      }
+    },
+    "clusters.title" : {
+      "comment" : "Navigation title of the list of groups of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar Groups" } }
+      }
+    },
+    "home.empty.message" : {
+      "comment" : "Home, after a scan that found nothing: explanation.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "None of the photos in this scope look alike. Pull down to scan again." } }
+      }
+    },
+    "home.idle.message" : {
+      "comment" : "Home, never scanned: what a scan does.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan your library to find groups of near-duplicate shots. Everything happens on this iPhone." } }
+      }
+    },
+    "home.idle.title" : {
+      "comment" : "Home, never scanned: title.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Find similar photos" } }
+      }
+    },
+    "home.photosInGroups %lld" : {
+      "comment" : "Home results: the number of photos in all groups.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo in these groups" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos in these groups" } }
+            }
+          }
+        }
+      }
+    },
+    "home.reclaimable %@" : {
+      "comment" : "Home results: estimated size of the photos selected for deletion. The argument is a size such as \"214 MB\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "About %@ can be freed" } }
+      }
+    },
+    "home.reclaimable.atLeast %@" : {
+      "comment" : "Home results: lower bound of the size that can be freed, when some sizes are unknown. The argument is a size such as \"214 MB\".",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "At least %@ can be freed" } }
+      }
+    },
+    "home.retry" : {
+      "comment" : "Home button after a failed scan: scans again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Try Again" } }
+      }
+    },
+    "home.review" : {
+      "comment" : "Home button after a scan: opens the groups of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Review" } }
+      }
+    },
+    "home.review.hint" : {
+      "comment" : "VoiceOver hint for the Home Review button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens the groups of similar photos." } }
+      }
+    },
+    "home.reviewNow" : {
+      "comment" : "Home button while scanning: opens the groups found so far.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Review Now" } }
+      }
+    },
+    "home.reviewNow.hint" : {
+      "comment" : "VoiceOver hint for the Review Now button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens the groups found so far. The scan keeps running." } }
+      }
+    },
+    "home.scanAgain" : {
+      "comment" : "Home button after a scan that found nothing: scans again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan Again" } }
       }
     },
     "home.scope" : {
@@ -27,6 +139,41 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose which albums and dates to scan." } }
+      }
+    },
+    "home.skipped %lld" : {
+      "comment" : "Home: tappable line with the number of photos the scan left out.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo skipped" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos skipped" } }
+            }
+          }
+        }
+      }
+    },
+    "home.skipped.hint" : {
+      "comment" : "VoiceOver hint for the skipped photos line on Home.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Explains why these photos were not checked." } }
+      }
+    },
+    "home.skipped.iCloud %lld" : {
+      "comment" : "Home: tappable line when every skipped photo is stored only in iCloud. The argument is the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : { "stringUnit" : { "state" : "translated", "value" : "%lld photo skipped (stored only in iCloud)" } },
+              "other" : { "stringUnit" : { "state" : "translated", "value" : "%lld photos skipped (stored only in iCloud)" } }
+            }
+          }
+        }
       }
     },
     "home.title" : {
@@ -720,6 +867,83 @@
             }
           }
         }
+      }
+    },
+    "skipped.decodeFailed.detail" : {
+      "comment" : "Skipped photos sheet: explains photos that could not be decoded.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The image file could not be opened, for example because it is damaged or in a format the app can't read." } }
+      }
+    },
+    "skipped.decodeFailed.title" : {
+      "comment" : "Skipped photos sheet: reason title for photos that could not be decoded.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not be read" } }
+      }
+    },
+    "skipped.done" : {
+      "comment" : "Button that closes the skipped photos sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } }
+      }
+    },
+    "skipped.footer" : {
+      "comment" : "Footer of the skipped photos sheet.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "SimilarPhotos only checks photos that are stored on this iPhone. It never uses the network." } }
+      }
+    },
+    "skipped.iCloudOnly.detail" : {
+      "comment" : "Skipped photos sheet: explains iCloud-only photos and what the user can do.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The full-size original is in iCloud, not on this iPhone. SimilarPhotos never downloads anything from the network, so it can't check these photos. To include them, choose Download and Keep Originals in Settings > Photos, then scan again." } }
+      }
+    },
+    "skipped.iCloudOnly.title" : {
+      "comment" : "Skipped photos sheet: reason title for photos whose original is only in iCloud.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Stored only in iCloud" } }
+      }
+    },
+    "skipped.noDate.detail" : {
+      "comment" : "Skipped photos sheet: explains why photos without a date are not compared.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Similar photos are found among shots taken close together in time. These photos have no capture date, so they can't be compared." } }
+      }
+    },
+    "skipped.noDate.title" : {
+      "comment" : "Skipped photos sheet: reason title for photos without a capture date.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No date" } }
+      }
+    },
+    "skipped.notFound.detail" : {
+      "comment" : "Skipped photos sheet: explains photos that disappeared during the scan.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "These photos were deleted or hidden while the scan was running." } }
+      }
+    },
+    "skipped.notFound.title" : {
+      "comment" : "Skipped photos sheet: reason title for photos deleted during the scan.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No longer in the library" } }
+      }
+    },
+    "skipped.title" : {
+      "comment" : "Title of the sheet that explains skipped photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Skipped Photos" } }
       }
     }
   },

@@ -1,5 +1,6 @@
 import Domain
 import DomainTestSupport
+import Foundation
 import Presentation
 import Testing
 
@@ -7,9 +8,28 @@ import Testing
 struct PermissionViewModelTests {
     private func makeViewModel(
         _ service: MockPhotoPermissionService,
+        library: MockPhotoLibraryRepository = MockPhotoLibraryRepository(),
         openSettings: @escaping @MainActor () -> Void = {}
     ) -> PermissionViewModel {
-        PermissionViewModel(permissions: service, openSettings: openSettings)
+        PermissionViewModel(permissions: service, library: library, openSettings: openSettings)
+    }
+
+    /// A library of `count` photos; one of them is a screenshot, which the banner counts too.
+    private func makeLibrary(photoCount count: Int) -> MockPhotoLibraryRepository {
+        MockPhotoLibraryRepository(assets: photos(count))
+    }
+
+    private func photos(_ count: Int) -> [PhotoAsset] {
+        (0..<count).map { index in
+            PhotoAsset(
+                id: "P\(index)",
+                creationDate: Date(timeIntervalSince1970: TimeInterval(index)),
+                pixelWidth: 100,
+                pixelHeight: 100,
+                isFavorite: false,
+                mediaSubtypes: index == 0 ? [.screenshot] : []
+            )
+        }
     }
 
     @Test(arguments: [
@@ -37,10 +57,11 @@ struct PermissionViewModelTests {
 
     @Test func startsWithUnknownRouteWithoutTouchingTheLibrary() async {
         let service = MockPhotoPermissionService(status: .authorized)
-        let viewModel = makeViewModel(service)
+        let library = MockPhotoLibraryRepository()
+        let viewModel = makeViewModel(service, library: library)
         #expect(viewModel.route(hasCompletedOnboarding: true) == nil)
         #expect(await service.requestAccessCallCount == 0)
-        #expect(await service.photoCountCallCount == 0)
+        #expect(await library.assetCountCallCount == 0)
     }
 
     @Test(arguments: [
@@ -68,8 +89,8 @@ struct PermissionViewModelTests {
     }
 
     @Test func refreshFromFullToLimitedLoadsCount() async {
-        let service = MockPhotoPermissionService(status: .authorized, photoCount: 12)
-        let viewModel = makeViewModel(service)
+        let service = MockPhotoPermissionService(status: .authorized)
+        let viewModel = makeViewModel(service, library: makeLibrary(photoCount: 12))
         await viewModel.refresh()
         #expect(viewModel.accessiblePhotoCount == nil)
 
@@ -80,18 +101,19 @@ struct PermissionViewModelTests {
     }
 
     @Test func countIsLoadedOnlyUnderLimitedAccess() async {
-        let service = MockPhotoPermissionService(status: .authorized, photoCount: 5)
-        let viewModel = makeViewModel(service)
+        let service = MockPhotoPermissionService(status: .authorized)
+        let library = makeLibrary(photoCount: 5)
+        let viewModel = makeViewModel(service, library: library)
         await viewModel.refresh()
-        #expect(await service.photoCountCallCount == 0)
+        #expect(await library.assetCountCallCount == 0)
         #expect(viewModel.accessiblePhotoCount == nil)
     }
 
     @Test func limitedToFullClearsCount() async {
-        let service = MockPhotoPermissionService(status: .limited, photoCount: 5)
-        let viewModel = makeViewModel(service)
+        let service = MockPhotoPermissionService(status: .limited)
+        let viewModel = makeViewModel(service, library: makeLibrary(photoCount: 5))
         await viewModel.refresh()
-        #expect(viewModel.accessiblePhotoCount == 5)
+        #expect(viewModel.accessiblePhotoCount == 5, "Screenshots are shared photos too")
 
         await service.setStatus(.authorized)
         await viewModel.refresh()
@@ -100,13 +122,14 @@ struct PermissionViewModelTests {
     }
 
     @Test func olderLimitedRefreshDoesNotOverwriteNewerResult() async {
-        let service = MockPhotoPermissionService(status: .limited, photoCount: 5)
-        await service.holdNextPhotoCount()
-        let viewModel = makeViewModel(service)
+        let service = MockPhotoPermissionService(status: .limited)
+        let library = makeLibrary(photoCount: 5)
+        await library.holdNextAssetCount()
+        let viewModel = makeViewModel(service, library: library)
 
         // The older refresh reads "limited" and then waits for its photo count.
         let olderRefresh = Task { await viewModel.refresh() }
-        while await !service.isHoldingPhotoCount {
+        while await !library.isHoldingAssetCount {
             await Task.yield()
         }
 
@@ -116,7 +139,7 @@ struct PermissionViewModelTests {
         #expect(viewModel.status == .authorized)
 
         // The older result arrives late and must be ignored.
-        await service.releaseHeldPhotoCount()
+        await library.releaseHeldAssetCount()
         await olderRefresh.value
         #expect(viewModel.status == .authorized)
         #expect(viewModel.accessiblePhotoCount == nil)
@@ -124,30 +147,34 @@ struct PermissionViewModelTests {
     }
 
     @Test func olderLimitedRefreshDoesNotOverwriteNewerDenied() async {
-        let service = MockPhotoPermissionService(status: .limited, photoCount: 5)
-        await service.holdNextPhotoCount()
-        let viewModel = makeViewModel(service)
+        let service = MockPhotoPermissionService(status: .limited)
+        let library = makeLibrary(photoCount: 5)
+        await library.holdNextAssetCount()
+        let viewModel = makeViewModel(service, library: library)
 
         let olderRefresh = Task { await viewModel.refresh() }
-        while await !service.isHoldingPhotoCount {
+        while await !library.isHoldingAssetCount {
             await Task.yield()
         }
 
         await service.setStatus(.denied)
         await viewModel.refresh()
 
-        await service.releaseHeldPhotoCount()
+        await library.releaseHeldAssetCount()
         await olderRefresh.value
         #expect(viewModel.route(hasCompletedOnboarding: true) == .permissionDenied)
         #expect(viewModel.accessiblePhotoCount == nil)
     }
 
     @Test func presentLimitedPickerRefreshesCount() async {
-        let service = MockPhotoPermissionService(status: .limited, photoCount: 3, photoCountAfterPicker: 30)
-        let viewModel = makeViewModel(service)
+        let service = MockPhotoPermissionService(status: .limited)
+        let library = makeLibrary(photoCount: 3)
+        let viewModel = makeViewModel(service, library: library)
         await viewModel.refresh()
         #expect(viewModel.accessiblePhotoCount == 3)
 
+        // The user shares more photos in the picker.
+        await library.setAssets(photos(30))
         await viewModel.presentLimitedPicker()
         #expect(await service.presentLimitedPickerCallCount == 1)
         #expect(viewModel.accessiblePhotoCount == 30)
@@ -155,7 +182,7 @@ struct PermissionViewModelTests {
 
     @Test func openSettingsInvokesInjectedAction() {
         let counter = CallCounter()
-        let viewModel = makeViewModel(MockPhotoPermissionService(status: .denied)) { counter.count += 1 }
+        let viewModel = makeViewModel(MockPhotoPermissionService(status: .denied), openSettings: { counter.count += 1 })
         viewModel.openSettings()
         #expect(counter.count == 1)
     }

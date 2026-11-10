@@ -5,7 +5,8 @@ import SwiftUI
 /// Drives a library scan from the UI: starts and cancels it, consumes its progress and group streams, feeds the
 /// groups into `SelectionStore` (append-only), and handles the app lifecycle around it.
 ///
-/// - The screen stays awake only while the scan screen is visible **and** a scan runs.
+/// - The screen stays awake only while a screen that shows the scan (Home, the group list) is visible **and** a
+///   scan runs.
 /// - In the background the scan keeps going for the time iOS grants (`beginBackgroundTask`); when that runs out it
 ///   is cancelled, which saves what was finished.
 @Observable
@@ -19,6 +20,13 @@ public final class ScanViewModel {
     /// The keep / delete choice; groups arrive here in publishing order.
     public let selection: SelectionStore
 
+    /// Whether a scan of this app session reached `.done`.
+    public private(set) var hasCompletedScan = false
+
+    /// Called on the main actor when a scan ends (after `.finished`). Not called for a scan that a newer
+    /// `startScan()` replaced. The final phase may arrive on the progress stream slightly later.
+    @ObservationIgnored public var onScanEnded: (@MainActor () -> Void)?
+
     @ObservationIgnored private let coordinator: any ScanCoordinating
     @ObservationIgnored private let preferences: any ScopePreferencesStore
     @ObservationIgnored private let idleTimer: any IdleTimerControlling
@@ -27,7 +35,7 @@ public final class ScanViewModel {
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var consumers: [Task<Void, Never>] = []
     @ObservationIgnored private var scanGeneration = 0
-    @ObservationIgnored private var isScanScreenVisible = false
+    @ObservationIgnored private var visibleScanScreens = 0
     @ObservationIgnored private var backgroundTask: BackgroundTaskToken?
 
     /// Creates the view model.
@@ -70,6 +78,9 @@ public final class ScanViewModel {
                 for await snapshot in streams.progress {
                     guard let self, generation == self.scanGeneration else { return }
                     self.progress = snapshot
+                    if snapshot.phase == .done, !self.hasCompletedScan {
+                        self.hasCompletedScan = true
+                    }
                 }
             },
             Task { [weak self] in
@@ -98,15 +109,16 @@ public final class ScanViewModel {
 
     // MARK: - Lifecycle
 
-    /// The scan screen became visible.
+    /// A screen that shows the scan became visible. Calls are counted, so during a navigation push the next
+    /// screen's appearance and the previous one's disappearance can come in either order.
     public func scanScreenAppeared() {
-        isScanScreenVisible = true
+        visibleScanScreens += 1
         updateIdleTimer()
     }
 
-    /// The scan screen is no longer visible.
+    /// A screen that shows the scan is no longer visible.
     public func scanScreenDisappeared() {
-        isScanScreenVisible = false
+        visibleScanScreens = max(0, visibleScanScreens - 1)
         updateIdleTimer()
     }
 
@@ -202,6 +214,7 @@ public final class ScanViewModel {
         isScanning = false
         updateIdleTimer()
         endBackgroundTask()
+        onScanEnded?()
     }
 
     /// Stops reading the streams of the previous scan.
@@ -214,7 +227,7 @@ public final class ScanViewModel {
 
     /// Keeps the screen awake only while the scan screen is visible and a scan runs.
     private func updateIdleTimer() {
-        idleTimer.setIdleTimerDisabled(isScanScreenVisible && isScanning)
+        idleTimer.setIdleTimerDisabled(visibleScanScreens > 0 && isScanning)
     }
 
     /// Asks for background time if a scan runs; on expiry the scan is cancelled.

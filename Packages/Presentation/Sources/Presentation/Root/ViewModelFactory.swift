@@ -22,6 +22,10 @@ public protocol ViewModelFactory: AnyObject, Sendable {
 
     /// The scan of the current app session (SPS-14). One instance, so a running scan survives navigation.
     var scanViewModel: ScanViewModel { get }
+
+    /// The home dashboard of the current app session (SPS-20). One instance, so the stored results are loaded and
+    /// the launch scan is started once.
+    var homeViewModel: HomeViewModel { get }
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

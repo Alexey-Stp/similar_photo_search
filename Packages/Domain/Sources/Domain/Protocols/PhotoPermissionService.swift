@@ -9,9 +9,6 @@ public protocol PhotoPermissionService: Sendable {
     /// and returns the resulting status.
     func requestAccess() async -> PhotoLibraryAuthorization
 
-    /// The number of photos the app can see. Under limited access this is the user's selection.
-    func accessiblePhotoCount() async -> Int
-
     /// Shows the system picker that changes the limited-access selection.
     /// Returns when the picker is dismissed, or immediately if it cannot be shown.
     func presentLimitedPicker() async

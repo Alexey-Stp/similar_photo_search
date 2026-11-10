@@ -2,7 +2,8 @@
 import Domain
 import Foundation
 
-/// `ScanCoordinating` for SwiftUI previews: publishes one fixed snapshot and never finishes.
+/// `ScanCoordinating` for SwiftUI previews: publishes one fixed snapshot. A snapshot with a final phase (done,
+/// cancelled, failed) ends the scan; any other keeps it running forever.
 actor PreviewScanCoordinator: ScanCoordinating {
     private let snapshot: ScanProgress
 
@@ -14,8 +15,12 @@ actor PreviewScanCoordinator: ScanCoordinating {
     /// Returns streams that publish the snapshot once.
     func start(scope: ScanScope, sessionConfig: SessionConfig) -> ScanStreams {
         let (progress, progressContinuation) = AsyncStream.makeStream(of: ScanProgress.self)
-        let (clusters, _) = AsyncStream.makeStream(of: ClusterUpdate.self)
+        let (clusters, clusterContinuation) = AsyncStream.makeStream(of: ClusterUpdate.self)
         progressContinuation.yield(snapshot)
+        if snapshot.phase.isFinal {
+            clusterContinuation.yield(.finished)
+            clusterContinuation.finish()
+        }
         return ScanStreams(progress: progress, clusters: clusters)
     }
 
@@ -45,15 +50,16 @@ final class PreviewAppLifecycle: IdleTimerControlling, BackgroundTaskRunning {
 }
 
 extension ScanViewModel {
-    /// A view model whose scan shows `snapshot` once started.
+    /// A view model whose scan shows `snapshot` once started; `selection` holds the groups already found.
     static func preview(
-        snapshot: ScanProgress = ScanProgress(processed: 3_120, total: 10_000, phase: .analyzing, eta: 140)
+        snapshot: ScanProgress = ScanProgress(processed: 3_120, total: 10_000, phase: .analyzing, eta: 140),
+        selection: SelectionStore = .preview()
     ) -> ScanViewModel {
         let lifecycle = PreviewAppLifecycle()
         return ScanViewModel(
             coordinator: PreviewScanCoordinator(snapshot: snapshot),
             preferences: PreviewScopePreferencesStore(preferences: .default),
-            selection: .preview(),
+            selection: selection,
             idleTimer: lifecycle,
             backgroundTasks: lifecycle
         )
