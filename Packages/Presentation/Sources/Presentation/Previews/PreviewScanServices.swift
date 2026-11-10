@@ -22,12 +22,6 @@ actor PreviewScanCoordinator: ScanCoordinating {
     func excludeDeleted(_ assetIDs: Set<String>) {}
 }
 
-/// `ScopePreferencesStore` for previews: always the default scope.
-struct PreviewScopePreferencesStore: ScopePreferencesStore {
-    func load() async -> ScopePreferences { .default }
-    func save(_ preferences: ScopePreferences) async {}
-}
-
 /// Idle timer and background tasks that do nothing, for previews.
 @MainActor
 final class PreviewAppLifecycle: IdleTimerControlling, BackgroundTaskRunning {
@@ -51,7 +45,7 @@ extension ScanViewModel {
         let lifecycle = PreviewAppLifecycle()
         return ScanViewModel(
             coordinator: PreviewScanCoordinator(snapshot: snapshot),
-            preferences: PreviewScopePreferencesStore(),
+            preferences: PreviewScopePreferencesStore(preferences: .default),
             selection: .preview(),
             idleTimer: lifecycle,
             backgroundTasks: lifecycle
