@@ -1,6 +1,7 @@
 @testable import DataLayer
 import Domain
 import Foundation
+import SwiftData
 import Testing
 
 /// The SwiftData cache against in-memory and temporary-directory stores.
@@ -23,13 +24,28 @@ struct SwiftDataFeaturePrintCacheTests {
         )
     }
 
+    /// A complete quality measurement with every optional set, so the round trip checks each column.
+    private let measurement = QualityMeasurement(
+        version: 1_031,
+        sharpness: 0.012_5,
+        faceQuality: 0.62,
+        aesthetics: -0.3,
+        isUtility: false,
+        isEdited: true
+    )
+
     /// A Revision 2 sized vector whose values depend on `seed`.
     private func vector(seed: Int, count: Int = 768) -> [Float] {
         (0..<count).map { Float(seed) + Float($0) / 1_000 }
     }
 
     /// The analyzed record of a print of `id` with `vector(seed:)`.
-    private func record(_ id: String, revision: Int = 2, seed: Int = 1, qualityScore: Double? = nil) -> AnalysisRecord {
+    private func record(
+        _ id: String,
+        revision: Int = 2,
+        seed: Int = 1,
+        quality: QualityMeasurement? = nil
+    ) -> AnalysisRecord {
         AnalysisRecord(
             featurePrint: FeaturePrint(
                 assetID: id,
@@ -37,7 +53,7 @@ struct SwiftDataFeaturePrintCacheTests {
                 vector: vector(seed: seed),
                 assetModificationDate: modificationDate
             ),
-            qualityScore: qualityScore,
+            quality: quality,
             analyzedAt: analyzedAt
         )
     }
@@ -55,7 +71,7 @@ struct SwiftDataFeaturePrintCacheTests {
     /// Analyzed and failed records come back field for field, including sub-second dates.
     @Test func storedRecordsComeBackUnchanged() async throws {
         let cache = SwiftDataFeaturePrintCache(location: .inMemory)
-        let analyzed = record("A", qualityScore: 0.75)
+        let analyzed = record("A", quality: measurement)
         let failed = AnalysisRecord(
             assetID: "B",
             revision: 2,
@@ -104,6 +120,36 @@ struct SwiftDataFeaturePrintCacheTests {
         try await cache.upsert([record("A")])
         let hits = await cache.validEntries(for: [asset("A"), asset("unknown")], revision: 2)
         #expect(Set(hits.keys) == ["A"])
+    }
+
+    /// A measurement without faces or aesthetics keeps those `nil`, and a record without one has none.
+    @Test func qualityMeasurementsRoundTripWithTheirNils() async throws {
+        let cache = SwiftDataFeaturePrintCache(location: .inMemory)
+        let partial = QualityMeasurement(
+            version: 1_030,
+            sharpness: 0.5,
+            faceQuality: nil,
+            aesthetics: nil,
+            isUtility: nil,
+            isEdited: false
+        )
+        try await cache.upsert([record("A", quality: partial), record("B")])
+
+        let hits = await cache.validEntries(for: [asset("A"), asset("B")], revision: 2)
+        #expect(hits["A"]?.quality == partial)
+        #expect(hits["A"]?.quality(scoringVersion: 1_030) == partial)
+        #expect(hits["B"]?.quality == nil)
+    }
+
+    /// Adding a measurement to a cached record replaces the row; clearing it removes every quality column.
+    @Test func upsertAddsAndClearsTheMeasurement() async throws {
+        let cache = SwiftDataFeaturePrintCache(location: .inMemory)
+        try await cache.upsert([record("A")])
+        try await cache.upsert([record("A").withQuality(measurement)])
+        #expect(await cache.validEntries(for: [asset("A")], revision: 2)["A"]?.quality == measurement)
+
+        try await cache.upsert([record("A")])
+        #expect(await cache.validEntries(for: [asset("A")], revision: 2)["A"]?.quality == nil)
     }
 
     // MARK: - Writes
@@ -217,6 +263,59 @@ struct SwiftDataFeaturePrintCacheTests {
             let reopened = SwiftDataFeaturePrintCache(location: .directory(directory))
             #expect(await reopened.validEntries(for: [asset("A")], revision: 2)["A"] == record("A"))
         }
+    }
+
+    // MARK: - Migration
+
+    /// A version 1 store opens as version 2 and keeps its feature prints; the old score is not carried over.
+    @Test func aVersion1StoreMigratesWithoutLosingFeaturePrints() async throws {
+        try await withTemporaryDirectory { directory in
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let storeFile = AnalysisContainerFactory.storeURL(in: directory)
+            let vectorData = FeatureVectorPacking.data(from: vector(seed: 1))
+            try writeVersion1Store(at: storeFile) { context in
+                context.insert(AnalysisSchemaV1.CachedAnalysis(
+                    assetID: "A",
+                    vectorData: vectorData,
+                    revision: 2,
+                    modificationDate: modificationDate,
+                    qualityScore: 0.75,
+                    status: AnalysisStatus.analyzed.rawValue,
+                    analyzedAt: analyzedAt
+                ))
+            }
+
+            let cache = SwiftDataFeaturePrintCache(location: .directory(directory))
+            let hit = await cache.validEntries(for: [asset("A")], revision: 2)["A"]
+            #expect(hit == record("A"))
+            #expect(hit?.quality == nil)
+
+            // The migrated store takes measurements.
+            try await cache.upsert([record("A", quality: measurement)])
+            let reopened = SwiftDataFeaturePrintCache(location: .directory(directory))
+            #expect(await reopened.validEntries(for: [asset("A")], revision: 2)["A"]?.quality == measurement)
+        }
+    }
+
+    /// The plan lists every version in order and migrates each to the next.
+    @Test func theMigrationPlanCoversEveryVersion() {
+        #expect(AnalysisMigrationPlan.schemas.map { $0.versionIdentifier } == [
+            AnalysisSchemaV1.versionIdentifier,
+            AnalysisSchemaV2.versionIdentifier
+        ])
+        #expect(AnalysisMigrationPlan.stages.count == AnalysisMigrationPlan.schemas.count - 1)
+        #expect(AnalysisMigrationPlan.current.versionIdentifier == AnalysisSchemaV2.versionIdentifier)
+    }
+
+    /// Creates a version 1 store at `url`, as a build from before SPS-17 would have, and saves what `insert` adds.
+    /// Rows are created inside `insert`, after the container exists (SwiftData needs it to build a model).
+    private func writeVersion1Store(at url: URL, insert: (ModelContext) -> Void) throws {
+        let schema = Schema(versionedSchema: AnalysisSchemaV1.self)
+        let configuration = ModelConfiguration("Analysis", schema: schema, url: url, cloudKitDatabase: .none)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let context = ModelContext(container)
+        insert(context)
+        try context.save()
     }
 
     // MARK: - Vector packing

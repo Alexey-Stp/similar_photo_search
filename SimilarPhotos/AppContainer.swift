@@ -13,6 +13,7 @@ final class AppContainer: ViewModelFactory {
     let featurePrintService: any FeaturePrintService
     let featurePrintCache: any FeaturePrintCache
     let clusteringEngine: any ClusteringEngine
+    /// Measures cluster members lazily (SPS-17); shares the image loader with the feature-print service.
     let qualityScorer: any QualityScorer
     let assetDeletionService: any AssetDeletionService
     let scopePreferencesStore: any ScopePreferencesStore
@@ -33,7 +34,7 @@ final class AppContainer: ViewModelFactory {
         featurePrintService = VisionFeaturePrintService(images: imageLoader)
         featurePrintCache = SwiftDataFeaturePrintCache()
         clusteringEngine = UnionFindClusteringEngine()
-        qualityScorer = VisionQualityScorer()
+        qualityScorer = VisionQualityScorer(images: imageLoader, edits: PhotoKitAssetEditInspector())
         assetDeletionService = PhotoKitAssetDeletionService()
         scopePreferencesStore = UserDefaultsScopePreferencesStore(defaults: .standard)
         sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())

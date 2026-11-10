@@ -77,8 +77,8 @@ enum AnalysisContainerFactory {
 
     // MARK: - Private
 
-    /// The schema of the current version, `AnalysisSchemaV1`.
-    private static var schema: Schema { Schema(versionedSchema: AnalysisSchemaV1.self) }
+    /// The schema of the current version (`AnalysisMigrationPlan.current`).
+    static var schema: Schema { Schema(versionedSchema: AnalysisMigrationPlan.current) }
 
     /// A container over the SQLite store at `url`, with the migration plan and no CloudKit.
     private static func makeFileContainer(url: URL) throws -> ModelContainer {

@@ -26,8 +26,9 @@ public struct AnalysisRecord: Sendable, Hashable {
     public let status: AnalysisStatus
     /// The feature-print vector; empty unless `status` is `.analyzed`.
     public let vector: [Float]
-    /// The photo's quality score, once one has been computed (SPS-17).
-    public let qualityScore: Double?
+    /// The photo's raw quality signals, once measured (SPS-17). Raw, not normalized: scores are normalized per
+    /// cluster when ranked. Check its version with `quality(scoringVersion:)` before using it.
+    public let quality: QualityMeasurement?
     /// When the photo was analysed.
     public let analyzedAt: Date
 
@@ -38,7 +39,7 @@ public struct AnalysisRecord: Sendable, Hashable {
         assetModificationDate: Date?,
         status: AnalysisStatus,
         vector: [Float] = [],
-        qualityScore: Double? = nil,
+        quality: QualityMeasurement? = nil,
         analyzedAt: Date
     ) {
         self.assetID = assetID
@@ -46,19 +47,19 @@ public struct AnalysisRecord: Sendable, Hashable {
         self.assetModificationDate = assetModificationDate
         self.status = status
         self.vector = vector
-        self.qualityScore = qualityScore
+        self.quality = quality
         self.analyzedAt = analyzedAt
     }
 
     /// Creates the record of a computed feature print.
-    public init(featurePrint: FeaturePrint, qualityScore: Double? = nil, analyzedAt: Date) {
+    public init(featurePrint: FeaturePrint, quality: QualityMeasurement? = nil, analyzedAt: Date) {
         self.init(
             assetID: featurePrint.assetID,
             revision: featurePrint.revision,
             assetModificationDate: featurePrint.assetModificationDate,
             status: .analyzed,
             vector: featurePrint.vector,
-            qualityScore: qualityScore,
+            quality: quality,
             analyzedAt: analyzedAt
         )
     }
@@ -96,6 +97,27 @@ public struct AnalysisRecord: Sendable, Hashable {
             revision: revision,
             vector: vector,
             assetModificationDate: assetModificationDate
+        )
+    }
+
+    /// The quality measurement if it was made with `scoringVersion`, otherwise `nil` (measure the photo again).
+    ///
+    /// Only meaningful on a record that `isValid(for:revision:)`: an edit to the photo invalidates the whole record.
+    public func quality(scoringVersion: Int) -> QualityMeasurement? {
+        guard let quality, quality.version == scoringVersion else { return nil }
+        return quality
+    }
+
+    /// A copy of this record with `quality` replaced; everything else, including `analyzedAt`, is kept.
+    public func withQuality(_ quality: QualityMeasurement?) -> AnalysisRecord {
+        AnalysisRecord(
+            assetID: assetID,
+            revision: revision,
+            assetModificationDate: assetModificationDate,
+            status: status,
+            vector: vector,
+            quality: quality,
+            analyzedAt: analyzedAt
         )
     }
 
