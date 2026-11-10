@@ -62,9 +62,9 @@ iPhone 12; library changes are picked up incrementally.
 |---|---|---|---|
 | [SPS-7](SPS-7.md) | `PhotoLibraryRepository` with scope filters | Done | SPS-2 |
 | [SPS-8](SPS-8.md) | Album and scope selection UI | Done | SPS-7 |
-| [SPS-26](SPS-26.md) | Split the library into shooting sessions by time | Review | SPS-7 |
-| [SPS-9](SPS-9.md) | Memory-safe batched image loading pipeline | Review | SPS-7 |
-| [SPS-10](SPS-10.md) | Incremental library change tracking | Review | SPS-13, SPS-26 |
+| [SPS-26](SPS-26.md) | Split the library into shooting sessions by time | Done | SPS-7 |
+| [SPS-9](SPS-9.md) | Memory-safe batched image loading pipeline | Done | SPS-7 |
+| [SPS-10](SPS-10.md) | Incremental library change tracking | Done | SPS-13, SPS-26 |
 
 ### Epic SPS-11 — Visual analysis and caching
 
@@ -76,9 +76,9 @@ within 5 s on a 10k library; second launch with an unchanged library reaches clu
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-12](SPS-12.md) | Feature print extraction via Vision | Review | SPS-9 |
-| [SPS-13](SPS-13.md) | SwiftData feature print cache | Review | SPS-12 |
-| [SPS-14](SPS-14.md) | Analysis orchestrator: progress, cancellation, resume, thermal | Review | SPS-9, SPS-12, SPS-13, SPS-16, SPS-26 (SPS-10, SPS-17 when available) |
+| [SPS-12](SPS-12.md) | Feature print extraction via Vision | Done | SPS-9 |
+| [SPS-13](SPS-13.md) | SwiftData feature print cache | Done | SPS-12 |
+| [SPS-14](SPS-14.md) | Analysis orchestrator: progress, cancellation, resume, thermal | Done | SPS-9, SPS-12, SPS-13, SPS-16, SPS-26 (SPS-10, SPS-17 when available) |
 
 ### Epic SPS-15 — Clustering and smart selection
 
@@ -88,9 +88,9 @@ Group near-duplicates by feature-print distance inside one shooting session; ran
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-16](SPS-16.md) | Similarity clustering engine | Review | SPS-26 |
-| [SPS-17](SPS-17.md) | Photo quality scoring | Review | SPS-9 |
-| [SPS-18](SPS-18.md) | Smart Selection use case | Review | SPS-16, SPS-17 |
+| [SPS-16](SPS-16.md) | Similarity clustering engine | Done | SPS-26 |
+| [SPS-17](SPS-17.md) | Photo quality scoring | Done | SPS-9 |
+| [SPS-18](SPS-18.md) | Smart Selection use case | Done | SPS-16, SPS-17 |
 
 ### Epic SPS-19 — User interface
 
