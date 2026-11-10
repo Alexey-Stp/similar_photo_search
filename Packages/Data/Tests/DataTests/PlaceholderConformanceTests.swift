@@ -12,7 +12,8 @@ struct PlaceholderConformanceTests {
         let images: any ImageLoading = PhotoKitImageLoader()
         let featurePrints: any FeaturePrintService = VisionFeaturePrintService(images: images)
         let cache: any FeaturePrintCache = SwiftDataFeaturePrintCache()
-        let scorer: any QualityScorer = VisionQualityScorer()
+        let edits: any AssetEditInspecting = PhotoKitAssetEditInspector()
+        let scorer: any QualityScorer = VisionQualityScorer(images: images, edits: edits)
         let deletion: any AssetDeletionService = PhotoKitAssetDeletionService()
         let sessionLog: any SessionSegmentationLogging = OSLogSessionSegmentationLogger()
         let changeTracker: any LibraryChangeTracker = PhotoKitLibraryChangeTracker()
@@ -20,8 +21,8 @@ struct PlaceholderConformanceTests {
 
         let services: [any Sendable] = [
             photoLibrary, permissions, featurePrints, cache, scorer, deletion, images, sessionLog,
-            changeTracker, libraryObserver
+            changeTracker, libraryObserver, edits
         ]
-        #expect(services.count == 10)
+        #expect(services.count == 11)
     }
 }

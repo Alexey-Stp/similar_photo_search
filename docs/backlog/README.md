@@ -89,7 +89,7 @@ Group near-duplicates by feature-print distance inside one shooting session; ran
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
 | [SPS-16](SPS-16.md) | Similarity clustering engine | Review | SPS-26 |
-| [SPS-17](SPS-17.md) | Photo quality scoring | To do | SPS-9 |
+| [SPS-17](SPS-17.md) | Photo quality scoring | Review | SPS-9 |
 | [SPS-18](SPS-18.md) | Smart Selection use case | To do | SPS-16, SPS-17 |
 
 ### Epic SPS-19 — User interface

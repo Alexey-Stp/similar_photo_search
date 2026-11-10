@@ -37,3 +37,8 @@ Deleting a photo the user wanted is the worst possible outcome, so be conservati
 - Reads must be scoped per cell (fine-grained `@Observable` properties), or every thumbnail re-renders on each toggle (SPS-21).
 - Tests: favorites never selected, tie handling, invariant enforcement, override preservation.
 - From SPS-16: `SimilarityCluster` is immutable, with `id: String` (the newest member's ID, the same for the same members), `isExactDuplicate` and `averageDistance`; set `suggestedKeeperID` by creating a copy with the same `id`. Members arrive in library order (newest first), not ranked.
+- From SPS-17: `QualityRanker.rank` gives `[RankedMember]` best first (`score` 0…1 within the cluster,
+  `isProtected` for favorites, `reasons` as `QualityReason` string-catalog keys). Members whose measurement was skipped
+  or failed are missing from it: never pre-select them. Take `pixelCount` and `isEdited` for the exact-duplicate rule
+  from `QualitySignals`. Scores are min-max normalized, so in a two-photo cluster they differ by whole signal weights:
+  the 0.02 near-tie mostly fires when the signals are equal or cancel out.

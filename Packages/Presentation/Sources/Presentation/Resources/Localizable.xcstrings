@@ -190,6 +190,41 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Photo access is off" } }
       }
     },
+    "quality.reason.bestAesthetics" : {
+      "comment" : "Badge on a photo that has the best aesthetics score of its group of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Best composition" } }
+      }
+    },
+    "quality.reason.bestFaces" : {
+      "comment" : "Badge on a photo whose faces look best in its group (eyes open, in focus, facing the camera).",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Best faces" } }
+      }
+    },
+    "quality.reason.favorite" : {
+      "comment" : "Badge on a photo the user marked as a favorite; it is never suggested for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Favorite" } }
+      }
+    },
+    "quality.reason.highestResolution" : {
+      "comment" : "Badge on the photo with the most pixels in its group of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Highest resolution" } }
+      }
+    },
+    "quality.reason.sharpest" : {
+      "comment" : "Badge on the sharpest photo of its group of similar photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sharpest" } }
+      }
+    },
     "restricted.message" : {
       "comment" : "Explains that photo access is blocked by parental controls or device management and cannot be changed by the user.",
       "extractionState" : "manual",

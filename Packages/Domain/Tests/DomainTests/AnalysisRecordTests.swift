@@ -109,4 +109,42 @@ struct AnalysisRecordTests {
             #expect(record == nil)
         }
     }
+
+    // MARK: - Quality
+
+    /// A cached measurement is used only under the scoring version it was made with.
+    @Test func qualityIsReturnedOnlyForItsScoringVersion() {
+        let measurement = QualityMeasurement(
+            version: 1_021,
+            sharpness: 0.01,
+            faceQuality: nil,
+            aesthetics: nil,
+            isUtility: nil,
+            isEdited: false
+        )
+        let record = AnalysisRecord(featurePrint: featurePrint, quality: measurement, analyzedAt: analyzedAt)
+        #expect(record.quality(scoringVersion: 1_021) == measurement)
+        #expect(record.quality(scoringVersion: 1_020) == nil)
+        let unscored = AnalysisRecord(featurePrint: featurePrint, analyzedAt: analyzedAt)
+        #expect(unscored.quality(scoringVersion: 1_021) == nil)
+    }
+
+    /// Adding a measurement keeps the print, its validity and the analysis date.
+    @Test func withQualityKeepsEverythingElse() {
+        let record = AnalysisRecord(featurePrint: featurePrint, analyzedAt: analyzedAt)
+        let measurement = QualityMeasurement(
+            version: 1,
+            sharpness: 2,
+            faceQuality: 0.5,
+            aesthetics: 0.1,
+            isUtility: false,
+            isEdited: true
+        )
+        let scored = record.withQuality(measurement)
+        #expect(scored.quality == measurement)
+        #expect(scored.featurePrint == featurePrint)
+        #expect(scored.analyzedAt == analyzedAt)
+        #expect(scored.isValid(for: asset(modified: modificationDate), revision: 2))
+        #expect(scored.withQuality(nil) == record)
+    }
 }

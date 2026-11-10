@@ -139,7 +139,9 @@ actor AnalysisStore {
         }
         var descriptor = FetchDescriptor<CachedAnalysis>(predicate: predicate)
         descriptor.propertiesToFetch = [
-            \.assetID, \.vectorData, \.revision, \.modificationDate, \.qualityScore, \.status, \.analyzedAt
+            \.assetID, \.vectorData, \.revision, \.modificationDate, \.status, \.analyzedAt,
+            \.qualityVersion, \.qualitySharpness, \.qualityFaceScore, \.qualityAesthetics, \.qualityIsUtility,
+            \.qualityIsEdited
         ]
         return try modelContext.fetch(descriptor)
     }
