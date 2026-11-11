@@ -66,7 +66,7 @@ final class AppContainer: ViewModelFactory {
         featurePrintCache = SwiftDataFeaturePrintCache()
         clusteringEngine = UnionFindClusteringEngine()
         qualityScorer = VisionQualityScorer(images: imageLoader, edits: PhotoKitAssetEditInspector())
-        assetDeletionService = PhotoKitAssetDeletionService()
+        assetDeletionService = PhotoKitAssetDeletionService(chunksAfterFailure: false)
         scopePreferencesStore = UserDefaultsScopePreferencesStore(defaults: .standard)
         sessionSegmenter = SessionSegmenter(logger: OSLogSessionSegmentationLogger())
         libraryChangeTracker = PhotoKitLibraryChangeTracker()

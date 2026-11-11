@@ -1,20 +1,27 @@
 import Domain
 import Foundation
 
-/// `AssetDeletionService` that records requests and returns a preset outcome.
+/// `AssetDeletionService` that records requests and answers with a scripted result.
 public actor MockAssetDeletionService: AssetDeletionService {
-    /// Outcome returned by every call.
-    public let outcome: DeletionOutcome
+    /// Builds the result for the requested IDs.
+    public typealias Responder = @Sendable ([String]) -> DeletionResult
+
+    private let respond: Responder
     /// Asset IDs passed to each call.
     public private(set) var deletionRequests: [[String]] = []
 
-    /// Creates the mock.
-    public init(outcome: DeletionOutcome = .deleted) {
-        self.outcome = outcome
+    /// Creates the mock. By default every requested ID is deleted.
+    public init(respond: @escaping Responder = { DeletionResult(deleted: Set($0)) }) {
+        self.respond = respond
     }
 
-    public func delete(assetIDs: [String]) -> DeletionOutcome {
+    /// Creates a mock that returns `result` for every call.
+    public init(result: DeletionResult) {
+        self.init { _ in result }
+    }
+
+    public func delete(assetIDs: [String]) -> DeletionResult {
         deletionRequests.append(assetIDs)
-        return outcome
+        return respond(assetIDs)
     }
 }
