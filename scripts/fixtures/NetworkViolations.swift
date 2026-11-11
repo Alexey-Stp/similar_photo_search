@@ -64,6 +64,7 @@ func openSocket(address: UnsafePointer<sockaddr>, length: socklen_t) {
     _ = getnameinfo(address, length, &name, 64, nil, 0, 0)              // expect: no_socket_calls
     _ = sendto(fd, buffer, count, 0, address, length)                   // expect: no_socket_calls
     _ = recvfrom(fd, buffer, count, 0, nil, nil)                        // expect: no_socket_calls
+    _ = connect(fd, sockaddrPointer(&storage), socklen_t(MemoryLayout<sockaddr_in>.size)) // expect: no_socket_calls
     _ = connect(                                                        // expect: no_socket_calls
         fd, address, length
     )
@@ -76,6 +77,9 @@ final class LibraryClient {
     func refresh(client: LibraryClient, publisher: Publisher) {
         client.connect(to: "library")                                   // expect: none
         connect(to: "library")                                          // expect: none
+        connect(1)                                                      // expect: none
+        connect(fd, address)                                            // expect: none
+        _ = gethostbyname2("library")                                   // expect: none
         self.connect()                                                  // expect: none
         let cancellable = publisher.autoconnect()                       // expect: none
         reconnect(fd, address, length)                                  // expect: none

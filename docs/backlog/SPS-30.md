@@ -35,15 +35,19 @@ outside the paths the real checks scan, so they don't break the normal CI run.
 - New SwiftLint rule `no_socket_calls`. It matches only the function name (`match_kinds: [identifier]`, so comments and
   strings never fire) for `socket`, `connect`, `getaddrinfo`, `gethostbyname`/`gethostbyname2`, `gethostbyaddr`,
   `getnameinfo`, `sendto` and `recvfrom`. It fires on free calls and `Darwin.`/`Glibc.`-qualified calls whose arguments
-  are unlabelled and non-empty. Member calls (`publisher.connect()`), labelled calls (`connect(to: host)`) and
-  `func`/`case` declarations don't fire, so a Swift method named `connect(to:)` stays legal. Not covered: `bind`,
+  are unlabelled and at least as many as the C function takes: 3 or more for all but `gethostbyname2` (2) and
+  `gethostbyname` (1); commas nested up to two parentheses deep don't count. An unlabelled method called through
+  implicit self looks the same as a free call, so the argument count is what keeps `connect(1)` or
+  `connect(fd, address)` legal. A method with 3+ unlabelled arguments named like a C call must be called as `self.connect(...)`.
+  Member calls (`publisher.connect()`), labelled calls (`connect(to: host)`) and `func`/`case` declarations don't fire. Not covered: `bind`,
   `listen` and `accept` (too generic to match by name) and `CFSocket*`.
 - `check-domain-imports.sh` and `check-concrete-construction.sh` take an optional `[root]`, like `check-dependencies.sh`.
   Both now fail when the folders they scan are missing. Before, grep's exit 2 read as "no hits", so a wrong path passed silently.
   Hits are printed relative to the root, and the Accelerate exemption is anchored to `Packages/Domain/Sources/Domain/Clustering/`.
 - `expect-failure.sh` accepts `--expect` more than once; every text must appear. Existing calls are unchanged.
 - Fixtures: `scripts/fixtures/domain-imports-{forbidden,accelerate,allowed}` and
-  `scripts/fixtures/concrete-construction-{violation,allowed}`, each a small repository tree outside the scanned paths.
+  `scripts/fixtures/concrete-construction-{violation,import,package,allowed}` (concrete type reference, `import DataLayer`,
+  `../Data` package dependency, clean), each a small repository tree outside the scanned paths.
 - Not verified locally (no SwiftLint on the Windows machine): the real `swiftlint --strict` run and
   `check-swiftlint-fixture.sh`. The regex was checked against the fixture with Foundation's `NSRegularExpression` (ICU, the
   engine SwiftLint uses). Comments and strings were filtered by hand, so only CI proves the `match_kinds` filtering.

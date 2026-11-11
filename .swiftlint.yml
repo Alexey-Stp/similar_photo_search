@@ -26,10 +26,12 @@ custom_rules:
     name: "Zero network sockets"
     # Direct BSD socket and resolver calls (SPS-30). The match is only the function name, so `match_kinds` drops it in
     # comments and strings. It fires on a free call or one qualified with `Darwin.`/`Glibc.`, and only when the
-    # arguments are unlabelled and non-empty, which is how the C functions are called. Not matched: member calls
-    # (`client.connect(to:)`, `publisher.connect()`), labelled calls (`connect(to: host)`), `func`/`case` declarations,
-    # and longer names (`reconnect(`, `socketPair(`).
-    regex: '(?:(?<=\bDarwin\.)|(?<=\bGlibc\.)|(?<![\w.]))(?<!\b(?:func|case)[ \t]{1,16})\b(?:socket|connect|getaddrinfo|gethostbyname2?|gethostbyaddr|getnameinfo|sendto|recvfrom)(?=[ \t]*\((?!\s*\))(?!\s*\w+(?:\s+\w+)?\s*:))'
+    # arguments are unlabelled and as many as the C function takes: at least 3 (two top-level commas; commas nested up
+    # to two parentheses deep don't count) for all but gethostbyname2 (2) and gethostbyname (1). So a method called
+    # through implicit self with fewer arguments (`connect(1)`, `connect(fd, address)`) stays legal. Also not matched:
+    # member calls (`client.connect(to:)`, `publisher.connect()`), labelled calls (`connect(to: host)`), `func`/`case`
+    # declarations, and longer names (`reconnect(`, `socketPair(`).
+    regex: '(?:(?<=\bDarwin\.)|(?<=\bGlibc\.)|(?<![\w.]))(?<!\b(?:func|case)[ \t]{1,16})\b(?:gethostbyname(?=[ \t]*\((?!\s*\))(?!\s*\w+(?:\s+\w+)?\s*:))|gethostbyname2(?=[ \t]*\((?!\s*\))(?!\s*\w+(?:\s+\w+)?\s*:)(?:[^,()]|\((?:[^()]|\([^()]*\))*\))*,)|(?:socket|connect|getaddrinfo|gethostbyaddr|getnameinfo|sendto|recvfrom)(?=[ \t]*\((?!\s*\))(?!\s*\w+(?:\s+\w+)?\s*:)(?:(?:[^,()]|\((?:[^()]|\([^()]*\))*\))*,){2}))'
     match_kinds:
       - identifier
     message: "Direct socket and DNS calls (socket, connect, getaddrinfo, gethostbyname, ...) are forbidden (CLAUDE.md rule #1)."
