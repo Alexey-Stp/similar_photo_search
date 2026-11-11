@@ -90,8 +90,8 @@ struct CalibrationFixtureExtractionTests {
         var info = utsname()
         uname(&info)
         let machine = withUnsafeBytes(of: &info.machine) { bytes in
-            String(decoding: bytes.prefix { $0 != 0 }, as: UTF8.self)
-        }
+            String(bytes: bytes.prefix { $0 != 0 }, encoding: .utf8)
+        } ?? "unknown device"
         return "\(machine) / \(ProcessInfo.processInfo.operatingSystemVersionString)"
     }
 }
