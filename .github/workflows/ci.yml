@@ -39,6 +39,41 @@ jobs:
 
       # Self-tests: every guard must reject its negative fixture *with the intended diagnostic*
       # (scripts/expect-failure.sh), so an unrelated error cannot make a self-test pass.
+      - name: Domain import check self-tests
+        run: |
+          f=scripts/fixtures
+          d=Packages/Domain
+          # Each forbidden framework, in a different import form; Tests are checked too. Accelerate in Clustering is fine.
+          bash scripts/expect-failure.sh --expect "Domain must not import platform frameworks" \
+            --expect "$d/Sources/Domain/ImportsPhotos.swift:2:import Photos" \
+            --expect "$d/Sources/Domain/ImportsUIKit.swift:2:@preconcurrency import UIKit" \
+            --expect "$d/Sources/Domain/ImportsSwiftUI.swift:2:import struct SwiftUI.Color" \
+            --expect "$d/Sources/Domain/ImportsVision.swift:2:import Vision.VNRequest" \
+            --expect "$d/Tests/DomainTests/ImportsSwiftData.swift:2:@testable import SwiftData" \
+            --absent "Accelerate may only be imported" \
+            -- bash scripts/check-domain-imports.sh "$f/domain-imports-forbidden"
+          bash scripts/expect-failure.sh --expect "Accelerate may only be imported" \
+            --expect "$d/Sources/Domain/Sessions/Segmenter.swift:2:import Accelerate" \
+            --absent "Clustering/Engine.swift" --absent "must not import platform frameworks" \
+            -- bash scripts/check-domain-imports.sh "$f/domain-imports-accelerate"
+          # A wrong root is an error, not a silent pass.
+          bash scripts/expect-failure.sh --expect "Packages/Domain/Sources not found" \
+            -- bash scripts/check-domain-imports.sh "$f"
+          # Positive: commented imports, string literals and look-alike module names (PhotosKitHelpers) are ignored.
+          bash scripts/check-domain-imports.sh "$f/domain-imports-allowed"
+
+      - name: Composition root check self-tests
+        run: |
+          f=scripts/fixtures
+          bash scripts/expect-failure.sh --expect "concrete Data types may only be referenced in SimilarPhotos/AppContainer.swift" \
+            --expect "Packages/Presentation/Sources/Presentation/ScanViewModel.swift:4:let repository = PhotoKitLibraryRepository()" \
+            --absent "SimilarPhotos/AppContainer.swift:5:" --absent "only SimilarPhotos/AppContainer.swift may import DataLayer" \
+            -- bash scripts/check-concrete-construction.sh "$f/concrete-construction-violation"
+          bash scripts/expect-failure.sh --expect "Packages/Data/Sources not found" \
+            -- bash scripts/check-concrete-construction.sh "$f"
+          # Positive: the same type constructed in AppContainer, with Presentation using only the protocol.
+          bash scripts/check-concrete-construction.sh "$f/concrete-construction-allowed"
+
       - name: Info.plist check self-tests
         run: |
           f=scripts/fixtures

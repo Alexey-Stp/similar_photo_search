@@ -22,6 +22,18 @@ custom_rules:
     regex: '^[ \t]*(@\w+[ \t]+)*import[ \t]+(Network|WebKit|SafariServices|CFNetwork|CloudKit|MultipeerConnectivity)\b'
     message: "Network, WebKit, SafariServices, CFNetwork, CloudKit and MultipeerConnectivity are forbidden (CLAUDE.md rule #1)."
     severity: error
+  no_socket_calls:
+    name: "Zero network sockets"
+    # Direct BSD socket and resolver calls (SPS-30). The match is only the function name, so `match_kinds` drops it in
+    # comments and strings. It fires on a free call or one qualified with `Darwin.`/`Glibc.`, and only when the
+    # arguments are unlabelled and non-empty, which is how the C functions are called. Not matched: member calls
+    # (`client.connect(to:)`, `publisher.connect()`), labelled calls (`connect(to: host)`), `func`/`case` declarations,
+    # and longer names (`reconnect(`, `socketPair(`).
+    regex: '(?:(?<=\bDarwin\.)|(?<=\bGlibc\.)|(?<![\w.]))(?<!\b(?:func|case)[ \t]{1,16})\b(?:socket|connect|getaddrinfo|gethostbyname2?|gethostbyaddr|getnameinfo|sendto|recvfrom)(?=[ \t]*\((?!\s*\))(?!\s*\w+(?:\s+\w+)?\s*:))'
+    match_kinds:
+      - identifier
+    message: "Direct socket and DNS calls (socket, connect, getaddrinfo, gethostbyname, ...) are forbidden (CLAUDE.md rule #1)."
+    severity: error
   no_icloud_downloads:
     name: "No iCloud downloads"
     # 1) Any assignment whose right-hand side is not exactly the literal `false`, followed only by end of line,

@@ -72,14 +72,17 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs these on every pu
 | Required Info.plist usage keys present; no network keys (ATS, local network, Bonjour, background fetch/push) | [scripts/check-info-plist.sh](scripts/check-info-plist.sh) |
 | No networking entitlements in any `*.entitlements` file or configured entitlements path | [scripts/check-entitlements.sh](scripts/check-entitlements.sh) |
 | Privacy manifest: no tracking, no collected data, every entry well-formed, and every required-reason API used in the Swift/C/Objective-C sources is declared | [scripts/check-privacy-manifest.sh](scripts/check-privacy-manifest.sh) + [scripts/required-reason-apis.txt](scripts/required-reason-apis.txt) |
-| No networking APIs or frameworks, no remote URL literals. `isNetworkAccessAllowed` may only be written as `= false`, followed by nothing but end of line, `;`, `}` or a `//` comment. Anything after a block comment, `toggle()`, `inout` (`&`) and key paths are rejected. | SwiftLint custom rules in [.swiftlint.yml](.swiftlint.yml) |
+| No networking APIs or frameworks, no direct socket or DNS calls (`socket(`, `connect(`, `getaddrinfo(`, `gethostbyname(`, ...), no remote URL literals. `isNetworkAccessAllowed` may only be written as `= false`, followed by nothing but end of line, `;`, `}` or a `//` comment. Anything after a block comment, `toggle()`, `inout` (`&`) and key paths are rejected. | SwiftLint custom rules in [.swiftlint.yml](.swiftlint.yml) |
 
-**Self-tests.** The zero-network and privacy guards (Info.plist, entitlements, privacy manifest, dependencies, SwiftLint rules) also run against fixtures in [scripts/fixtures/](scripts/fixtures/):
+**Self-tests.** Every guard (Domain imports, composition root, Info.plist, entitlements, privacy manifest, dependencies, SwiftLint rules) also runs against fixtures in [scripts/fixtures/](scripts/fixtures/):
 
 - Each negative fixture must be rejected **with the intended diagnostic** ([scripts/expect-failure.sh](scripts/expect-failure.sh)).
 - The SwiftLint rules are checked line by line against `// expect:` annotations, including lines that must *not* fire ([scripts/check-swiftlint-fixture.sh](scripts/check-swiftlint-fixture.sh)).
+- The Domain import, composition root and dependency checks take an optional root folder, so their fixtures are small
+  repository trees (for example `scripts/fixtures/domain-imports-forbidden/Packages/Domain/...`). The first two treat a
+  root without the expected folders as an error, never as a pass.
 
-When you change a rule, keep its fixture in sync. `check-domain-imports.sh` and `check-concrete-construction.sh` have no self-tests yet.
+When you change a rule, keep its fixture in sync. Fixtures live outside the paths the real checks and SwiftLint scan.
 
 After the guards, CI builds the app and runs `DomainTests`, `DataTests` and `PresentationTests`.
 

@@ -49,3 +49,43 @@ let settings = "app-settings:"              // expect: none
 // swiftlint:disable:next no_remote_url_literals
 let policy = "https://example.com/privacy"  // expect: none
 let afterExemption = "https://example.com/" // expect: no_remote_url_literals
+
+// Direct BSD socket and resolver calls (SPS-30).
+func openSocket(address: UnsafePointer<sockaddr>, length: socklen_t) {
+    let fd = socket(AF_INET, SOCK_STREAM, 0)                            // expect: no_socket_calls
+    let fd6 = Darwin.socket(AF_INET6, SOCK_DGRAM, 0)                    // expect: no_socket_calls
+    _ = connect(fd, address, length)                                    // expect: no_socket_calls
+    _ = Glibc.connect(fd6, address, length)                             // expect: no_socket_calls
+    _ = connect (fd, address, length)                                   // expect: no_socket_calls
+    _ = getaddrinfo("example.com", "443", &hints, &info)                // expect: no_socket_calls
+    let host = gethostbyname("localhost")                               // expect: no_socket_calls
+    let host6 = gethostbyname2("localhost", AF_INET6)                   // expect: no_socket_calls
+    let peer = gethostbyaddr(&raw, socklen_t(4), AF_INET)               // expect: no_socket_calls
+    _ = getnameinfo(address, length, &name, 64, nil, 0, 0)              // expect: no_socket_calls
+    _ = sendto(fd, buffer, count, 0, address, length)                   // expect: no_socket_calls
+    _ = recvfrom(fd, buffer, count, 0, nil, nil)                        // expect: no_socket_calls
+    _ = connect(                                                        // expect: no_socket_calls
+        fd, address, length
+    )
+}
+
+// Look-alikes that must not fire.
+final class LibraryClient {
+    func connect(to host: String) {}                                    // expect: none
+    func connect() {}                                                   // expect: none
+    func refresh(client: LibraryClient, publisher: Publisher) {
+        client.connect(to: "library")                                   // expect: none
+        connect(to: "library")                                          // expect: none
+        self.connect()                                                  // expect: none
+        let cancellable = publisher.autoconnect()                       // expect: none
+        reconnect(fd, address, length)                                  // expect: none
+        let pair = socketPair(count: 2)                                 // expect: none
+        // Calls socket(AF_INET, SOCK_STREAM, 0) in a comment           // expect: none
+        let note = "socket(AF_INET, SOCK_STREAM, 0) and connect(fd, a)" // expect: none
+    }
+}
+
+enum Transport {
+    case socket(Int32)                                                  // expect: none
+    case connect(String)                                                // expect: none
+}

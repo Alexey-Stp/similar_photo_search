@@ -10,7 +10,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 fixture="${1:-$root/scripts/fixtures/NetworkViolations.swift}"
 config="${2:-$root/.swiftlint.yml}"
-rules='no_network_apis|no_network_frameworks|no_icloud_downloads|no_remote_url_literals'
+rules='no_network_apis|no_network_frameworks|no_socket_calls|no_icloud_downloads|no_remote_url_literals'
 
 if [[ ! -f "$fixture" ]]; then
     echo "error: fixture $fixture not found" >&2
