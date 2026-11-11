@@ -49,10 +49,8 @@ struct PhotoKitLibraryPerformer: PhotoLibraryPerforming {
         let submitted = OSAllocatedUnfairLock(initialState: Set<String>())
         try await PHPhotoLibrary.shared().performChanges {
             let assets = PHAsset.fetchAssets(withLocalIdentifiers: assetIDs, options: Self.fetchOptions())
-            var found = Set<String>(minimumCapacity: assets.count)
-            for index in 0..<assets.count {
-                found.insert(assets.object(at: index).localIdentifier)
-            }
+            // `withLock` takes a `@Sendable` closure, so it may only capture an immutable value.
+            let found = Set((0..<assets.count).map { assets.object(at: $0).localIdentifier })
             submitted.withLock { $0 = found }
             PHAssetChangeRequest.deleteAssets(assets)
         }
