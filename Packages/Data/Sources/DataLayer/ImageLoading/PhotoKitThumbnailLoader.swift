@@ -39,7 +39,7 @@ public actor PhotoKitThumbnailLoader {
     public nonisolated func thumbnail(for assetID: String, size: CGSize) -> AsyncStream<LoadedImage> {
         let requester = requester
         return AsyncStream(bufferingPolicy: .bufferingNewest(1)) { continuation in
-            let pending = PendingImageRequest(requester: requester)
+            let pending = CancellableImageRequest(requester: requester)
             continuation.onTermination = { termination in
                 if case .cancelled = termination {
                     pending.cancel()
@@ -120,7 +120,7 @@ public actor PhotoKitThumbnailLoader {
 
 /// The ID of one image request, so a cancellation can reach it even if it happens before the ID is known. Shared
 /// with `PhotoKitScreenImageLoader`.
-final class PendingImageRequest: @unchecked Sendable {
+final class CancellableImageRequest: @unchecked Sendable {
     private let lock = NSLock()
     private let requester: any ImageRequesting
     private var requestID: ImageRequestID?

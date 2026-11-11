@@ -65,7 +65,7 @@ pixels. Synchronized gestures are fiddly; test with VoiceOver and Reduce Motion.
   does it ask `.localPreview` (`.opportunistic`) and return it flagged → "Original in iCloud" label. Sizes are pane
   size × display scale (`ComparisonLayout.pixelSize`), capped at 4,096 px per side in both layers, so
   `PHImageManagerMaximumSize` can never be requested. Task cancellation cancels the PhotoKit request
-  (`PendingImageRequest`, renamed from the thumbnail loader's private `PendingThumbnail`).
+  (`CancellableImageRequest`, the thumbnail loader's former private `PendingThumbnail`).
 - **Memory.** Only the current page and its neighbours hold a screen image (`shouldLoadFullImage`), side by side only
   the two shown photos; other pages release theirs when they leave the window.
 - **Selection.** `SelectionStore.markAsBest(_:in:)` and `keepOnly(_:in:excluding:)` (in `SelectionStore+Comparison`).

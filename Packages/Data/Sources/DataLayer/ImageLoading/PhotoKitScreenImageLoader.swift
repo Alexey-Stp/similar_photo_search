@@ -70,7 +70,7 @@ public struct PhotoKitScreenImageLoader: Sendable {
         assetID: String,
         size: CGSize
     ) async -> CollectedImage {
-        let pending = PendingImageRequest(requester: requester)
+        let pending = CancellableImageRequest(requester: requester)
         let collector = ImageCollector()
         return await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
