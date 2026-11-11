@@ -54,7 +54,8 @@ struct ConcurrencyLimiterTests {
         await limiter.release()
     }
 
-    /// Cancelling a waiting task ends its wait within 200 ms and leaks no slot.
+    /// Cancelling a waiting task ends its wait promptly and leaks no slot. Without cancellation the waiter would wait
+    /// until a release that never comes; 1 s leaves headroom for a loaded CI simulator (200 ms once flaked at 234 ms).
     @Test func aCancelledWaiterStopsWaitingAtOnceAndHoldsNoSlot() async throws {
         let limiter = ConcurrencyLimiter(limit: 1)
         try await limiter.acquire()
@@ -65,7 +66,7 @@ struct ConcurrencyLimiterTests {
         waiter.cancel()
 
         await #expect(throws: CancellationError.self) { try await waiter.value }
-        #expect(ContinuousClock.now - cancelledAt < .milliseconds(200))
+        #expect(ContinuousClock.now - cancelledAt < .seconds(1))
         #expect(await limiter.waitingCount == 0)
 
         // The cancelled waiter took no slot: after one release the limiter is free again.

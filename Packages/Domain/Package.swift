@@ -11,7 +11,12 @@ let package = Package(
     targets: [
         .target(name: "Domain"),
         .target(name: "DomainTestSupport", dependencies: ["Domain"]),
-        .testTarget(name: "DomainTests", dependencies: ["Domain", "DomainTestSupport"])
+        .testTarget(
+            name: "DomainTests",
+            dependencies: ["Domain", "DomainTestSupport"],
+            // The labelled calibration set (SPS-28): feature-print vectors only, no image pixels.
+            resources: [.copy("Fixtures")]
+        )
     ],
     swiftLanguageModes: [.v6]
 )

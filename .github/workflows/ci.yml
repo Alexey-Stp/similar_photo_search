@@ -111,9 +111,12 @@ jobs:
 
       - name: Package tests (Domain, Data)
         timeout-minutes: 10
+        # Both packages always run, so a Domain failure can't hide a Data failure; the step fails if either does.
         run: |
-          swift test --package-path Packages/Domain -Xswiftc -warnings-as-errors
-          swift test --package-path Packages/Data -Xswiftc -warnings-as-errors
+          status=0
+          swift test --package-path Packages/Domain -Xswiftc -warnings-as-errors || status=1
+          swift test --package-path Packages/Data -Xswiftc -warnings-as-errors || status=1
+          exit $status
 
       - name: Generate Xcode project
         run: |

@@ -20,7 +20,9 @@ let package = Package(
             name: "DataTests",
             dependencies: [
                 "DataLayer",
-                .product(name: "Domain", package: "Domain")
+                .product(name: "Domain", package: "Domain"),
+                // Calibration fixture types for the device-only extraction test (SPS-28).
+                .product(name: "DomainTestSupport", package: "Domain")
             ]
         )
     ],

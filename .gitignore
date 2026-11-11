@@ -8,6 +8,8 @@ DerivedData/
 xcuserdata/
 *.xcresult
 Packages/*/Package.resolved
+# SwiftPM on Windows writes the resource bundle's Info.plist into the package directory
+Packages/*/Info.plist
 
 # OS
 .DS_Store

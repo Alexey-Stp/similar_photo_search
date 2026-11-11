@@ -48,6 +48,16 @@ public struct ClusteringConfig: Sendable, Hashable {
         self.exactDuplicateDistance = exactDuplicateDistance
     }
 
+    /// The config the app scans with, calibrated on the labelled fixture set (SPS-28).
+    ///
+    /// The calibration test in `DomainTests` (`CalibrationTests`) checks these exact values against the fixture, so
+    /// the app and the test can't drift apart. Each threshold's comment states the dataset size, the measured
+    /// pairwise precision and recall, and the date.
+    ///
+    /// Revision 2: **not calibrated yet**. The fixture must be extracted on a physical device first
+    /// (`docs/backlog/SPS-28.md`); until then a scan stops with "not calibrated" instead of guessing.
+    public static let calibrated = ClusteringConfig(thresholds: [:])
+
     /// The threshold for vectors of `revision`, or `nil` if none was calibrated.
     public func threshold(forRevision revision: Int) -> Float? {
         thresholds[revision]
