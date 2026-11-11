@@ -11,21 +11,41 @@ private let isExtractionRun = ProcessInfo.processInfo.environment["RUN_CALIBRATI
 /// Device-only, debug-only: extracts the SPS-28 calibration fixture from labelled albums. It is a test, so it never
 /// ships in the app. It reads the albums inside a top-level folder named `SPS-Calibration` (one album per group,
 /// named `<category>--<label>`, see `Packages/Domain/Tests/DomainTests/Fixtures/README.md`), computes each photo's
-/// feature print with the app's own `VisionFeaturePrintService` (512 px, no network), and writes the anonymous
-/// fixture as a test attachment and to the temporary directory.
+/// feature print with the app's own `VisionFeaturePrintService` (512 px, no network), and records the anonymous
+/// fixture as a Swift Testing attachment, to be exported from the Xcode test report.
 ///
-/// Run on an iPhone with full photo-library access and the scheme environment variable `RUN_CALIBRATION_EXTRACTION=1`.
+/// Run on an iPhone with full photo-library access and the scheme environment variable `RUN_CALIBRATION_EXTRACTION=1`,
+/// built with **Xcode 26 or later** (Swift 6.2): attachments don't exist in Swift Testing before that, and there is no
+/// other way to get the file off the device. With an older toolchain the test fails with that message.
 struct CalibrationFixtureExtractionTests {
+    /// The top-level Photos folder that holds the calibration albums.
     static let folderName = "SPS-Calibration"
+    /// The attachment's name, which is also the fixture's file name in the repo.
     static let fileName = "calibration-rev2.json"
+    /// The smallest labelled set the calibration accepts.
+    static let minimumPhotos = 500
 
+    /// One calibration album: its title and its photos.
     struct Album {
+        /// The album title, `<category>--<label>`.
         let name: String
+        /// The album's photos (images only, every burst frame).
         let assets: [PhotoAsset]
     }
 
+    /// Extracts the fixture and records it as an attachment; records nothing if any check fails.
     @Test(.enabled(if: isExtractionRun, "Device-only: extracts the SPS-28 calibration fixture"))
     func extractsTheLabelledCalibrationSet() async throws {
+        #if compiler(>=6.2)
+        let data = try await Self.extractFixture()
+        Attachment.record(Array(data), named: Self.fileName)
+        #else
+        Issue.record("Build with Xcode 26 or later (Swift 6.2): the fixture is exported as a test attachment.")
+        #endif
+    }
+
+    /// The encoded fixture, after every check passed: each photo has a print, and the set is complete.
+    static func extractFixture() async throws -> Data {
         try #require(PHPhotoLibrary.authorizationStatus(for: .readWrite) == .authorized, "Allow full library access")
         let albums = Self.calibrationAlbums()
         try #require(!albums.isEmpty, "No albums in a top-level folder named \(Self.folderName)")
@@ -44,18 +64,14 @@ struct CalibrationFixtureExtractionTests {
             }
         }
 
-        let fixture = try CalibrationFixtureBuilder().fixture(from: samples, source: Self.sourceDescription())
-        let data = try fixture.encoded()
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(Self.fileName)
-        try data.write(to: url)
-        #if compiler(>=6.2)
-        Attachment.record(Array(data), named: Self.fileName)
-        #endif
-        print(CalibrationReport.coverageTable(fixture))
-        print("Wrote \(fixture.photos.count) photos to \(url.path)")
+        try #require(unprinted.isEmpty, "Photos without a print (keep the originals on the device): \(unprinted)")
 
-        #expect(unprinted.isEmpty, "Photos without a print (keep the originals on the device): \(unprinted)")
-        #expect(fixture.photos.count >= 500, "The labelled set needs at least 500 photos")
+        let fixture = try CalibrationFixtureBuilder().fixture(from: samples, source: sourceDescription())
+        print(CalibrationReport.coverageTable(fixture))
+        let problems = CalibrationCoverage.problems(in: fixture, minimumPhotos: minimumPhotos)
+        try #require(problems.isEmpty, "\(problems.joined(separator: "\n"))")
+        print("Extracted \(fixture.photos.count) photos")
+        return try fixture.encoded()
     }
 
     /// The albums of the calibration folder with their photos (images only, every frame of a burst).

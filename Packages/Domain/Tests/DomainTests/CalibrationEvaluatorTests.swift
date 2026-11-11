@@ -40,6 +40,7 @@ struct CalibrationEvaluatorTests {
 
     let evaluator = CalibrationEvaluator(fixture: Self.fixture)
 
+    /// Pairs are scored per session; a labelled pair split by the session gap is a false negative.
     @Test func scoresPairsWithinSessionsAndCountsSplitPairsAsMissed() async throws {
         let score = try await evaluator.score(
             config: ClusteringConfig(thresholds: [2: 0.5]),
@@ -51,6 +52,7 @@ struct CalibrationEvaluatorTests {
         #expect(score.recall == 0.75)
     }
 
+    /// With a 60 min gap the pair 20 minutes apart shares a session and is found.
     @Test func longerSessionGapFindsThePairTakenTwentyMinutesApart() async throws {
         let score = try await evaluator.score(
             config: ClusteringConfig(thresholds: [2: 0.5]),
@@ -60,12 +62,14 @@ struct CalibrationEvaluatorTests {
         #expect(score == PairwiseScore(truePositives: 4, falsePositives: 1, falseNegatives: 0))
     }
 
+    /// Sessions come from `SessionSegmenter`: newest first, members in library order.
     @Test func sessionsUseTheRealSegmenterNewestFirst() async throws {
         let sessions = try await evaluator.sessions(SessionConfig(sessionGap: 15 * 60))
 
         #expect(sessions.map { $0.map(\.id) } == [["b2"], ["c1", "b1", "u1", "a3", "a2", "a1"]])
     }
 
+    /// The curve is sorted by threshold and scores every point.
     @Test func curveIsSortedByThresholdAndScoresEachPoint() async throws {
         let curve = try await evaluator.curve(thresholds: [0.5, 0.05], revision: 2)
 
@@ -76,6 +80,7 @@ struct CalibrationEvaluatorTests {
         #expect(curve[1].score == PairwiseScore(truePositives: 3, falsePositives: 1, falseNegatives: 1))
     }
 
+    /// Only the threshold changes along the curve; the rest comes from the base config.
     @Test func curveKeepsTheOtherParametersOfTheBaseConfig() async throws {
         // A zero pair interval compares only photos taken at the same instant: nothing here.
         let base = ClusteringConfig(thresholds: [:], maxPairInterval: 0)
@@ -84,6 +89,7 @@ struct CalibrationEvaluatorTests {
         #expect(curve[0].score.truePositives == 0)
     }
 
+    /// The best point has the highest recall at the required precision, smallest threshold on ties.
     @Test func bestPointHasTheHighestRecallAtTheRequiredPrecision() {
         let curve = [
             CurvePoint(threshold: 0.1, score: PairwiseScore(truePositives: 1, falsePositives: 0, falseNegatives: 9)),
@@ -97,6 +103,7 @@ struct CalibrationEvaluatorTests {
         #expect(CalibrationEvaluator.bestPoint(on: [curve[3]], minimumPrecision: 0.95) == nil)
     }
 
+    /// Each gap counts the labelled pairs it puts into different sessions.
     @Test func sessionGapSplitsCountLabelledPairsInDifferentSessions() async throws {
         // Strict (5 min), Balanced (15 min), Relaxed (60 min).
         let gaps: [TimeInterval] = SessionGapPreset.allCases.map(\.interval)
@@ -108,6 +115,7 @@ struct CalibrationEvaluatorTests {
         #expect(splits[2].recallCeiling == 1)
     }
 
+    /// With nothing predicted or labelled, precision and recall are 1.
     @Test func emptyScoresAreNeutral() {
         let empty = PairwiseScore(truePositives: 0, falsePositives: 0, falseNegatives: 0)
 
@@ -115,6 +123,7 @@ struct CalibrationEvaluatorTests {
         #expect(empty.recall == 1)
     }
 
+    /// The Markdown tables have a header and one row per entry.
     @Test func reportTablesHaveOneRowPerEntry() async throws {
         let curve = try await evaluator.curve(thresholds: [0.05, 0.5], revision: 2)
         let gaps: [TimeInterval] = [SessionGapPreset.strict.interval, SessionGapPreset.balanced.interval]

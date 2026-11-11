@@ -85,13 +85,16 @@ public struct CalibrationFixtureBuilder: Sendable {
 
     /// Replaces original strings with `<prefix>1`, `<prefix>2`, … in order of first use.
     private struct AliasTable {
+        /// Put before the running number.
         let prefix: String
         private var aliases: [String: String] = [:]
 
+        /// An empty table.
         init(prefix: String) {
             self.prefix = prefix
         }
 
+        /// The alias of `original`, made on first use.
         mutating func alias(for original: String) -> String {
             if let alias = aliases[original] { return alias }
             let alias = "\(prefix)\(aliases.count + 1)"
@@ -100,6 +103,7 @@ public struct CalibrationFixtureBuilder: Sendable {
         }
     }
 
+    /// A sample with its parsed album name and date.
     private struct LabelledSample {
         let sample: Sample
         let category: CalibrationCategory
@@ -107,6 +111,7 @@ public struct CalibrationFixtureBuilder: Sendable {
         let date: Date
     }
 
+    /// Parses every album name and checks the samples; throws the first problem found.
     private func labelledSamples(_ samples: [Sample]) throws(BuildError) -> [LabelledSample] {
         var albumByAsset: [String: String] = [:]
         var result: [LabelledSample] = []

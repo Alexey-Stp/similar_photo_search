@@ -69,17 +69,20 @@ the device scan still need a physical iPhone. Until the fixture is committed, `C
   depend on `DomainTestSupport`.
 - **Extraction** is `CalibrationFixtureExtractionTests` (DataTests). It is compiled only for an iOS device and
   enabled only with `RUN_CALIBRATION_EXTRACTION=1`. It uses the app's own `VisionFeaturePrintService` (512 px,
-  `isNetworkAccessAllowed = false`) and fetches with `includeAllBurstAssets = true`. It writes the JSON as a Swift
-  Testing attachment (`#if compiler(>=6.2)`) and to the temporary directory, and fails if any photo got no print
-  (iCloud-only) or there are fewer than 500 photos.
+  `isNetworkAccessAllowed = false`) and fetches with `includeAllBurstAssets = true`. **It needs Xcode 26 / Swift 6.2**:
+  the JSON leaves the device only as a Swift Testing attachment, and with an older toolchain the test records an issue
+  instead (CI's Xcode 16.4 is Swift 6.1, which only matters for this device run). Before encoding it requires a print
+  for every photo (iCloud-only originals fail it) and a clean `CalibrationCoverage`; on any failure nothing is recorded.
 - **Deviation: the threshold lives in Domain.** It is `ClusteringConfig.calibrated`, and
   `AppContainer.clusteringConfig` is now just `ClusteringConfig.calibrated`. The calibration test checks that exact
   config, so the app and the regression gate can't drift apart. The doc comment with dataset size, precision, recall
   and date goes on `ClusteringConfig.calibrated`. It is still `thresholds: [:]`.
 - `CalibrationTests` prints the coverage table, the curve (thresholds 0.00–1.50 in 0.01 steps; rows with no true
-  positive are left out) and the session-gap table for 5 / 15 / 60 min. It fails if the set has fewer than 500 photos,
-  a category with no group (`unrelated` needs at least 2), a non-revision-2 print, or no burst; if precision < 95 % or
-  recall < 80 % at the calibrated config; or if the default 15 min gap alone caps recall below 80 %.
+  positive are left out) and the session-gap table for 5 / 15 / 60 min. It fails if `CalibrationCoverage` reports a
+  problem (fewer than 500 photos; a non-revision-2 print, mixed vector lengths or duplicate IDs; a category other than
+  `unrelated` without a group of two or more; fewer than two `different-subject` groups or two `unrelated` photos; no
+  burst identifier shared by two photos), so a set of singletons can't pass; if precision < 95 % or recall < 80 % at
+  the calibrated config; or if the default 15 min gap alone caps recall below 80 %.
 - Checked with a throwaway synthetic 504-photo fixture (not committed): the resource loads, the tables print, and the
   test stops at "no threshold for revision 2". Synthetic numbers say nothing about real prints.
 - Windows: SwiftPM writes the test resource bundle's `Info.plist` into `Packages/Domain/`; it is now in `.gitignore`.

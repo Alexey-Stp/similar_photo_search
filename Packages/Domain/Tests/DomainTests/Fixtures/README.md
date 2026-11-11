@@ -27,11 +27,16 @@ Use only photos the team owns and agrees to have in the repo as vectors.
 
    A photo must be in exactly one album. Keep the originals on the device (iCloud-only originals are skipped, never
    downloaded). Aim for at least 500 photos in total, with several albums per category, from more than one person's camera
-   habits.
-2. Allow the test runner full photo-library access, set the scheme's test environment variable
-   `RUN_CALIBRATION_EXTRACTION=1`, and run `CalibrationFixtureExtractionTests` (DataTests) on the iPhone.
-3. The test prints the coverage table and writes `calibration-rev2.json` as a test attachment (and to the test's temporary
-   directory). Export it from the Xcode test report and put it in this folder.
+   habits. The set is rejected (`CalibrationCoverage`) unless every category except `unrelated` has an album with at
+   least two photos, `different-subject` has at least two albums, `unrelated` has at least two photos, and at least one
+   burst contributes two or more frames.
+2. Build with **Xcode 26 or later** (Swift 6.2). The fixture leaves the device only as a Swift Testing attachment, which
+   older toolchains don't have; with them the test fails and says so. Allow the test runner full photo-library access,
+   set the scheme's test environment variable `RUN_CALIBRATION_EXTRACTION=1`, and run
+   `CalibrationFixtureExtractionTests` (DataTests) on the iPhone.
+3. The test prints the coverage table. If every photo got a feature print and the coverage rules above hold, it records
+   `calibration-rev2.json` as a test attachment; otherwise it fails and records nothing. In the Xcode test report, select
+   the test, export the attachment and put it in this folder.
 4. Run `swift test --package-path Packages/Domain --filter CalibrationTests`. It prints the threshold → precision / recall
    curve and the session-gap table. Pick the threshold with the best recall at precision ≥ 95 % and put it in
    `ClusteringConfig.calibrated`, with the dataset size, precision, recall and date in its doc comment. Record the tables in

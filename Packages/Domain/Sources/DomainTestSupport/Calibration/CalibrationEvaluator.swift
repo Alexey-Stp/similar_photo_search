@@ -163,14 +163,18 @@ public struct SessionGapSplit: Sendable, Hashable {
 
 /// An unordered pair of photo IDs.
 struct PhotoPair: Hashable {
+    /// The smaller ID.
     let first: String
+    /// The larger ID.
     let second: String
 
+    /// The pair of `lhs` and `rhs`, in either order.
     init(_ lhs: String, _ rhs: String) {
         first = min(lhs, rhs)
         second = max(lhs, rhs)
     }
 
+    /// Every pair of distinct positions in `ids`: n·(n−1)/2 pairs.
     static func allPairs(of ids: [String]) -> [PhotoPair] {
         var pairs: [PhotoPair] = []
         for (index, lhs) in ids.enumerated() {

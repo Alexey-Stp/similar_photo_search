@@ -18,36 +18,39 @@ struct CalibrationTests {
     /// so distances lie in 0…2).
     static let curveThresholds: [Float] = (0...150).map { Float($0) / 100 }
 
+    /// Thrown while `Fixtures/calibration-rev2.json` is not in the repo.
     struct FixtureMissing: Error, CustomStringConvertible {
+        /// How to produce the fixture.
         var description: String {
             "Fixtures/\(CalibrationTests.fixtureName).json is missing. Extract it on a physical iPhone with "
                 + "CalibrationFixtureExtractionTests (RUN_CALIBRATION_EXTRACTION=1); see Fixtures/README.md."
         }
     }
 
+    /// The fixture's file name in `Fixtures/`, without extension.
     static let fixtureName = "calibration-rev2"
 
+    /// The committed fixture; throws `FixtureMissing` when it isn't there.
     static func loadFixture() throws -> CalibrationFixture {
         guard let url = Bundle.module.url(forResource: fixtureName, withExtension: "json", subdirectory: "Fixtures")
         else { throw FixtureMissing() }
         return try CalibrationFixture.decoded(from: Data(contentsOf: url))
     }
 
+    /// The set is big enough and has a labelled pair in every category (see `CalibrationCoverage`).
     @Test func fixtureCoversTheRequiredKindsOfPhotos() throws {
         let fixture = try Self.loadFixture()
         print(CalibrationReport.coverageTable(fixture))
 
-        #expect(fixture.photos.count >= Self.minimumPhotos, "The labelled set needs at least 500 photos")
-        #expect(fixture.photos.allSatisfy { $0.revision == Self.revision }, "Only revision-2 prints belong here")
-        #expect(Set(fixture.photos.map(\.vector.count)).count == 1, "All vectors must have one length")
-        #expect(Set(fixture.photos.map(\.id)).count == fixture.photos.count, "Photo IDs must be unique")
-        for category in CalibrationCategory.allCases {
-            let groups = Set(fixture.photos.filter { $0.category == category }.map(\.group))
-            #expect(groups.count >= (category == .unrelated ? 2 : 1), "No photos of category \(category.rawValue)")
-        }
-        #expect(fixture.photos.contains { $0.burstIdentifier != nil }, "No photo carries a burst identifier")
+        let problems = CalibrationCoverage.problems(
+            in: fixture,
+            minimumPhotos: Self.minimumPhotos,
+            revision: Self.revision
+        )
+        #expect(problems.isEmpty, "\(problems.joined(separator: "\n"))")
     }
 
+    /// `ClusteringConfig.calibrated` reaches precision ≥ 95 % and recall ≥ 80 %; prints the curve to choose from.
     @Test func calibratedThresholdMeetsTheEpicTarget() async throws {
         let evaluator = CalibrationEvaluator(fixture: try Self.loadFixture())
         let base = ClusteringConfig.calibrated
@@ -68,6 +71,7 @@ struct CalibrationTests {
         #expect(score.recall >= Self.minimumRecall, "Recall \(score.recall) is below 80 %")
     }
 
+    /// The default 15 min session gap alone doesn't cap recall below 80 %; prints the 5 / 15 / 60 min table.
     @Test func defaultSessionGapKeepsEnoughLabelledPairsTogether() async throws {
         let evaluator = CalibrationEvaluator(fixture: try Self.loadFixture())
         let gaps = SessionGapPreset.allCases.map(\.interval)

@@ -40,6 +40,7 @@ struct CalibrationFixtureTests {
 
     // MARK: - Format
 
+    /// Encoding and decoding keeps every bit of the vector and the date.
     @Test func roundTripKeepsEveryBitOfTheVectorAndTheDate() throws {
         let photo = CalibrationPhoto(
             id: "p0001",
@@ -58,6 +59,7 @@ struct CalibrationFixtureTests {
         #expect(decoded.photos[0].vector.map(\.bitPattern) == photo.vector.map(\.bitPattern))
     }
 
+    /// Vectors are base64 of little-endian floats; a nil burst is left out.
     @Test func vectorIsBase64OfLittleEndianFloats() throws {
         let photo = CalibrationPhoto(
             id: "p0001",
@@ -77,12 +79,14 @@ struct CalibrationFixtureTests {
         #expect(json.hasSuffix("}\n"))
     }
 
+    /// A fixture of another format version is rejected.
     @Test func decodingRejectsAnotherFormatVersion() throws {
         let json = Data(#"{"formatVersion": 2, "source": "x", "photos": []}"#.utf8)
 
         #expect(throws: DecodingError.self) { try CalibrationFixture.decoded(from: json) }
     }
 
+    /// A vector whose byte count is not a multiple of 4 is rejected.
     @Test func decodingRejectsAVectorThatIsNotWholeFloats() throws {
         let json = Data("""
             {"formatVersion": 1, "source": "x", "photos": [{"id": "p1", "group": "g", "category": "burst",
@@ -94,6 +98,7 @@ struct CalibrationFixtureTests {
 
     // MARK: - Album names
 
+    /// `<category>--<label>` album names parse, ignoring case and spaces around the separator.
     @Test(arguments: [
         ("burst--dog jumping", CalibrationCategory.burst, "dog jumping"),
         ("Low-Light -- city at night", .lowLight, "city at night"),
@@ -106,6 +111,7 @@ struct CalibrationFixtureTests {
         #expect(parsed.label == label)
     }
 
+    /// Names without a known category or a label are rejected.
     @Test(arguments: ["burst", "burst--", "selfies--beach", "--beach", "burst-beach"])
     func rejectsAlbumNamesOutsideTheConvention(name: String) {
         #expect(CalibrationFixtureBuilder.parseAlbumName(name) == nil)
@@ -113,6 +119,7 @@ struct CalibrationFixtureTests {
 
     // MARK: - Builder
 
+    /// IDs, bursts and groups are anonymized in date order; no original text reaches the JSON.
     @Test func builderAnonymizesIDsBurstsAndGroupsInDateOrder() throws {
         let samples = [
             Self.sample("burst--Anna on the swing", "LOCAL-C", seconds: 2, burst: "BURST-X"),
@@ -139,6 +146,7 @@ struct CalibrationFixtureTests {
         }
     }
 
+    /// A photo in two albums has an ambiguous label and is rejected.
     @Test func builderRejectsAPhotoInTwoAlbums() {
         let samples = [
             Self.sample("burst--one", "LOCAL-A", seconds: 1),
@@ -152,6 +160,7 @@ struct CalibrationFixtureTests {
         }
     }
 
+    /// Bad album names, missing dates and another photo's print are rejected.
     @Test func builderRejectsBadAlbumsMissingDatesAndForeignPrints() {
         let builder = CalibrationFixtureBuilder()
 

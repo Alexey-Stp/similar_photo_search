@@ -24,6 +24,7 @@ public struct CalibrationFixture: Sendable, Hashable, Codable {
         self.photos = photos
     }
 
+    /// Decodes a fixture; throws `DecodingError` for any format other than `currentFormatVersion`.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         formatVersion = try container.decode(Int.self, forKey: .formatVersion)
@@ -114,6 +115,7 @@ public struct CalibrationPhoto: Sendable, Hashable, Codable {
         case id, group, category, creationDate, burstIdentifier, revision, vector
     }
 
+    /// Decodes a photo; throws `DecodingError` if `vector` is not base64 of whole little-endian `Float`s.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(String.self, forKey: .id)
@@ -133,6 +135,7 @@ public struct CalibrationPhoto: Sendable, Hashable, Codable {
         self.vector = vector
     }
 
+    /// Encodes the photo with `vector` as base64 of little-endian `Float`s and no `burstIdentifier` key when nil.
     public func encode(to encoder: any Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
@@ -165,6 +168,7 @@ public enum CalibrationCategory: String, Sendable, Hashable, Codable, CaseIterab
 
 /// Packs vectors as little-endian `Float` bytes, independent of the host's byte order.
 enum CalibrationVectorCoding {
+    /// The little-endian bytes of `vector`, 4 per value.
     static func data(from vector: [Float]) -> Data {
         var data = Data(capacity: vector.count * 4)
         for value in vector {
@@ -173,6 +177,7 @@ enum CalibrationVectorCoding {
         return data
     }
 
+    /// The vector stored in `data`, or `nil` if its size is not a whole number of `Float`s.
     static func vector(from data: Data) -> [Float]? {
         guard data.count.isMultiple(of: 4) else { return nil }
         let bytes = [UInt8](data)
