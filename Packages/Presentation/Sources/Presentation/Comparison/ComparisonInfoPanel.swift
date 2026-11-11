@@ -25,6 +25,7 @@ struct ComparisonInfoPanel: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    /// The date, then resolution and file size on one line.
     private func facts(_ info: ComparisonPhotoInfo) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             if let date = info.date {
@@ -47,6 +48,7 @@ struct ComparisonInfoPanel: View {
         return String(localized: "compare.info.sizeUnavailable", bundle: .module)
     }
 
+    /// Best, the keep / delete status, Favorite, Edited and Live.
     private func badges(_ info: ComparisonPhotoInfo) -> some View {
         let selected = viewModel.isSelected(assetID)
         return FlowingBadges {
@@ -68,6 +70,7 @@ struct ComparisonInfoPanel: View {
         }
     }
 
+    /// One tinted capsule with an icon and a short text.
     private func badge(_ key: LocalizedStringKey, symbol: String, tint: Color) -> some View {
         Label {
             Text(key, bundle: .module)
@@ -129,6 +132,7 @@ struct ComparisonInfoPanel: View {
 private struct FlowingBadges<Content: View>: View {
     @ViewBuilder let content: Content
 
+    /// The badges in one row, or one below the other when the row does not fit.
     var body: some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 6) { content }

@@ -58,6 +58,7 @@ public struct PhotoKitScreenImageLoader: Sendable {
         CGSize(width: cappedSide(size.width), height: cappedSide(size.height))
     }
 
+    /// One side between 1 and `maxPixelSide`, rounded to whole pixels.
     private static func cappedSide(_ side: CGFloat) -> CGFloat {
         guard side.isFinite, side > 0 else { return maxPixelSide }
         return min(maxPixelSide, max(1, side.rounded()))

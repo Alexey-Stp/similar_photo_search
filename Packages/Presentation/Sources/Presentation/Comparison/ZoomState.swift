@@ -106,6 +106,7 @@ public final class ZoomState {
         )
     }
 
+    /// Publishes the zoom and pan (only when they change) and makes them the base of the next gesture.
     private func set(scale newScale: CGFloat, offset newOffset: CGSize) {
         if scale != newScale {
             scale = newScale

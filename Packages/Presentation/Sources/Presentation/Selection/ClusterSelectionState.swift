@@ -31,6 +31,7 @@ public final class ClusterSelectionState: Identifiable {
         selectedIDs != suggestion.suggestedForDeletion || isDeleteAllConfirmed || chosenKeeperID != nil
     }
 
+    /// Creates the choice of one cluster; only `SelectionStore` does.
     init(
         suggestion: ClusterSelection,
         selectedIDs: Set<String>,

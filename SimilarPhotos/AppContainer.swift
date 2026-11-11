@@ -202,6 +202,7 @@ private struct PhotoKitScreenImageBridge: ScreenImageLoading {
         }
     }
 
+    /// The Data image as a Presentation `Thumbnail`.
     private static func thumbnail(_ image: LoadedImage) -> Thumbnail {
         Thumbnail(cgImage: image.cgImage, exifOrientation: image.orientation)
     }

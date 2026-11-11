@@ -31,16 +31,17 @@ struct ZoomableImage: View {
                 }
                 .gesture(magnify(content: content))
                 .gesture(pan(content: content), including: zoom.isZoomed ? .all : .subviews)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityLabel)
+                .accessibilityAddTraits(.isImage)
                 .accessibilityZoomAction { action in
                     zoom.accessibilityZoom(zoomIn: action.direction == .zoomIn, content: content)
                 }
         }
         .clipped()
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityAddTraits(.isImage)
     }
 
+    /// Pinch: zooms live, commits (or snaps back to 1×) when the fingers lift.
     private func magnify(content: CGSize) -> some Gesture {
         MagnifyGesture()
             .onChanged { value in zoom.magnify(by: value.magnification, content: content) }
@@ -49,6 +50,7 @@ struct ZoomableImage: View {
             }
     }
 
+    /// Drag while zoomed: pans live within the image edges, commits when the finger lifts.
     private func pan(content: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 1)
             .onChanged { value in zoom.pan(by: value.translation, content: content) }

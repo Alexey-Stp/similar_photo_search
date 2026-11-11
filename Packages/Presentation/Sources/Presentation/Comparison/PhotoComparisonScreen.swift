@@ -153,6 +153,7 @@ private struct ComparisonPagerPage: View {
     let assetID: String
     @State private var idleZoom = ZoomState()
 
+    /// The pane of this photo, zoomable only while it is the current page.
     var body: some View {
         let isCurrent = viewModel.shownCurrentID == assetID
         ComparisonPane(
@@ -171,6 +172,7 @@ private struct ComparisonTopBar: View {
     @Bindable var viewModel: PhotoComparisonViewModel
     let onClose: () -> Void
 
+    /// Close on the left, the position in the middle, the side-by-side switch on the right.
     var body: some View {
         HStack {
             Button(action: onClose) {

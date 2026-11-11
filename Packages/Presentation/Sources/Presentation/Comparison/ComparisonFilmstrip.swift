@@ -31,6 +31,7 @@ struct ComparisonFilmstrip: View {
         .frame(height: side + 16)
     }
 
+    /// One thumbnail: framed when shown, dimmed with a checkmark when selected, starred when Best.
     private func cell(_ assetID: String) -> some View {
         let isShown = assetID == viewModel.shownCurrentID
             || (viewModel.showsSideBySide && assetID == viewModel.shownSecondaryID)

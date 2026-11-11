@@ -8,6 +8,7 @@ struct PhotoComparisonHost: View {
     @Environment(\.viewModelFactory) private var factory
     @State private var viewModel: PhotoComparisonViewModel?
 
+    /// The comparison once its view model exists, black before that.
     var body: some View {
         Group {
             if let viewModel {

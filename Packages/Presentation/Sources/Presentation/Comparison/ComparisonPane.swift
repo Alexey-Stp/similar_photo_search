@@ -48,6 +48,7 @@ struct ComparisonPane: View {
         let pixelSize: CGSize
         let isActive: Bool
 
+        /// Hashes the fields one by one (`CGSize` is not `Hashable`).
         func hash(into hasher: inout Hasher) {
             hasher.combine(assetID)
             hasher.combine(pixelSize.width)
@@ -93,6 +94,7 @@ struct ComparisonPane: View {
 
 /// "Original in iCloud" on the local preview of an iCloud-only photo.
 private struct ICloudOriginalLabel: View {
+    /// A capsule at the bottom of the photo; touches pass through.
     var body: some View {
         VStack {
             Spacer()

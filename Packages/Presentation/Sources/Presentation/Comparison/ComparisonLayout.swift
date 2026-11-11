@@ -30,6 +30,7 @@ public enum ComparisonLayout {
         return CGSize(width: imageSize.width * factor, height: imageSize.height * factor)
     }
 
+    /// One side in whole pixels between 1 and `maxPixelSide`; anything not positive becomes 1.
     private static func side(_ value: CGFloat) -> CGFloat {
         guard value.isFinite, value > 0 else { return 1 }
         return min(maxPixelSide, max(1, value.rounded()))

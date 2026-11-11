@@ -95,6 +95,7 @@ extension PhotoComparisonViewModel {
 
     // MARK: - Private
 
+    /// Stores the looked-up details and which requested photos the library no longer has.
     private func record(assets: [PhotoAsset], sizes: [String: Int64], edited: Set<String>, requested: [String]) {
         var infos = infos
         for asset in assets {

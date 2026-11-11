@@ -233,6 +233,7 @@ public final class SelectionStore {
         }
     }
 
+    /// Remembers the cluster's choice (selection, delete-all, chosen Best) while it differs from the suggestion.
     func recordOverride(of state: ClusterSelectionState) {
         if state.isOverridden {
             overrides[state.id] = Override(

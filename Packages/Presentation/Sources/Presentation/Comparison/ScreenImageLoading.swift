@@ -17,8 +17,8 @@ public struct ScreenImage: Sendable {
 
 /// Loads photos at screen size for the comparison screen, local only.
 ///
-/// The app implements it over `PHImageManager` (aspect fit, `isNetworkAccessAllowed = false`, never the maximum
-/// size); previews and tests use fakes. Sizes are in **pixels** (view size × display scale).
+/// The app implements it over `PHImageManager` (aspect fit, network access disabled, never the maximum size);
+/// previews and tests use fakes. Sizes are in **pixels** (view size × display scale).
 public protocol ScreenImageLoading: Sendable {
     /// The photo at about `pixelSize` (aspect fit): the original, or the high-quality local preview when the
     /// original is only in iCloud. `nil` if the photo is gone, can't be decoded, or the task was cancelled
