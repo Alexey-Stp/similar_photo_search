@@ -98,7 +98,9 @@ struct CalibrationEvaluatorTests {
     }
 
     @Test func sessionGapSplitsCountLabelledPairsInDifferentSessions() async throws {
-        let splits = try await evaluator.sessionGapSplits(gaps: [5 * 60, 15 * 60, 60 * 60])
+        // Strict (5 min), Balanced (15 min), Relaxed (60 min).
+        let gaps: [TimeInterval] = SessionGapPreset.allCases.map(\.interval)
+        let splits: [SessionGapSplit] = try await evaluator.sessionGapSplits(gaps: gaps)
 
         #expect(splits.map(\.splitPairs) == [1, 1, 0])
         #expect(splits.map(\.labelledPairs) == [4, 4, 4])
@@ -115,7 +117,8 @@ struct CalibrationEvaluatorTests {
 
     @Test func reportTablesHaveOneRowPerEntry() async throws {
         let curve = try await evaluator.curve(thresholds: [0.05, 0.5], revision: 2)
-        let splits = try await evaluator.sessionGapSplits(gaps: [5 * 60, 15 * 60])
+        let gaps: [TimeInterval] = [SessionGapPreset.strict.interval, SessionGapPreset.balanced.interval]
+        let splits: [SessionGapSplit] = try await evaluator.sessionGapSplits(gaps: gaps)
 
         let curveTable = CalibrationReport.curveTable(curve)
         #expect(curveTable.split(separator: "\n").count == 4)
