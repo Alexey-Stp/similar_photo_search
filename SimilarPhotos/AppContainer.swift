@@ -58,9 +58,10 @@ final class AppContainer: ViewModelFactory {
     /// Opens the Photos app from the deletion result (SPS-25), best effort.
     let photosAppOpener: any PhotosAppOpening = UIKitPhotosAppOpener()
 
-    /// Similarity thresholds per Vision revision. Empty until the calibration spike on the labelled fixture set
-    /// (SPS-16): with no threshold, a scan stops with "not calibrated" instead of guessing.
-    static let clusteringConfig = ClusteringConfig(thresholds: [:])
+    /// Similarity thresholds per Vision revision, calibrated on the labelled fixture set (SPS-28). The values, their
+    /// dataset size, precision, recall and date are documented on `ClusteringConfig.calibrated`, which the
+    /// calibration test checks. With no threshold for a revision, a scan stops with "not calibrated".
+    static let clusteringConfig = ClusteringConfig.calibrated
 
     /// Builds every service once.
     init() {
