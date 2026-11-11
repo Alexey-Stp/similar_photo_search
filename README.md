@@ -3,7 +3,9 @@
 A native iOS app that finds near-duplicate photos in your library and helps you delete them.
 Everything runs **on device**: the app makes no network calls, and photos that exist only in iCloud are skipped rather than downloaded.
 
-> Status: early skeleton (SPS-2). Services are placeholders; see the [backlog](docs/backlog/README.md).
+> Status: the feature tickets SPS-2 to SPS-26 in the [backlog](docs/backlog/README.md) are implemented. Not yet usable on a
+> device: the similarity threshold is not calibrated, so every scan stops with "not calibrated" ([SPS-28](docs/backlog/SPS-28.md)).
+> Device QA is still open ([SPS-29](docs/backlog/SPS-29.md)).
 
 ## Requirements
 
