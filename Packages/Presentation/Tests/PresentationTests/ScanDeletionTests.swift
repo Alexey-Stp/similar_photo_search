@@ -39,6 +39,28 @@ struct ScanDeletionTests {
         #expect(await harness.coordinator.startCalls.count == 1)
     }
 
+    @Test func groupsPublishedBeforeTheScanLearnedOfADeletionDontBringPhotosBack() async {
+        let harness = DeletionHarness()
+        await harness.scan.startScan()
+        await harness.coordinator.send(.added([ClusterListHarness.group(["A1", "A2", "A3"])]))
+        #expect(await harness.eventually { harness.store.clusterIDs == ["A1"] })
+        await harness.scan.deletionFinished(deleted: ["A1", "B2"])
+
+        // Published by the scan before the exclusion reached it, still holding the deleted photos.
+        let stale = [
+            ClusterListHarness.group(["A1", "A2", "A3"]),
+            ClusterListHarness.group(["B1", "B2"]),
+            ClusterListHarness.group(["C1", "C2"])
+        ]
+        await harness.coordinator.send(.added(stale))
+        #expect(await harness.eventually { harness.store.clusterIDs.count == 2 })
+
+        #expect(harness.store.clusterIDs == ["A2", "C1"])
+        #expect(harness.store.state(for: "A2")?.memberIDs == ["A2", "A3"])
+        #expect(harness.scan.rowOrder.ids == ["A2", "C1"])
+        #expect(!harness.store.isSelected("A1"))
+    }
+
     @Test func nothingDeletedChangesNothing() async {
         let harness = DeletionHarness()
         harness.show([["A1", "A2"]])

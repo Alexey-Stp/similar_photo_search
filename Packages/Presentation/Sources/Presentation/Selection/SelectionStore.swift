@@ -227,6 +227,7 @@ public final class SelectionStore {
         let keeperID: String?
     }
 
+    /// Forgets which cluster the state's members belong to (before it is replaced or removed).
     func unindex(_ state: ClusterSelectionState) {
         for id in state.memberIDs where clusterIDByAsset[id] == state.id {
             clusterIDByAsset[id] = nil

@@ -73,7 +73,12 @@ reconciles deleted IDs on the next launch. `photos-redirect://` is undocumented 
   `needsReview`), none if nothing is ranked. **The ID stays unless the naming photo was deleted; then it becomes the
   newest survivor** — the same ID a running scan gives the shrunk cluster (`ScanRun.withoutExcludedMembers` uses the
   default ID), so a re-publish lands on the same row. The row keeps its position (`ClusterRowOrder.rename`,
-  `SelectionStore.clusterIDs` replaced in place). Fewer than 2 survivors → removed.
+  `SelectionStore.clusterIDs` replaced in place). Fewer than 2 survivors → removed, except a single
+  survivor that is still selected (the user deleted the whole group and that photo failed): it stays as a one-photo
+  group, selected, so it can be retried.
+- **Stale publishes.** `ScanViewModel` remembers the session's deleted IDs (`deletedAssetIDs`, set before the first
+  suspension of `deletionFinished`) and reconciles every `.added` update with `removingMembers` before `upsert`, so a
+  group the scan published before `excludeDeleted` reached it can't bring deleted photos back or recreate an old row.
 - **Decision: survivors keep the user's choice.** Selected survivors (photos that failed to delete) stay selected, a
   chosen Best that survived stays Best, delete-all stays confirmed while every survivor is selected. The choice is
   recorded as an override for the **new** member set, so a rescan that publishes the same survivors restores it
@@ -93,7 +98,7 @@ reconciles deleted IDs on the next launch. `photos-redirect://` is undocumented 
 - **Strings:** `deletion.*` (29 keys). `docs/qa/zero-network.md` scope note updated: deletion now runs from the UI.
 - **Verified on Windows:** Domain tests (226, incl. 9 `ClusterSelectionRemovalTests`, `-warnings-as-errors`); the three
   `scripts/check-*.sh`. The view-model layer compiled in a scratch package (SwiftUI/CoreGraphics stubbed,
-  `-warnings-as-errors`), where `DeletionViewModelTests` (10), `SelectionStoreDeletionTests` (7), `ScanDeletionTests` (4),
+  `-warnings-as-errors`), where `DeletionViewModelTests` (10), `SelectionStoreDeletionTests` (8), `ScanDeletionTests` (5),
   `ClusterRowOrderTests` (incl. rename) and all other suites passed; only the existing string-catalog tests failed there,
   as in SPS-18/21/22. **Not run (need macOS CI):** the real Presentation build and tests, the views and previews, the app
   build (`UIKitPhotosAppOpener`, `AppContainer`), `check-info-plist.sh`, SwiftLint.

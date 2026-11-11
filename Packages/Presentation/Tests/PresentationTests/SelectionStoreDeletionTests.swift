@@ -85,6 +85,21 @@ struct SelectionStoreDeletionTests {
         #expect(try #require(store.state(for: "A1")).selectedIDs == ["A4"])
     }
 
+    @Test func theFailedLastPhotoOfAGroupDeletedEntirelyStaysVisibleAndSelected() throws {
+        let store = makeStore([["A1", "A2", "A3"], ["B1", "B2"]])
+        store.confirmDeleteAll("A1")
+
+        let update = store.removeDeleted(["A1", "A2", "B2"])  // A3 failed
+
+        #expect(update.removed == ["B1"], "A kept photo left alone is no group")
+        #expect(update.renamed == ["A1": "A3"])
+        #expect(store.clusterIDs == ["A3"])
+        let state = try #require(store.state(for: "A3"))
+        #expect(state.memberIDs == ["A3"])
+        #expect(state.isSelected("A3"))
+        #expect(store.selectedAssetIDs == ["A3"])
+    }
+
     @Test func aConfirmedDeleteAllStaysConfirmedWhileEverySurvivorIsSelected() throws {
         let store = makeStore([["A1", "A2", "A3"]])
         store.confirmDeleteAll("A1")

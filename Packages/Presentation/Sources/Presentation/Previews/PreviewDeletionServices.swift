@@ -4,6 +4,7 @@ import SwiftUI
 
 /// `AssetDeletionService` for SwiftUI previews: never touches PhotoKit; answers with `result` after a short wait.
 struct PreviewDeletionService: AssetDeletionService {
+    /// Builds the result for the requested IDs.
     let result: @Sendable ([String]) -> DeletionResult
 
     /// Waits a second (the "system alert"), then returns the scripted result.

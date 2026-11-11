@@ -32,10 +32,12 @@ public final class ScanViewModel {
     /// `startScan()` replaced. The final phase may arrive on the progress stream slightly later.
     @ObservationIgnored public var onScanEnded: (@MainActor () -> Void)?
 
+    /// Runs the scans; also told about deleted photos (`ScanViewModel+Deletion`).
     @ObservationIgnored let coordinator: any ScanCoordinating
     @ObservationIgnored private let preferences: any ScopePreferencesStore
     @ObservationIgnored private let idleTimer: any IdleTimerControlling
     @ObservationIgnored private let backgroundTasks: any BackgroundTaskRunning
+    /// The current time (scan scope, the quiet period after a deletion); injected by tests.
     @ObservationIgnored let now: () -> Date
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var consumers: [Task<Void, Never>] = []
@@ -46,6 +48,8 @@ public final class ScanViewModel {
     @ObservationIgnored var deletionsInProgress = 0
     /// Library changes until then are this app's own deletion (`ScanViewModel+Deletion`).
     @ObservationIgnored var ownChangesQuietUntil: Date?
+    /// Photos deleted by the user in this app session; groups published later are reconciled against them.
+    @ObservationIgnored var deletedAssetIDs: Set<String> = []
 
     /// Creates the view model.
     public init(
@@ -120,6 +124,7 @@ public final class ScanViewModel {
     /// groups already shown; the deletion flow uses `deletionFinished(deleted:)`, which does both.
     public func photosDeleted(_ assetIDs: Set<String>) {
         guard !assetIDs.isEmpty else { return }
+        deletedAssetIDs.formUnion(assetIDs)
         let coordinator = coordinator
         Task { await coordinator.excludeDeleted(assetIDs) }
     }
@@ -217,7 +222,12 @@ public final class ScanViewModel {
     /// Applies one group change to the selection store.
     private func apply(_ update: ClusterUpdate) {
         switch update {
-        case .added(let selections):
+        case .added(let published):
+            // A group published before the scan learned of a deletion must not bring deleted photos back.
+            let selections = deletedAssetIDs.isEmpty
+                ? published
+                : published.compactMap { $0.removingMembers(deletedAssetIDs) }
+            guard !selections.isEmpty else { return }
             selection.upsert(selections)
             rowOrder.add(selections.map(\.id))
             clusterRevision += 1

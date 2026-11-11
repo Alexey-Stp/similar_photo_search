@@ -17,7 +17,8 @@ public struct DeletionUpdate: Sendable, Equatable {
 extension SelectionStore {
     /// Updates the clusters after their photos were deleted (SPS-25), locally and without a rescan.
     ///
-    /// - A cluster left with fewer than two members is removed.
+    /// - A cluster left with fewer than two members is removed, except a single survivor that is still selected
+    ///   (the user deleted the whole group and that photo failed): it stays as a one-photo group, selected.
     /// - Any other affected cluster is recomputed (`ClusterSelection.removingMembers(_:)`) under the same ID, or under
     ///   its newest survivor's ID when the naming photo was deleted. The user's choice for the survivors is kept:
     ///   what they selected stays selected (for example a photo that could not be deleted), and a chosen Best that
@@ -30,7 +31,7 @@ extension SelectionStore {
         guard !deleted.isEmpty else { return update }
         for clusterID in clusterIDs {
             guard let state = states[clusterID], state.memberIDs.contains(where: deleted.contains) else { continue }
-            guard let next = state.suggestion.removingMembers(deleted) else {
+            guard let next = state.suggestion.removingMembers(deleted) ?? failedLeftover(of: state, deleted) else {
                 update.removed.append(clusterID)
                 continue
             }
@@ -62,11 +63,32 @@ extension SelectionStore {
         clusterIDByAsset[assetID]
     }
 
+    /// A one-photo group for the only survivor of a group the user wanted to delete entirely, when that photo is still
+    /// selected (its deletion failed): it stays visible and selectable for a retry. `nil` for any other leftover.
+    private func failedLeftover(of state: ClusterSelectionState, _ deleted: Set<String>) -> ClusterSelection? {
+        let survivors = state.memberIDs.filter { !deleted.contains($0) }
+        guard survivors.count == 1, let survivor = survivors.first, state.selectedIDs.contains(survivor) else {
+            return nil
+        }
+        return ClusterSelection(
+            cluster: SimilarityCluster(
+                id: deleted.contains(state.id) ? survivor : state.id,
+                assetIDs: [survivor],
+                averageDistance: state.suggestion.cluster.averageDistance,
+                isExactDuplicate: state.suggestion.cluster.isExactDuplicate
+            ),
+            ranking: state.suggestion.ranking.filter { $0.assetID == survivor },
+            suggestedForDeletion: [],
+            needsReview: true
+        )
+    }
+
     /// Puts `next` in place of `state` (same row), carrying the user's choice over to the survivors.
     private func replace(_ state: ClusterSelectionState, with next: ClusterSelection) {
         let survivors = Set(next.cluster.assetIDs)
         var selected = state.selectedIDs.intersection(survivors)
-        let confirmed = state.isDeleteAllConfirmed && selected == survivors
+        // A failed leftover of one photo stays selected: the user already confirmed deleting the whole group.
+        let confirmed = (state.isDeleteAllConfirmed || survivors.count == 1) && selected == survivors
         if selected == survivors, !confirmed, let kept = next.keeperID ?? next.cluster.assetIDs.first {
             // A cluster keeps at least one photo unless the user confirmed otherwise.
             selected.remove(kept)

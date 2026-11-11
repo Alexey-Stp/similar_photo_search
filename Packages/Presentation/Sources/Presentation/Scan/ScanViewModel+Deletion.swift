@@ -18,6 +18,8 @@ extension ScanViewModel {
         deletionsInProgress = max(0, deletionsInProgress - 1)
         guard !deleted.isEmpty else { return }
         ownChangesQuietUntil = now().addingTimeInterval(Self.ownChangeQuietPeriod)
+        // Recorded before the first suspension, so groups the scan already published can't bring them back.
+        deletedAssetIDs.formUnion(deleted)
         let update = selection.removeDeleted(deleted)
         rowOrder.rename(update.renamed)
         rowOrder.remove(update.removed)
