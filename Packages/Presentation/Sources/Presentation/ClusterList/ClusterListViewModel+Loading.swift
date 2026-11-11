@@ -31,9 +31,9 @@ extension ClusterListViewModel {
         }
     }
 
-    /// The bytes deleting the group would free: every member except the keeper (except the largest member when
-    /// there is no keeper). Stable while the user toggles photos. `nil` while a member's size is still unknown;
-    /// unavailable sizes count as 0.
+    /// The bytes deleting the group would free: every member except the suggested keeper (except the largest member
+    /// when there is no keeper). Stable while the user toggles photos or marks another one as best. `nil` while a
+    /// member's size is still unknown; unavailable sizes count as 0.
     public func reclaimableBytes(of clusterID: String) -> Int64? {
         guard let state = selection.state(for: clusterID) else { return nil }
         var total: Int64 = 0
@@ -50,7 +50,7 @@ extension ClusterListViewModel {
             }
             total += size
             largest = max(largest, size)
-            if id == state.keeperID {
+            if id == state.suggestion.keeperID {
                 keeperSize = size
             }
         }

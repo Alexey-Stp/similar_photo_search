@@ -103,7 +103,7 @@ and the list never jumps under the user's finger; full VoiceOver, Dark Mode and 
 |---|---|---|---|
 | [SPS-20](SPS-20.md) | Home / scan dashboard | Review | SPS-14 |
 | [SPS-21](SPS-21.md) | Cluster list with efficient thumbnail loading | Review | SPS-18, SPS-20 |
-| [SPS-22](SPS-22.md) | Photo comparison screen | To do | SPS-18, SPS-21 |
+| [SPS-22](SPS-22.md) | Photo comparison screen | Review | SPS-18, SPS-21 |
 
 ### Epic SPS-23 — Deletion
 

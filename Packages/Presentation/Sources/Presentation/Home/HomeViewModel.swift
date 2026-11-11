@@ -7,8 +7,20 @@ import SwiftUI
 public enum HomeRoute: Hashable, Sendable {
     /// The groups of similar photos.
     case clusters
-    /// The comparison of one group's photos (SPS-22 builds the full screen).
-    case comparison(clusterID: String)
+}
+
+/// The full-screen comparison of one group, presented over the group list (SPS-22).
+public struct ComparisonRequest: Hashable, Sendable, Identifiable {
+    /// The group to compare.
+    public let clusterID: String
+
+    /// The group ID.
+    public var id: String { clusterID }
+
+    /// Creates a request.
+    public init(clusterID: String) {
+        self.clusterID = clusterID
+    }
 }
 
 /// The home dashboard: which state to show, the results summary, and when to scan.
@@ -41,6 +53,8 @@ public final class HomeViewModel {
     public let scan: ScanViewModel
     /// The navigation path of Home.
     public var path: [HomeRoute] = []
+    /// The comparison shown full screen, if any.
+    public var comparison: ComparisonRequest?
     /// Whether the running scan is a silent refresh (results stay on screen).
     public private(set) var isRefreshingSilently = false
     /// Whether stored results of an earlier scan were loaded at launch.
@@ -138,10 +152,10 @@ public final class HomeViewModel {
         path.append(.clusters)
     }
 
-    /// Opens the comparison of one group (the header of its card, or the VoiceOver action "Compare").
+    /// Opens the full-screen comparison of one group (the header of its card, or the VoiceOver action "Compare").
     public func compare(clusterID: String) {
-        guard path.last != .comparison(clusterID: clusterID) else { return }
-        path.append(.comparison(clusterID: clusterID))
+        guard comparison == nil else { return }
+        comparison = ComparisonRequest(clusterID: clusterID)
     }
 
     /// Follows the scene phase (background time for the scan, library changes made in the background).

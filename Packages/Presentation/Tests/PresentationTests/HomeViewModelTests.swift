@@ -109,12 +109,16 @@ struct HomeViewModelTests {
         #expect(harness.home.path == [.clusters])
     }
 
-    @Test func compareOpensTheComparisonOfOneGroupOnce() {
+    @Test func compareOpensTheFullScreenComparisonOfOneGroupOnce() {
         let harness = makeHarness()
         harness.home.review()
         harness.home.compare(clusterID: "A1")
-        harness.home.compare(clusterID: "A1")
-        #expect(harness.home.path == [.clusters, .comparison(clusterID: "A1")])
+        harness.home.compare(clusterID: "B1")
+        #expect(harness.home.path == [.clusters])
+        #expect(harness.home.comparison == ComparisonRequest(clusterID: "A1"))
+        harness.home.comparison = nil
+        harness.home.compare(clusterID: "B1")
+        #expect(harness.home.comparison?.clusterID == "B1")
     }
 
     @Test func aFinishedScanWithGroupsShowsTheSummary() async {
