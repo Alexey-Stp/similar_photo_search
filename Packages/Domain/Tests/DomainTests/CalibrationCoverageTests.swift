@@ -40,20 +40,20 @@ struct CalibrationCoverageTests {
     }
 
     /// A complete fixture has no problem.
-    @Test func completeFixturePasses() {
+    @Test func completeFixturePasses() async throws {
         let fixture = CalibrationFixture(source: "test", photos: Self.completePhotos())
 
-        #expect(CalibrationCoverage.problems(in: fixture, minimumPhotos: 10) == [])
+        #expect(try await CalibrationCoverage.problems(in: fixture, minimumPhotos: 10) == [])
     }
 
     /// Only singleton groups and isolated burst identifiers: every category and the burst check fail.
-    @Test func singletonGroupsAndIsolatedBurstsFail() {
+    @Test func singletonGroupsAndIsolatedBurstsFail() async throws {
         let photos = CalibrationCategory.allCases.enumerated().map { index, category in
             Self.photo(index, category, group: "\(category.rawValue)-g\(index)", burst: "b\(index)")
         }
 
         let fixture = CalibrationFixture(source: "test", photos: photos)
-        let problems = CalibrationCoverage.problems(in: fixture, minimumPhotos: 1)
+        let problems = try await CalibrationCoverage.problems(in: fixture, minimumPhotos: 1)
 
         for category in CalibrationCategory.allCases where category != .unrelated {
             #expect(problems.contains { $0.contains("Category \(category.rawValue) has no labelled pair") })
@@ -64,21 +64,21 @@ struct CalibrationCoverageTests {
     }
 
     /// One subject only is not enough for `different-subject`, even with a labelled pair.
-    @Test func differentSubjectNeedsTwoSubjects() {
+    @Test func differentSubjectNeedsTwoSubjects() async throws {
         let photos = Self.completePhotos().filter { $0.group != "different-subject-g2" }
 
         let fixture = CalibrationFixture(source: "test", photos: photos)
-        let problems = CalibrationCoverage.problems(in: fixture, minimumPhotos: 1)
+        let problems = try await CalibrationCoverage.problems(in: fixture, minimumPhotos: 1)
 
         #expect(problems == ["Category different-subject needs at least two subjects (groups)."])
     }
 
     /// Size, revision, vector length and ID uniqueness are checked too.
-    @Test func sizeRevisionLengthAndIDsAreChecked() {
+    @Test func sizeRevisionLengthAndIDsAreChecked() async throws {
         var photos = Self.completePhotos()
         photos.append(Self.photo(0, .unrelated, group: "unrelated-g9", revision: 1, length: 3))
 
-        let problems = CalibrationCoverage.problems(in: CalibrationFixture(source: "test", photos: photos))
+        let problems = try await CalibrationCoverage.problems(in: CalibrationFixture(source: "test", photos: photos))
 
         #expect(problems == [
             "The set has \(photos.count) photos; it needs at least 500.",
@@ -86,5 +86,57 @@ struct CalibrationCoverageTests {
             "All vectors must have the same length.",
             "Photo IDs must be unique."
         ])
+    }
+
+    /// Two unrelated photos labelled as one group are "the same", which the category forbids.
+    @Test func unrelatedPhotosSharingAGroupFail() async throws {
+        let photos = Self.completePhotos().map { photo in
+            guard photo.category == .unrelated else { return photo }
+            return CalibrationPhoto(
+                id: photo.id,
+                group: "unrelated-g1",
+                category: .unrelated,
+                creationDate: photo.creationDate,
+                burstIdentifier: nil,
+                revision: photo.revision,
+                vector: photo.vector
+            )
+        }
+
+        let fixture = CalibrationFixture(source: "test", photos: photos)
+        let problems = try await CalibrationCoverage.problems(in: fixture, minimumPhotos: 1)
+
+        #expect(problems == ["Every unrelated photo needs its own group; some share one."])
+    }
+
+    /// Photos two hours apart are in different sessions: no "not the same" pair is ever compared.
+    @Test func negativePairsThatAreNeverComparedFail() async throws {
+        let photos = Self.completePhotos().enumerated().map { index, photo in
+            CalibrationPhoto(
+                id: photo.id,
+                group: photo.group,
+                category: photo.category,
+                creationDate: Self.start.addingTimeInterval(TimeInterval(index) * 2 * 60 * 60),
+                burstIdentifier: photo.burstIdentifier,
+                revision: photo.revision,
+                vector: photo.vector
+            )
+        }
+
+        let fixture = CalibrationFixture(source: "test", photos: photos)
+        let problems = try await CalibrationCoverage.problems(in: fixture, minimumPhotos: 1)
+
+        #expect(problems.count == 2)
+        #expect(problems.contains { $0.hasPrefix("No different-subject photo is compared with another group") })
+        #expect(problems.contains { $0.hasPrefix("No unrelated photo is compared with another group") })
+    }
+
+    /// A pair in one session but further apart than `maxPairInterval` is not compared either.
+    @Test func negativePairsBeyondThePairIntervalDoNotCount() async throws {
+        let fixture = CalibrationFixture(source: "test", photos: Self.completePhotos())
+
+        let problems = try await CalibrationCoverage.problems(in: fixture, minimumPhotos: 1, maxPairInterval: 0)
+
+        #expect(problems.count == 2)
     }
 }

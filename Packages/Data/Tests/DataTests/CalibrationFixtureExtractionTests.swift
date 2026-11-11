@@ -53,22 +53,26 @@ struct CalibrationFixtureExtractionTests {
         try #require(service.revision == 2, "This device produces revision \(service.revision), not 2")
 
         var samples: [CalibrationFixtureBuilder.Sample] = []
-        var unprinted: [String: Int] = [:]
+        var unprintedCount = 0
         for album in albums {
             for asset in album.assets {
                 if case .computed(let featurePrint) = try await service.featurePrint(for: asset) {
                     samples.append(.init(albumName: album.name, asset: asset, featurePrint: featurePrint))
                 } else {
-                    unprinted[album.name, default: 0] += 1
+                    unprintedCount += 1
                 }
             }
         }
 
-        try #require(unprinted.isEmpty, "Photos without a print (keep the originals on the device): \(unprinted)")
+        // Only a count: album titles may hold personal labels and must not end up in shared test logs.
+        try #require(
+            unprintedCount == 0,
+            "\(unprintedCount) photos got no feature print; keep their originals on the device"
+        )
 
         let fixture = try CalibrationFixtureBuilder().fixture(from: samples, source: sourceDescription())
         print(CalibrationReport.coverageTable(fixture))
-        let problems = CalibrationCoverage.problems(in: fixture, minimumPhotos: minimumPhotos)
+        let problems = try await CalibrationCoverage.problems(in: fixture, minimumPhotos: minimumPhotos)
         try #require(problems.isEmpty, "\(problems.joined(separator: "\n"))")
         print("Extracted \(fixture.photos.count) photos")
         return try fixture.encoded()

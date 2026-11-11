@@ -38,14 +38,15 @@ struct CalibrationTests {
     }
 
     /// The set is big enough and has a labelled pair in every category (see `CalibrationCoverage`).
-    @Test func fixtureCoversTheRequiredKindsOfPhotos() throws {
+    @Test func fixtureCoversTheRequiredKindsOfPhotos() async throws {
         let fixture = try Self.loadFixture()
         print(CalibrationReport.coverageTable(fixture))
 
-        let problems = CalibrationCoverage.problems(
+        let problems = try await CalibrationCoverage.problems(
             in: fixture,
             minimumPhotos: Self.minimumPhotos,
-            revision: Self.revision
+            revision: Self.revision,
+            maxPairInterval: ClusteringConfig.calibrated.maxPairInterval
         )
         #expect(problems.isEmpty, "\(problems.joined(separator: "\n"))")
     }

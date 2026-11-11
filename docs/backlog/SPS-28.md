@@ -80,9 +80,12 @@ the device scan still need a physical iPhone. Until the fixture is committed, `C
 - `CalibrationTests` prints the coverage table, the curve (thresholds 0.00–1.50 in 0.01 steps; rows with no true
   positive are left out) and the session-gap table for 5 / 15 / 60 min. It fails if `CalibrationCoverage` reports a
   problem (fewer than 500 photos; a non-revision-2 print, mixed vector lengths or duplicate IDs; a category other than
-  `unrelated` without a group of two or more; fewer than two `different-subject` groups or two `unrelated` photos; no
-  burst identifier shared by two photos), so a set of singletons can't pass; if precision < 95 % or recall < 80 % at
-  the calibrated config; or if the default 15 min gap alone caps recall below 80 %.
+  `unrelated` without a group of two or more; fewer than two `different-subject` groups or two `unrelated` photos;
+  `unrelated` photos sharing a group; no burst identifier shared by two photos; no `unrelated` or no
+  `different-subject` photo in a pair with another group that clustering compares, i.e. same default session and
+  within `maxPairInterval`, without which precision is trivially 100 %), so a set of singletons can't pass. It also
+  fails if precision < 95 % or recall < 80 % at the calibrated config, or if the default 15 min gap alone caps recall
+  below 80 %. `CalibrationCoverage.problems` is `async` because it uses the real segmenter.
 - Checked with a throwaway synthetic 504-photo fixture (not committed): the resource loads, the tables print, and the
   test stops at "no threshold for revision 2". Synthetic numbers say nothing about real prints.
 - Windows: SwiftPM writes the test resource bundle's `Info.plist` into `Packages/Domain/`; it is now in `.gitignore`.

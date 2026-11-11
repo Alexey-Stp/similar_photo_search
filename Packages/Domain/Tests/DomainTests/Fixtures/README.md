@@ -29,7 +29,9 @@ Use only photos the team owns and agrees to have in the repo as vectors.
    downloaded). Aim for at least 500 photos in total, with several albums per category, from more than one person's camera
    habits. The set is rejected (`CalibrationCoverage`) unless every category except `unrelated` has an album with at
    least two photos, `different-subject` has at least two albums, `unrelated` has at least two photos, and at least one
-   burst contributes two or more frames.
+   burst contributes two or more frames. `unrelated` and `different-subject` photos must also be **taken close to photos
+   of another album** (same 15 min session, at most 60 min apart): only then does the app compare them, and only then
+   does the set test precision at all.
 2. Build with **Xcode 26 or later** (Swift 6.2). The fixture leaves the device only as a Swift Testing attachment, which
    older toolchains don't have; with them the test fails and says so. Allow the test runner full photo-library access,
    set the scheme's test environment variable `RUN_CALIBRATION_EXTRACTION=1`, and run
