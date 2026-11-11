@@ -33,6 +33,9 @@ public protocol ViewModelFactory: AnyObject, Sendable {
 
     /// Creates the full-screen comparison of one group (SPS-22), over `clusterListViewModel`.
     func makePhotoComparisonViewModel(clusterID: String) -> PhotoComparisonViewModel
+
+    /// Creates the deletion flow (review, progress, result) for one tap on "Delete N photos" (SPS-25).
+    func makeDeletionViewModel(request: ClusterListViewModel.DeletionRequest) -> DeletionViewModel
 }
 
 private struct ViewModelFactoryKey: EnvironmentKey {

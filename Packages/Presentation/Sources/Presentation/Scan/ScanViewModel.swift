@@ -24,24 +24,32 @@ public final class ScanViewModel {
     public private(set) var hasCompletedScan = false
 
     /// The rows of the group list, top first (`ClusterRowOrder`: append-only, groups newer than every row on top).
-    public private(set) var rowOrder = ClusterRowOrder()
+    public internal(set) var rowOrder = ClusterRowOrder()
     /// Goes up whenever groups are added, replaced or removed, also when a group is replaced under the same ID.
-    public private(set) var clusterRevision = 0
+    public internal(set) var clusterRevision = 0
 
     /// Called on the main actor when a scan ends (after `.finished`). Not called for a scan that a newer
     /// `startScan()` replaced. The final phase may arrive on the progress stream slightly later.
     @ObservationIgnored public var onScanEnded: (@MainActor () -> Void)?
 
-    @ObservationIgnored private let coordinator: any ScanCoordinating
+    /// Runs the scans; also told about deleted photos (`ScanViewModel+Deletion`).
+    @ObservationIgnored let coordinator: any ScanCoordinating
     @ObservationIgnored private let preferences: any ScopePreferencesStore
     @ObservationIgnored private let idleTimer: any IdleTimerControlling
     @ObservationIgnored private let backgroundTasks: any BackgroundTaskRunning
-    @ObservationIgnored private let now: () -> Date
+    /// The current time (scan scope, the quiet period after a deletion); injected by tests.
+    @ObservationIgnored let now: () -> Date
     @ObservationIgnored private let calendar: Calendar
     @ObservationIgnored private var consumers: [Task<Void, Never>] = []
     @ObservationIgnored private var scanGeneration = 0
     @ObservationIgnored private var visibleScanScreens = 0
     @ObservationIgnored private var backgroundTask: BackgroundTaskToken?
+    /// Deletions by this app that have not finished yet (`ScanViewModel+Deletion`).
+    @ObservationIgnored var deletionsInProgress = 0
+    /// Library changes until then are this app's own deletion (`ScanViewModel+Deletion`).
+    @ObservationIgnored var ownChangesQuietUntil: Date?
+    /// Photos deleted by the user in this app session; groups published later are reconciled against them.
+    @ObservationIgnored var deletedAssetIDs: Set<String> = []
 
     /// Creates the view model.
     public init(
@@ -112,10 +120,11 @@ public final class ScanViewModel {
         Task { await coordinator.cancel() }
     }
 
-    /// Photos the user deleted (SPS-25 calls this after a successful deletion): the running scan never loads,
-    /// analyses or publishes them. Updating the groups already shown is the deletion flow's job.
+    /// Photos deleted by the user: the running scan never loads, analyses or publishes them. Does not touch the
+    /// groups already shown; the deletion flow uses `deletionFinished(deleted:)`, which does both.
     public func photosDeleted(_ assetIDs: Set<String>) {
         guard !assetIDs.isEmpty else { return }
+        deletedAssetIDs.formUnion(assetIDs)
         let coordinator = coordinator
         Task { await coordinator.excludeDeleted(assetIDs) }
     }
@@ -213,7 +222,12 @@ public final class ScanViewModel {
     /// Applies one group change to the selection store.
     private func apply(_ update: ClusterUpdate) {
         switch update {
-        case .added(let selections):
+        case .added(let published):
+            // A group published before the scan learned of a deletion must not bring deleted photos back.
+            let selections = deletedAssetIDs.isEmpty
+                ? published
+                : published.compactMap { $0.removingMembers(deletedAssetIDs) }
+            guard !selections.isEmpty else { return }
             selection.upsert(selections)
             rowOrder.add(selections.map(\.id))
             clusterRevision += 1

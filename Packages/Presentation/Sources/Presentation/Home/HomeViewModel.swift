@@ -168,9 +168,10 @@ public final class HomeViewModel {
     }
 
     /// The photo library changed: rescan now, after the running scan, or when the app is in the foreground again.
-    /// Only after an earlier scan; a library that was never scanned is left alone.
+    /// Only after an earlier scan; a library that was never scanned is left alone. The change caused by this app's
+    /// own deletion is ignored: the deletion flow already updated the groups (SPS-25).
     func libraryDidChange() {
-        guard hasPreviousScan else { return }
+        guard hasPreviousScan, !scan.isOwnDeletionInProgress else { return }
         needsRescan = true
         rescanIfNeeded()
     }

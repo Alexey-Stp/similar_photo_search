@@ -44,6 +44,9 @@ struct ClusterListScreen: View {
         } message: {
             Text("clusters.deleteAll.message", bundle: .module)
         }
+        .sheet(item: deletionBinding) { request in
+            DeletionSheet(request: request) { viewModel.deletionRequest = nil }
+        }
         .onChange(of: scan.clusterRevision, initial: true) { viewModel.clustersChanged() }
         .onChange(of: displayScale, initial: true) { viewModel.displayScaleChanged(displayScale) }
         .onChange(of: viewModel.rows.first, initial: true) { _, first in
@@ -112,6 +115,14 @@ struct ClusterListScreen: View {
             .padding()
             .accessibilityElement(children: .combine)
         }
+    }
+
+    /// Presents the deletion flow (SPS-25) for the last tap on "Delete N photos"; cleared when the sheet closes.
+    private var deletionBinding: Binding<ClusterListViewModel.DeletionRequest?> {
+        Binding(
+            get: { viewModel.deletionRequest },
+            set: { viewModel.deletionRequest = $0 }
+        )
     }
 
     /// Presents the delete-all dialog while a group waits for it.

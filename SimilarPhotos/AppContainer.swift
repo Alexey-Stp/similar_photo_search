@@ -53,6 +53,11 @@ final class AppContainer: ViewModelFactory {
         inspector: PhotoKitAssetEditInspector()
     )
 
+    /// Idle timer and background tasks of `UIApplication` (scan, deletion).
+    let lifecycle = UIKitAppLifecycle()
+    /// Opens the Photos app from the deletion result (SPS-25), best effort.
+    let photosAppOpener: any PhotosAppOpening = UIKitPhotosAppOpener()
+
     /// Similarity thresholds per Vision revision. Empty until the calibration spike on the labelled fixture set
     /// (SPS-16): with no threshold, a scan stops with "not calibrated" instead of guessing.
     static let clusteringConfig = ClusteringConfig(thresholds: [:])
@@ -91,7 +96,6 @@ final class AppContainer: ViewModelFactory {
             thermalMonitor: thermalMonitor,
             results: clusterRepository
         )
-        let lifecycle = UIKitAppLifecycle()
         scanViewModel = ScanViewModel(
             coordinator: scanCoordinator,
             preferences: scopePreferencesStore,
@@ -138,6 +142,19 @@ final class AppContainer: ViewModelFactory {
             list: clusterListViewModel,
             screenImages: screenImageLoader,
             edits: editStatusProvider
+        )
+    }
+
+    /// The review, deletion and result of one "Delete N photos" tap.
+    func makeDeletionViewModel(request: ClusterListViewModel.DeletionRequest) -> DeletionViewModel {
+        DeletionViewModel(
+            assetIDs: request.assetIDs,
+            deletion: assetDeletionService,
+            cache: featurePrintCache,
+            scan: scanViewModel,
+            thumbnails: thumbnailLoader,
+            photosApp: photosAppOpener,
+            backgroundTasks: lifecycle
         )
     }
 

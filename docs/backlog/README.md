@@ -116,7 +116,7 @@ consistent after every outcome; users are told photos go to Recently Deleted for
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
 | [SPS-24](SPS-24.md) | `AssetDeletionService` via PhotoKit change requests | Review | SPS-2 |
-| [SPS-25](SPS-25.md) | Deletion confirmation flow, results and post-deletion sync | To do | SPS-18, SPS-21, SPS-24 |
+| [SPS-25](SPS-25.md) | Deletion confirmation flow, results and post-deletion sync | Review | SPS-18, SPS-21, SPS-24 |
 
 ## Suggested order
 

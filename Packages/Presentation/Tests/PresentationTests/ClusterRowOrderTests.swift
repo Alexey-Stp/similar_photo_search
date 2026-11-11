@@ -49,6 +49,17 @@ struct ClusterRowOrderTests {
         #expect(order.ids == ["E", "D", "C", "B"])
     }
 
+    @Test func aRenamedGroupKeepsItsRowAndItsNewIDIsKnown() {
+        var order = ClusterRowOrder()
+        order.add(["C", "B", "A"])
+        order.rename(["B": "B2", "unknown": "X", "A": "C"])
+        #expect(order.ids == ["C", "B2", "A"], "Unknown old IDs and new IDs already shown are ignored")
+
+        order.scanStarted()
+        order.add(["B2", "N"])
+        #expect(order.ids == ["C", "B2", "A", "N"], "B2 is a row already shown, so N is appended")
+    }
+
     @Test func aRemovedGroupThatComesBackIsNewAgain() {
         var order = ClusterRowOrder()
         order.add(["B", "A"])

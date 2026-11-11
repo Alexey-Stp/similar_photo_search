@@ -39,6 +39,17 @@ public struct ClusterRowOrder: Sendable, Hashable {
         }
     }
 
+    /// Gives rows a new ID in place (a group renamed after its naming photo was deleted). Unknown old IDs, and new
+    /// IDs already shown, are ignored.
+    public mutating func rename(_ renamed: [String: String]) {
+        for (old, new) in renamed where old != new && known.contains(old) && !known.contains(new) {
+            guard let index = ids.firstIndex(of: old) else { continue }
+            ids[index] = new
+            known.remove(old)
+            known.insert(new)
+        }
+    }
+
     /// Removes rows. Unknown IDs are ignored.
     public mutating func remove(_ clusterIDs: some Sequence<String>) {
         let removed = Set(clusterIDs).intersection(known)
