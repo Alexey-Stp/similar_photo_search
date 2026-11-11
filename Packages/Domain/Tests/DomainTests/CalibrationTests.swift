@@ -3,12 +3,18 @@ import DomainTestSupport
 import Foundation
 import Testing
 
+/// Whether `Fixtures/calibration-rev2.json` is committed; the suite is skipped until it is.
+private let isFixtureCommitted =
+    Bundle.module.url(forResource: "calibration-rev2", withExtension: "json", subdirectory: "Fixtures") != nil
+
 /// Regression gate for clustering (SPS-28): the app's `ClusteringConfig.calibrated` on the labelled fixture set must
 /// reach the SPS-15 epic target, pairwise precision ≥ 95 % and recall ≥ 80 %.
 ///
 /// The fixture holds revision-2 feature prints of real photos, extracted on a physical device by
-/// `CalibrationFixtureExtractionTests` (DataTests). These tests **fail** until it is committed: see
-/// `Fixtures/README.md`. Each run prints the precision/recall curve and the session-gap table.
+/// `CalibrationFixtureExtractionTests` (DataTests). Until it is committed these tests are **skipped** (reported as
+/// such in the test log): see `Fixtures/README.md`. Each run prints the precision/recall curve and the session-gap
+/// table.
+@Suite(.enabled(if: isFixtureCommitted, "Fixtures/calibration-rev2.json not committed yet (SPS-28)"))
 struct CalibrationTests {
     static let revision = 2
     static let minimumPhotos = 500
@@ -30,10 +36,14 @@ struct CalibrationTests {
     /// The fixture's file name in `Fixtures/`, without extension.
     static let fixtureName = "calibration-rev2"
 
+    /// The committed fixture's URL, or `nil` while it isn't in the repo.
+    static var fixtureURL: URL? {
+        Bundle.module.url(forResource: fixtureName, withExtension: "json", subdirectory: "Fixtures")
+    }
+
     /// The committed fixture; throws `FixtureMissing` when it isn't there.
     static func loadFixture() throws -> CalibrationFixture {
-        guard let url = Bundle.module.url(forResource: fixtureName, withExtension: "json", subdirectory: "Fixtures")
-        else { throw FixtureMissing() }
+        guard let url = fixtureURL else { throw FixtureMissing() }
         return try CalibrationFixture.decoded(from: Data(contentsOf: url))
     }
 

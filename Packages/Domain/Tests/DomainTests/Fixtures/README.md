@@ -5,7 +5,8 @@ the Vision revision-2 feature print (base64 of little-endian `Float`s, the cache
 anonymous burst ID and an anonymous group label. **No image pixels, PhotoKit IDs or album titles.** Photos with the same
 group are "the same picture"; every other pair is "not the same".
 
-Until the file exists, `CalibrationTests` fails on purpose.
+Until the file exists, `CalibrationTests` is skipped (the test log says so); once it is committed, the suite runs and
+fails if the set is incomplete or the calibrated threshold misses the target.
 
 ## Extracting it
 
