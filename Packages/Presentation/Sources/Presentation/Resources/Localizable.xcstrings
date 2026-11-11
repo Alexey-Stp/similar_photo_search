@@ -337,6 +337,424 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Will Be Deleted" } }
       }
     },
+    "deletion.done" : {
+      "comment" : "Button that closes the deletion result.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "deletion.error.permission" : {
+      "comment" : "Deletion failed because photo access was revoked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SimilarPhotos no longer has full access to your photo library, so nothing was deleted. Allow access to all photos in Settings, then try again."
+          }
+        }
+      }
+    },
+    "deletion.error.title" : {
+      "comment" : "Title when nothing could be deleted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn’t Delete Photos"
+          }
+        }
+      }
+    },
+    "deletion.failure.label %lld %@" : {
+      "comment" : "VoiceOver label of a photo that was not deleted. Argument 1 is its position in the list, argument 2 the reason, for example shared album.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photo %1$lld, not deleted: %2$@"
+          }
+        }
+      }
+    },
+    "deletion.failures.footer" : {
+      "comment" : "Below the photos that were not deleted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "These photos stay in their groups and stay selected. You can deselect them or try again."
+          }
+        }
+      }
+    },
+    "deletion.failures.header" : {
+      "comment" : "Header of the photos that were not deleted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not Deleted"
+          }
+        }
+      }
+    },
+    "deletion.openPhotos" : {
+      "comment" : "Button that opens the Photos app after a deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open Photos"
+          }
+        }
+      }
+    },
+    "deletion.openPhotos.hint" : {
+      "comment" : "VoiceOver hint of Open Photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Opens the Photos app, where you find Recently Deleted."
+          }
+        }
+      }
+    },
+    "deletion.partial %lld %lld %lld %@" : {
+      "comment" : "Result when some photos were not deleted. Argument 1 deleted count, 2 requested count, 3 failed count, 4 the shared reason, for example shared album.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted %1$lld of %2$lld. %3$lld couldn’t be deleted (%4$@)"
+          }
+        }
+      }
+    },
+    "deletion.partial.mixed %lld %lld %lld" : {
+      "comment" : "Result when some photos were not deleted for different reasons. Argument 1 deleted count, 2 requested count, 3 failed count.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted %1$lld of %2$lld. %3$lld couldn’t be deleted."
+          }
+        }
+      }
+    },
+    "deletion.progress.message" : {
+      "comment" : "Shown while the system deletion alert is up.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Answer the system alert to continue. Nothing is deleted until you confirm there."
+          }
+        }
+      }
+    },
+    "deletion.progress.title" : {
+      "comment" : "Title while photos are being deleted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleting…"
+          }
+        }
+      }
+    },
+    "deletion.reason.notDeletable" : {
+      "comment" : "Why a photo was not deleted: the library does not allow it, for example a shared album.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "shared album"
+          }
+        }
+      }
+    },
+    "deletion.reason.notDeleted" : {
+      "comment" : "Why a photo was not deleted: the system reported success but it is still there.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "still in the library"
+          }
+        }
+      }
+    },
+    "deletion.reason.permissionDenied" : {
+      "comment" : "Why a photo was not deleted: the app lost photo access.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no photo access"
+          }
+        }
+      }
+    },
+    "deletion.reason.unavailable" : {
+      "comment" : "Why a photo was not deleted: it is gone or no longer accessible.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "no longer available"
+          }
+        }
+      }
+    },
+    "deletion.reason.unknown" : {
+      "comment" : "Why a photo was not deleted: any other error.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "unexpected error"
+          }
+        }
+      }
+    },
+    "deletion.result.partialTitle" : {
+      "comment" : "Title of the result when some photos were not deleted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some Photos Not Deleted"
+          }
+        }
+      }
+    },
+    "deletion.result.spaceNote" : {
+      "comment" : "Below a partial result.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted photos move to Recently Deleted. The space is freed when Recently Deleted is emptied."
+          }
+        }
+      }
+    },
+    "deletion.result.title" : {
+      "comment" : "Title of the result when every photo was deleted.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Photos Deleted"
+          }
+        }
+      }
+    },
+    "deletion.review.cancel" : {
+      "comment" : "Closes the deletion review without deleting.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "deletion.review.confirm %lld" : {
+      "comment" : "Destructive button of the deletion review. Argument 1 is the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld Photo"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Delete %lld Photos"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "deletion.review.confirm.hint" : {
+      "comment" : "VoiceOver hint of the confirm button.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Asks the system to delete the photos. You can recover them from Recently Deleted for 30 days."
+          }
+        }
+      }
+    },
+    "deletion.review.groups %lld" : {
+      "comment" : "Number of groups the photos to delete come from.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "From %lld group"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "From %lld groups"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "deletion.review.note" : {
+      "comment" : "Note in the deletion review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted photos move to Recently Deleted and can be recovered for 30 days."
+          }
+        }
+      }
+    },
+    "deletion.review.strip %lld" : {
+      "comment" : "VoiceOver label of the thumbnail strip of the deletion review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld photo to delete"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld photos to delete"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "deletion.review.title" : {
+      "comment" : "Title of the deletion review.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Review Deletion"
+          }
+        }
+      }
+    },
+    "deletion.success %lld %@" : {
+      "comment" : "Result after every photo was deleted. Argument 1 is the number of photos, argument 2 their estimated size, for example 214 MB.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deleted %#@photos@ (~%2$@). The space is freed when Recently Deleted is emptied."
+          },
+          "substitutions" : {
+            "photos" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg photo"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg photos"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "deletion.success.noSize %lld" : {
+      "comment" : "Result after every photo was deleted, when their size is unknown. Argument 1 is the number of photos.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deleted %lld photo. The space is freed when Recently Deleted is emptied."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Deleted %lld photos. The space is freed when Recently Deleted is emptied."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "home.empty.message" : {
       "comment" : "Home, after a scan that found nothing: explanation.",
       "extractionState" : "manual",

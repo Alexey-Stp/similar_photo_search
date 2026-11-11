@@ -30,17 +30,17 @@ public final class SelectionStore {
     }
 
     /// IDs of the clusters, in the order they first arrived (the UI only appends rows).
-    public private(set) var clusterIDs: [String] = []
+    public internal(set) var clusterIDs: [String] = []
     /// Number of photos selected for deletion across all clusters.
     public private(set) var selectedCount = 0
     /// The count and the estimated size of the photos selected for deletion, shown before any deletion.
     public private(set) var summary = DeletionSummary.empty
 
     var states: [String: ClusterSelectionState] = [:]
-    private var clusterIDByAsset: [String: String] = [:]
+    var clusterIDByAsset: [String: String] = [:]
 
     /// The user's choices by cluster ID, kept even while the cluster is gone (session-long).
-    @ObservationIgnored private var overrides: [String: Override] = [:]
+    @ObservationIgnored var overrides: [String: Override] = [:]
     @ObservationIgnored private var knownSizes: [String: Int64] = [:]
     @ObservationIgnored private var unavailableSizes: Set<String> = []
     @ObservationIgnored private var sizeTask: Task<Void, Never>?
@@ -220,14 +220,14 @@ public final class SelectionStore {
     // MARK: - Private
 
     /// A user's choice for one cluster, valid only for the same members.
-    private struct Override {
+    struct Override {
         let members: Set<String>
         let selectedIDs: Set<String>
         let isDeleteAllConfirmed: Bool
         let keeperID: String?
     }
 
-    private func unindex(_ state: ClusterSelectionState) {
+    func unindex(_ state: ClusterSelectionState) {
         for id in state.memberIDs where clusterIDByAsset[id] == state.id {
             clusterIDByAsset[id] = nil
         }
@@ -288,7 +288,7 @@ public final class SelectionStore {
     }
 
     /// The count and known size of `selected`, from the sizes estimated so far.
-    private func makeSummary(for selected: [String]) -> DeletionSummary {
+    func makeSummary(for selected: [String]) -> DeletionSummary {
         var bytes: Int64 = 0
         var unavailable = 0
         var pending = 0
