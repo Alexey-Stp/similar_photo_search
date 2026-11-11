@@ -101,9 +101,9 @@ and the list never jumps under the user's finger; full VoiceOver, Dark Mode and 
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-20](SPS-20.md) | Home / scan dashboard | Review | SPS-14 |
-| [SPS-21](SPS-21.md) | Cluster list with efficient thumbnail loading | Review | SPS-18, SPS-20 |
-| [SPS-22](SPS-22.md) | Photo comparison screen | Review | SPS-18, SPS-21 |
+| [SPS-20](SPS-20.md) | Home / scan dashboard | Done | SPS-14 |
+| [SPS-21](SPS-21.md) | Cluster list with efficient thumbnail loading | Done | SPS-18, SPS-20 |
+| [SPS-22](SPS-22.md) | Photo comparison screen | Done | SPS-18, SPS-21 |
 
 ### Epic SPS-23 — Deletion
 
@@ -115,18 +115,33 @@ consistent after every outcome; users are told photos go to Recently Deleted for
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-24](SPS-24.md) | `AssetDeletionService` via PhotoKit change requests | Review | SPS-2 |
-| [SPS-25](SPS-25.md) | Deletion confirmation flow, results and post-deletion sync | Review | SPS-18, SPS-21, SPS-24 |
+| [SPS-24](SPS-24.md) | `AssetDeletionService` via PhotoKit change requests | Done | SPS-2 |
+| [SPS-25](SPS-25.md) | Deletion confirmation flow, results and post-deletion sync | Done | SPS-18, SPS-21, SPS-24 |
+
+### Epic SPS-27 — Calibration and release readiness
+
+Work left after the feature tickets: calibrate the similarity threshold so the app finds groups on a device, check every
+device-only target and QA list, and close the open guard-rail gaps.
+**Done when:** a device scan of a real library shows groups (no "not calibrated"); precision ≥ 95% and recall ≥ 80% on the
+labelled fixture set; every epic target above is measured on a device; the zero-network QA passes over a scan and a deletion.
+**Risk:** the labelled set is too small or too uniform; device numbers miss the targets and need redesign work.
+
+| Ticket | Title | Status | Depends on |
+|---|---|---|---|
+| [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do | SPS-12, SPS-16, SPS-17, SPS-26 |
+| [SPS-29](SPS-29.md) | Device QA and performance pass | To do | SPS-28 |
+| [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | To do | SPS-5 |
 
 ## Suggested order
 
 | Sprint | Tickets |
 |---|---|
 | 1 | ~~SPS-2, SPS-5, SPS-3, SPS-4, SPS-7~~ |
-| 2 | SPS-8, SPS-26, SPS-9, SPS-12, SPS-13, spike: threshold and session-gap calibration on a labelled dataset |
-| 3 | SPS-14, SPS-16, SPS-10 |
-| 4 | SPS-17, SPS-18, SPS-20, SPS-21 |
-| 5 | SPS-22, SPS-24, SPS-25, hardening (performance and accessibility passes) |
+| 2 | ~~SPS-8, SPS-26, SPS-9, SPS-12, SPS-13~~, spike: threshold and session-gap calibration (moved to SPS-28) |
+| 3 | ~~SPS-14, SPS-16, SPS-10~~ |
+| 4 | ~~SPS-17, SPS-18, SPS-20, SPS-21~~ |
+| 5 | ~~SPS-22, SPS-24, SPS-25~~, hardening (moved to SPS-29) |
+| 6 | SPS-28, SPS-30, then SPS-29 |
 
 **Biggest cross-cutting risks:** the similarity threshold (SPS-16) and the session gap (SPS-26). Make a labelled set of
 about 500 photos with "same / not same" pairs early in sprint 2, store it in the repo as a test fixture, and use it as a
