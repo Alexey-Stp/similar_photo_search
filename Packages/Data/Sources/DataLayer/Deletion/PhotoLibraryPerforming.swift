@@ -1,5 +1,6 @@
 import Domain
 import Foundation
+import os
 import Photos
 
 /// The PhotoKit calls `PhotoKitAssetDeletionService` needs. Only identifiers cross this boundary, never `PHAsset`, so
@@ -14,16 +15,20 @@ protocol PhotoLibraryPerforming: Sendable {
 
     /// Deletes `assetIDs` in one `PHPhotoLibrary.performChanges` call, which shows one system alert.
     ///
-    /// Throws PhotoKit's error unchanged, including `PHPhotosError.userCancelled` when the user taps "Don't Allow".
-    func deleteAssets(withIDs assetIDs: [String]) async throws
+    /// - Returns: The IDs the change block found and submitted for deletion. An ID that vanished after the caller's
+    ///   check is not in the request, so this call did not delete it.
+    /// - Throws: PhotoKit's error unchanged, including `PHPhotosError.userCancelled` when the user taps "Don't Allow".
+    func deleteAssets(withIDs assetIDs: [String]) async throws -> Set<String>
 }
 
 /// `PhotoLibraryPerforming` over `PHPhotoLibrary.shared()`.
 struct PhotoKitLibraryPerformer: PhotoLibraryPerforming {
+    /// Maps `PHPhotoLibrary.authorizationStatus(for: .readWrite)` to the domain status.
     func readWriteAuthorization() -> PhotoLibraryAuthorization {
         PhotoKitPermissionService.map(PHPhotoLibrary.authorizationStatus(for: .readWrite))
     }
 
+    /// Fetches `assetIDs` in one `autoreleasepool` and reads `canPerform(.delete)` for each asset found.
     func deletability(of assetIDs: [String]) -> [String: Bool] {
         guard !assetIDs.isEmpty else { return [:] }
         return autoreleasepool {
@@ -37,12 +42,21 @@ struct PhotoKitLibraryPerformer: PhotoLibraryPerforming {
         }
     }
 
-    func deleteAssets(withIDs assetIDs: [String]) async throws {
+    /// Re-fetches `assetIDs` inside one change block and deletes what it finds; returns the IDs it submitted.
+    func deleteAssets(withIDs assetIDs: [String]) async throws -> Set<String> {
         // The change block runs on an arbitrary queue: it captures only the identifiers and re-fetches inside.
+        // The IDs it submits come back through a lock, never as `PHAsset`.
+        let submitted = OSAllocatedUnfairLock(initialState: Set<String>())
         try await PHPhotoLibrary.shared().performChanges {
             let assets = PHAsset.fetchAssets(withLocalIdentifiers: assetIDs, options: Self.fetchOptions())
+            var found = Set<String>(minimumCapacity: assets.count)
+            for index in 0..<assets.count {
+                found.insert(assets.object(at: index).localIdentifier)
+            }
+            submitted.withLock { $0 = found }
             PHAssetChangeRequest.deleteAssets(assets)
         }
+        return submitted.withLock { $0 }
     }
 
     /// Finds every requested asset that still exists, including burst members and hidden photos, so a photo that

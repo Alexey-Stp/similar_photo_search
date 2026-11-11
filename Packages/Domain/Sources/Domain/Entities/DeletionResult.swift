@@ -16,10 +16,12 @@ public enum DeletionError: Error, Sendable, Hashable {
 
 /// Result of asking the system to delete photos.
 ///
-/// A user cancel is a normal outcome, not an error: `cancelled` is `true`, `deleted` is empty and no photo changed.
-/// `failed` then holds only what was known before the system alert (`unavailable`, `notDeletable`).
+/// A user cancel is a normal outcome, not an error, and can be a partial result. With one request, nothing was deleted
+/// and `failed` holds what was known before the system alert (`unavailable`, `notDeletable`). When the deletion ran in
+/// several requests, a cancel stops the remaining ones: deletions and failures of earlier requests stay in the result,
+/// so callers must still process `deleted`.
 public struct DeletionResult: Sendable, Hashable {
-    /// IDs this call deleted, confirmed by re-fetching them afterwards.
+    /// IDs this call deleted, confirmed by re-fetching them afterwards. Can be non-empty even when `cancelled`.
     public var deleted: Set<String>
     /// IDs that were not deleted, with the reason.
     public var failed: [String: DeletionError]

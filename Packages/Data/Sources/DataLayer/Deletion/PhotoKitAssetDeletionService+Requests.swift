@@ -4,7 +4,7 @@ import Photos
 
 /// What the delete requests reported, before the deletion is confirmed by a re-fetch.
 struct DeletionRequestReport: Sendable, Hashable {
-    /// IDs in requests PhotoKit completed without an error.
+    /// IDs that a request PhotoKit completed without an error actually submitted for deletion.
     var succeeded: [String] = []
     /// IDs in requests that failed, with the reason.
     var failed: [String: DeletionError] = [:]
@@ -48,8 +48,17 @@ extension PhotoKitAssetDeletionService {
     /// One `performChanges` call for `ids`.
     func performRequest(for ids: [String]) async -> DeletionRequestReport {
         do {
-            try await library.deleteAssets(withIDs: ids)
-            return DeletionRequestReport(succeeded: ids)
+            let submitted = try await library.deleteAssets(withIDs: ids)
+            // An ID the change block did not find vanished after the check: this call did not delete it.
+            var report = DeletionRequestReport()
+            for id in ids {
+                if submitted.contains(id) {
+                    report.succeeded.append(id)
+                } else {
+                    report.failed[id] = .unavailable
+                }
+            }
+            return report
         } catch {
             switch Self.failure(for: error) {
             case .cancelledByUser:

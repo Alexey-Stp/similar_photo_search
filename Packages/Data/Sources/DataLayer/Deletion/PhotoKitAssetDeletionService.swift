@@ -42,6 +42,16 @@ public actor PhotoKitAssetDeletionService: AssetDeletionService {
         self.chunkSizeAfterFailure = chunkSizeAfterFailure
     }
 
+    /// Deletes `assetIDs` and accounts for every requested ID in the result.
+    ///
+    /// - `deleted`: IDs this call submitted to PhotoKit and that a re-fetch afterwards no longer finds.
+    /// - `failed`: `.permissionDenied` for every ID without read-write access; `.unavailable` for IDs that are gone,
+    ///   not accessible, or vanished before the change block fetched them; `.notDeletable` for IDs PhotoKit won't
+    ///   delete; `.notDeleted` for submitted IDs still present afterwards; `.unknown` or `.permissionDenied` for the
+    ///   IDs of a request that failed.
+    /// - `cancelled`: the user tapped "Don't Allow". With one request nothing was deleted. With the chunked fallback,
+    ///   the cancel stops the remaining chunks; earlier chunks' deletions and failures stay in the result, and IDs of
+    ///   the cancelled and later chunks are in neither `deleted` nor `failed`.
     public func delete(assetIDs: [String]) async -> DeletionResult {
         let requested = Self.unique(assetIDs)
         guard !requested.isEmpty else { return DeletionResult() }

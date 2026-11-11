@@ -5,7 +5,12 @@ CI enforces the code side (see [README → Guard rails](../../README.md#guard-ra
 
 Run it before every release, and again whenever scanning (SPS-14), deletion (SPS-24/SPS-25) or a new framework is added.
 
-> **Current scope.** Scanning (SPS-14) and the deletion service (SPS-24) exist; the deletion UI arrives with SPS-25. Until then, the deletion steps of checks 1 and 2 need a Debug build that calls `AssetDeletionService.delete(assetIDs:)` on a few photos (for example from a temporary button). Once SPS-25 lands, run the full flow including deletion from the UI.
+> **Current scope.** Scanning (SPS-14) and the deletion service (SPS-24) exist; the deletion UI arrives with SPS-25. Release builds have no way to delete until then, and no test hook may ship in one.
+>
+> - **Check 1 and the Release recording of check 2:** run everything except deletion; the deletion steps (step 3 "delete a few photos", the deleted count, the deletion in check 2 step 2) are **blocked until SPS-25**. Record them as blocked, not as passed.
+> - **The Debug recording of check 2 (step 4):** a local, uncommitted Debug-only hook (for example a temporary button behind `#if DEBUG`) may call `AssetDeletionService.delete(assetIDs:)` on a few photos to cover the deletion.
+>
+> Once SPS-25 lands, run the full flow including deletion from the UI in both build configurations.
 
 ## 1. Airplane Mode parity
 

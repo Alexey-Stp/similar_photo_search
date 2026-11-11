@@ -6,6 +6,7 @@ import Testing
 
 /// Deletion outcomes over a scripted library: success, user cancel, missing and non-deletable assets, lost access.
 struct PhotoKitAssetDeletionServiceTests {
+    /// A service over `library` with the chunked fallback off.
     private func makeService(_ library: FakePhotoLibraryPerformer) -> PhotoKitAssetDeletionService {
         PhotoKitAssetDeletionService(library: library, chunkSizeAfterFailure: nil)
     }
@@ -81,6 +82,13 @@ struct PhotoKitAssetDeletionServiceTests {
         library.removesAssetsOnSuccess = false
         let result = await makeService(library).delete(assetIDs: ["A", "B"])
         #expect(result == DeletionResult(failed: ["A": .notDeleted, "B": .notDeleted]))
+    }
+
+    @Test func assetsGoneBeforeTheChangeBlockAreUnavailableNotDeleted() async {
+        let library = FakePhotoLibraryPerformer(deletable: ["A", "B"])
+        library.vanishBeforeRequest = ["B"]
+        let result = await makeService(library).delete(assetIDs: ["A", "B"])
+        #expect(result == DeletionResult(deleted: ["A"], failed: ["B": .unavailable]))
     }
 
     @Test func emptyRequestShowsNoSystemAlert() async {

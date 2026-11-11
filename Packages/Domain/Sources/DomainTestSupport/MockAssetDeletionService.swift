@@ -20,6 +20,7 @@ public actor MockAssetDeletionService: AssetDeletionService {
         self.init { _ in result }
     }
 
+    /// Records `assetIDs` in `deletionRequests` and returns the responder's result for them.
     public func delete(assetIDs: [String]) -> DeletionResult {
         deletionRequests.append(assetIDs)
         return respond(assetIDs)
