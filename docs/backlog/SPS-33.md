@@ -15,9 +15,11 @@ calibration. Optional: the first release doesn't need it.
   `ClusteringConfig`. Balanced is today's `ClusteringConfig.calibrated`.
 - The Strict and Relaxed thresholds come from the SPS-28 curve: Strict takes the best recall at precision ≥ 99 %,
   Relaxed the best recall at precision ≥ 90 %. If the curve can't reach a target, the notes say why and which point was
-  taken. Each threshold's doc comment states dataset size, precision, recall and date, like `ClusteringConfig.calibrated`.
-- `CalibrationTests` checks all three configs on the fixture: each keeps its precision floor, Balanced keeps the SPS-15
-  target (precision ≥ 95 %, recall ≥ 80 %), Strict has the highest precision of the three and Relaxed the highest recall.
+  taken, and that point's measured precision becomes the preset's floor. Each threshold's doc comment states dataset
+  size, precision, recall and date, like `ClusteringConfig.calibrated`.
+- `CalibrationTests` checks all three configs on the fixture. Each meets its precision floor: 99 % for Strict, 95 % for
+  Balanced (with recall ≥ 80 %, the SPS-15 target) and 90 % for Relaxed, or the recorded precision of a fallback point,
+  which passes when it meets that value. Strict has the highest precision of the three and Relaxed the highest recall.
 - The choice is saved in `ScopePreferences`; values saved before this ticket decode as Balanced, as for `sessionGap`.
 - **Given** the user changes the sensitivity, **then** the next scan recomputes the clusters from cached feature
   prints: no photo is analysed again.
