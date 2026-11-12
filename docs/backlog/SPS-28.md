@@ -93,6 +93,9 @@ written to fail loudly; that kept every PR red, so it was changed. Committing th
 
 ### Still open (device)
 
+Do [SPS-31](SPS-31.md) first: the extraction needs Xcode 26, the app target treats warnings as errors
+(`Config/Shared.xcconfig`), and SPS-31 makes CI compile this device-only test.
+
 1. Build the albums (≥ 500 photos, all categories, more than one photographer), run the extraction on an iPhone, and
    commit `calibration-rev2.json`.
 2. Run `CalibrationTests`, put the chosen threshold in `ClusteringConfig.calibrated` with its doc comment, and record

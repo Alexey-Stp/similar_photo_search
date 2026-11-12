@@ -92,6 +92,10 @@ Group near-duplicates by feature-print distance inside one shooting session; ran
 | [SPS-16](SPS-16.md) | Similarity clustering engine | Done | SPS-26 |
 | [SPS-17](SPS-17.md) | Photo quality scoring | Done | SPS-9 |
 | [SPS-18](SPS-18.md) | Smart Selection use case | Done | SPS-16, SPS-17 |
+| [SPS-33](SPS-33.md) | Similarity sensitivity setting: Strict, Balanced, Relaxed | To do | SPS-28 |
+| [SPS-34](SPS-34.md) | Tune the quality-score weights on the labelled set | To do | SPS-17, SPS-18, SPS-28 |
+
+SPS-33 and SPS-34 are optional refinements on top of the SPS-28 calibration; the first release doesn't need them.
 
 ### Epic SPS-19 — User interface
 
@@ -122,16 +126,23 @@ consistent after every outcome; users are told photos go to Recently Deleted for
 ### Epic SPS-27 — Calibration and release readiness
 
 Work left after the feature tickets: calibrate the similarity threshold so the app finds groups on a device, check every
-device-only target and QA list, and close the open guard-rail gaps.
+device-only target and QA list, close the open guard-rail gaps, move to the Xcode 26 toolchain that App Store Connect
+requires, and take the first build through TestFlight to App Review.
 **Done when:** a device scan of a real library shows groups (no "not calibrated"); precision ≥ 95% and recall ≥ 80% on the
-labelled fixture set; every epic target above is measured on a device; the zero-network QA passes over a scan and a deletion.
-**Risk:** the labelled set is too small or too uniform; device numbers miss the targets and need redesign work.
+labelled fixture set; every epic target above is measured on a device; the zero-network QA passes over a scan and a
+deletion; CI builds with Xcode 26 or later; the first version is submitted for App Review.
+**Risk:** the labelled set is too small or too uniform; device numbers miss the targets and need redesign work; App Review
+rejects over metadata or behaviour on iPad.
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do (tooling merged; device run open) | SPS-12, SPS-16, SPS-17, SPS-26 |
-| [SPS-29](SPS-29.md) | Device QA and performance pass | To do | SPS-28 |
 | [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | Done | SPS-5 |
+| [SPS-31](SPS-31.md) | Build and test with Xcode 26 and the iOS 26 SDK | To do | SPS-2 |
+| [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do (tooling merged; device run open) | SPS-12, SPS-16, SPS-17, SPS-26 |
+| [SPS-29](SPS-29.md) | Device QA and performance pass | To do | SPS-28, SPS-31 |
+| [SPS-32](SPS-32.md) | First TestFlight build and App Store submission | To do | SPS-29, SPS-31 |
+
+Rows are in working order: SPS-31 needs no device, and the SPS-28 device run needs the Xcode 26 build it sets up.
 
 ## Suggested order
 
@@ -142,7 +153,9 @@ labelled fixture set; every epic target above is measured on a device; the zero-
 | 3 | ~~SPS-14, SPS-16, SPS-10~~ |
 | 4 | ~~SPS-17, SPS-18, SPS-20, SPS-21~~ |
 | 5 | ~~SPS-22, SPS-24, SPS-25~~, hardening (moved to SPS-29) |
-| 6 | SPS-28 (tooling merged, device run open), ~~SPS-30~~, then SPS-29 |
+| 6 | ~~SPS-30~~, SPS-31, SPS-28 (device run; tooling merged), then SPS-29 |
+| 7 | SPS-32 (TestFlight and App Review) |
+| Later | SPS-33, SPS-34 (optional) |
 
 **Biggest cross-cutting risks:** the similarity threshold (SPS-16) and the session gap (SPS-26). Both are calibrated in
 SPS-28 on a labelled set of about 500 photos stored in the repo as a fixture, and its `CalibrationTests` are the

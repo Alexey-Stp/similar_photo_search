@@ -1,12 +1,13 @@
 # SPS-29 — Device QA and performance pass
 
-**Type:** QA task · **Epic:** SPS-27 · **Depends on:** SPS-28
+**Type:** QA task · **Epic:** SPS-27 · **Depends on:** SPS-28, SPS-31
 
 ## Description
 
 Most epic "Done when" targets can only be checked on a physical device, and each ticket from SPS-9 onwards left a
-"device QA still open" list in its implementation notes. Run them all in one pass on a calibrated build (SPS-28), and
-record the results. Fix small problems here; open new tickets for anything bigger.
+"device QA still open" list in its implementation notes. Run them all in one pass on a calibrated build (SPS-28) made
+with Xcode 26 (SPS-31), the toolchain that ships, and record the results. Fix small problems here; open new tickets
+for anything bigger.
 
 ## Acceptance criteria
 
@@ -30,7 +31,8 @@ record the results. Fix small problems here; open new tickets for anything bigge
   file, or link the follow-up ticket.
 - **Zero network.** Run [docs/qa/zero-network.md](../qa/zero-network.md) in full over a complete scan and a deletion on a
   Release build: Airplane Mode, the Instruments network trace and the archive privacy report.
-- **Accessibility.** VoiceOver, AX5 Dynamic Type and Dark Mode on every screen.
+- **Accessibility and look.** VoiceOver, AX5 Dynamic Type and Dark Mode on every screen, on iOS 26 (the system design
+  the iOS 26 SDK brings, SPS-31) and in an iOS 17 Simulator, the minimum.
 - **Limited access.** Scanning, change tracking and deletion all work under Limited access.
 
 ## Technical notes
