@@ -99,5 +99,7 @@ written to fail loudly; that kept every PR red, so it was changed. Committing th
    here: the curve table, the chosen threshold with precision and recall, and the session-gap table with the decision
    to keep or change 15 min.
 3. Device scan of a real library: groups appear and no scan ends in "not calibrated".
-4. Not run here: `swift test` for `Packages/Data` (the extraction test, the new `DomainTestSupport` dependency), the app
-   build and SwiftLint (macOS only).
+4. CI passed on PR #24 (`Packages/Data` tests with the new `DomainTestSupport` dependency, the app build, SwiftLint).
+   `CalibrationFixtureExtractionTests` is compiled only for a device (`#if os(iOS) && !targetEnvironment(simulator)`),
+   and CI builds for the Mac and the Simulator, so no build has compiled it yet: the first device build with Xcode 26
+   is its first compile.

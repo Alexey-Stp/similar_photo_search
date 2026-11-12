@@ -33,7 +33,8 @@ re-imported) are not found. If needed later, this can be a separate "exact copie
 
 ## Tickets
 
-Status: **Done** (merged), **Review** (implemented, PR open or pending), **To do**.
+Status: **Done** (merged; device-only checks that are still open are collected in SPS-29), **Review** (implemented, PR
+open or pending), **To do** (not started, or merged only in part: the ticket's implementation notes say what is open).
 
 ### Epic SPS-1 — Project setup, permissions and onboarding
 
@@ -128,9 +129,9 @@ labelled fixture set; every epic target above is measured on a device; the zero-
 
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
-| [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do | SPS-12, SPS-16, SPS-17, SPS-26 |
+| [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do (tooling merged; device run open) | SPS-12, SPS-16, SPS-17, SPS-26 |
 | [SPS-29](SPS-29.md) | Device QA and performance pass | To do | SPS-28 |
-| [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | Review | SPS-5 |
+| [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | Done | SPS-5 |
 
 ## Suggested order
 
@@ -141,8 +142,9 @@ labelled fixture set; every epic target above is measured on a device; the zero-
 | 3 | ~~SPS-14, SPS-16, SPS-10~~ |
 | 4 | ~~SPS-17, SPS-18, SPS-20, SPS-21~~ |
 | 5 | ~~SPS-22, SPS-24, SPS-25~~, hardening (moved to SPS-29) |
-| 6 | SPS-28, SPS-30, then SPS-29 |
+| 6 | SPS-28 (tooling merged, device run open), ~~SPS-30~~, then SPS-29 |
 
-**Biggest cross-cutting risks:** the similarity threshold (SPS-16) and the session gap (SPS-26). Make a labelled set of
-about 500 photos with "same / not same" pairs early in sprint 2, store it in the repo as a test fixture, and use it as a
-regression test for every change to clustering or the feature-print revision.
+**Biggest cross-cutting risks:** the similarity threshold (SPS-16) and the session gap (SPS-26). Both are calibrated in
+SPS-28 on a labelled set of about 500 photos stored in the repo as a fixture, and its `CalibrationTests` are the
+regression test for every change to clustering or the feature-print revision. Until `calibration-rev2.json` is committed,
+that test is skipped and the app has no threshold, so nothing measures clustering changes against real prints yet.

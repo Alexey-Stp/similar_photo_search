@@ -51,3 +51,5 @@ outside the paths the real checks scan, so they don't break the normal CI run.
 - Not verified locally (no SwiftLint on the Windows machine): the real `swiftlint --strict` run and
   `check-swiftlint-fixture.sh`. The regex was checked against the fixture with Foundation's `NSRegularExpression` (ICU, the
   engine SwiftLint uses). Comments and strings were filtered by hand, so only CI proves the `match_kinds` filtering.
+- CI closed that gap: `swiftlint --strict`, `check-swiftlint-fixture.sh` (including the comment and string lines) and the
+  new self-test steps passed on PR #25 and on `main`.
