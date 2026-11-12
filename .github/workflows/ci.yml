@@ -30,7 +30,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.sha }}
-        run: bash scripts/ci-needs-build.sh "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT"
+        # An error in the script must never skip the guards, so it falls back to the full pipeline.
+        run: bash scripts/ci-needs-build.sh "$BASE_SHA" "$HEAD_SHA" >> "$GITHUB_OUTPUT" || echo "code=true" >> "$GITHUB_OUTPUT"
 
   lint:
     name: Lint & architecture guards
@@ -153,6 +154,9 @@ jobs:
           # A missing allow-list aborts instead of being treated as empty.
           ALLOWED_PACKAGES_FILE=scripts/fixtures/does-not-exist.txt \
             bash scripts/expect-failure.sh --expect "is missing or unreadable" -- bash scripts/check-dependencies.sh
+
+      - name: Docs-only detection self-test
+        run: bash scripts/ci-needs-build-selftest.sh
 
       - name: SwiftLint
         run: |

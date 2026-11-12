@@ -62,7 +62,8 @@ Clean Architecture + MVVM, split into three local Swift packages plus the app ta
 
 ## Guard rails
 
-CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs these on every pull request and on pushes to `main`:
+CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs these on every pull request and on pushes to `main`,
+unless the change is docs-only (see below):
 
 | Check | Script |
 |---|---|
@@ -85,6 +86,12 @@ CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs these on every pu
 When you change a rule, keep its fixture in sync. Fixtures live outside the paths the real checks and SwiftLint scan.
 
 After the guards, CI builds the app and runs `DomainTests`, `DataTests` and `PresentationTests`.
+
+**Docs-only changes** skip both macOS jobs: when every changed file is under `.claude/` or `docs/`, or is a Markdown
+file at the repository root, [scripts/ci-needs-build.sh](scripts/ci-needs-build.sh) tells CI to skip lint, build and
+tests. Anything else runs everything, and so do a change to that script or the workflow, a source file moved into
+`docs/`, and an error in the script. Its self-test, [scripts/ci-needs-build-selftest.sh](scripts/ci-needs-build-selftest.sh),
+runs it against a throwaway repository.
 
 Manual privacy checks (Airplane Mode, Instruments network trace, archive privacy report) are in [docs/qa/zero-network.md](docs/qa/zero-network.md).
 

@@ -6,7 +6,9 @@
 #   .claude/**   Claude Code skills and settings
 #   docs/**      backlog and design notes
 #   *.md         Markdown files at the repository root (README, CLAUDE.md)
-# Anything else, including this script and the workflows, runs the full pipeline.
+# Anything else, including this script and the workflows, runs the full pipeline. A rename counts as its old and its
+# new path (--no-renames), so moving a source file into docs/ still builds.
+# Self-test: scripts/ci-needs-build-selftest.sh.
 #
 # Usage: scripts/ci-needs-build.sh <base-sha> <head-sha>
 set -euo pipefail
@@ -22,7 +24,7 @@ if [[ -z "$base" || "$base" =~ ^0+$ ]] || ! git cat-file -e "${base}^{commit}" 2
     exit 0
 fi
 
-changed="$(git diff --name-only "$base" "$head")"
+changed="$(git diff --name-only --no-renames "$base" "$head")"
 needs_build="$(grep -vE "$docs_only" <<< "$changed" || true)"
 
 if [[ -n "$needs_build" ]]; then
