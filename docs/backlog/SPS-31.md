@@ -48,3 +48,17 @@ Swift 6.2 and the iOS 26 SDK can surface real concurrency problems in the PhotoK
 than a version bump. Getting Xcode 26 may also need a different runner image (`runs-on`).
 
 ## Implementation notes
+
+- **Runner and version.** The `test` job runs on `macos-26` with `XCODE_VERSION: "26.6"`, the image default when this
+  was written. `macos-15` only ships Xcode up to 26.3 and has no iOS 26.5 runtime. The `lint` job stays on `macos-15`
+  unchanged: it runs only shell guards and SwiftLint, and doesn't use the selected Xcode.
+- **Device build.** The new step "Build for a generic iOS device (device-only test code)" runs `xcodebuild
+  build-for-testing -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO` with the same warnings-as-errors flags
+  as `xcodebuild test`, before the simulator is picked. It compiles every test target in the scheme for `iphoneos`,
+  including the `#if compiler(>=6.2)` branch of `CalibrationFixtureExtractionTests`. Nothing is installed or run.
+- **Simulator name.** Xcode 26 images have no "iPhone 16" simulator. The CI preference and the commands in README,
+  CLAUDE.md and the `/ticket` skill now name "iPhone 17". The CI fallback to any iPhone is unchanged.
+- No Swift settings changed: `SWIFT_VERSION = 6.0`, `swift-tools-version: 6.0`, and Swift 6.2's opt-in modes
+  (default `MainActor` isolation, approachable concurrency) stay off.
+- **Still open:** the first CI run on Xcode 26 (new diagnostics get fixed at their source in this ticket), and one look
+  at every screen in an iOS 26 Simulator for the new system design (needs a Mac). The full device pass is SPS-29.

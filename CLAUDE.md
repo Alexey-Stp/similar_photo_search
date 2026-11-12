@@ -19,7 +19,8 @@ When a ticket is done, add **Implementation notes** to its file (decisions later
 
 ## Stack
 
-- Swift 6 (strict concurrency `complete`), SwiftUI, iOS 17.0 minimum.
+- Xcode 26 or later (iOS 26 SDK, Swift 6.2 compiler); App Store Connect accepts nothing older.
+- Swift 6 language mode (strict concurrency `complete`), SwiftUI, iOS 17.0 minimum. iOS 26-only API goes behind `#available`.
 - PhotoKit (`PHAsset`, `PHImageManager`, `PHCachingImageManager`, `PHPhotoLibrary`, persistent change tokens).
 - Vision: `VNGenerateImageFeaturePrintRequest` (Revision2), `VNDetectFaceCaptureQualityRequest`, `VNCalculateImageAestheticsScoresRequest` (iOS 18+, behind `#available`).
 - Accelerate (`vDSP`, `vImage`) for distances and sharpness.
@@ -58,7 +59,7 @@ docs/                     backlog and design notes
 xcodegen generate
 
 # build + test (adjust simulator name to one installed)
-xcodebuild test -scheme SimilarPhotos -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodebuild test -scheme SimilarPhotos -destination 'platform=iOS Simulator,name=iPhone 17'
 
 # package-level tests
 swift test --package-path Packages/Domain

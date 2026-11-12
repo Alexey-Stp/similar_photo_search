@@ -53,7 +53,7 @@ Run what the environment allows and report exactly what ran and what did not:
 bash scripts/check-domain-imports.sh && bash scripts/check-concrete-construction.sh && bash scripts/check-privacy-manifest.sh
 swift test --package-path Packages/Domain -Xswiftc -warnings-as-errors
 swift test --package-path Packages/Data -Xswiftc -warnings-as-errors
-xcodegen generate && xcodebuild test -scheme SimilarPhotos -destination 'platform=iOS Simulator,name=iPhone 16'
+xcodegen generate && xcodebuild test -scheme SimilarPhotos -destination 'platform=iOS Simulator,name=iPhone 17'
 swiftlint --strict
 ```
 
