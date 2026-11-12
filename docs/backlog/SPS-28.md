@@ -93,11 +93,16 @@ written to fail loudly; that kept every PR red, so it was changed. Committing th
 
 ### Still open (device)
 
+Do [SPS-31](SPS-31.md) first: the extraction needs Xcode 26, the app target treats warnings as errors
+(`Config/Shared.xcconfig`), and SPS-31 makes CI compile this device-only test.
+
 1. Build the albums (≥ 500 photos, all categories, more than one photographer), run the extraction on an iPhone, and
    commit `calibration-rev2.json`.
 2. Run `CalibrationTests`, put the chosen threshold in `ClusteringConfig.calibrated` with its doc comment, and record
    here: the curve table, the chosen threshold with precision and recall, and the session-gap table with the decision
    to keep or change 15 min.
 3. Device scan of a real library: groups appear and no scan ends in "not calibrated".
-4. Not run here: `swift test` for `Packages/Data` (the extraction test, the new `DomainTestSupport` dependency), the app
-   build and SwiftLint (macOS only).
+4. CI passed on PR #24 (`Packages/Data` tests with the new `DomainTestSupport` dependency, the app build, SwiftLint).
+   `CalibrationFixtureExtractionTests` is compiled only for a device (`#if os(iOS) && !targetEnvironment(simulator)`),
+   and CI builds for the Mac and the Simulator, so no build has compiled it yet: the first device build with Xcode 26
+   is its first compile.

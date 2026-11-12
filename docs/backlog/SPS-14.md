@@ -105,8 +105,8 @@ iOS kills the app. `cancel()` during a half-done SwiftData save needs transactio
 - **Lifecycle.** The idle timer is off only while `ScanStatusSection` is on screen and a scan runs. Going to the
   background during a scan starts `beginBackgroundTask`; on expiry the scan is cancelled and the task ended inside the
   handler. `BGProcessingTaskRequest` (optional) was **not** added, so Info.plist is unchanged.
-- **Thresholds.** `AppContainer.clusteringConfig` has **no threshold** (calibration spike still open, SPS-16), so on a
-  device every scan currently stops at the first session with two analysed photos and shows "not calibrated".
+- **Thresholds.** `AppContainer.clusteringConfig` has **no threshold** (calibration still open: [SPS-28](SPS-28.md)), so
+  on a device every scan currently stops at the first session with two analysed photos and shows "not calibrated".
 - **Verified on Windows:** Domain tests (203, incl. `AnalysisCoordinatorTests` (20: publish order, single-photo skip,
   resume from cache, reuse of unchanged sessions, removal of shrunk sessions, config change, cancel < 500 ms with saved
   work, deleted-during-scan, serious/critical/Low Power throttling, batched saves, missing threshold) and

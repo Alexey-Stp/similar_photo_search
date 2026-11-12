@@ -87,7 +87,8 @@ small, a real series is split and never compared.
 - Performance tests (`ClusteringPerformanceTests`, 500-photo session < 200 ms, 20k library in sessions < 3 s) are
   device-only (`RUN_DEVICE_PERFORMANCE_TESTS=1`). On Windows, in a debug build without vDSP, the 500-photo session took
   1.06 s and the 20k library passed, so the numbers mean nothing until they run on a device.
-- **Still open:** both performance tests on an iPhone 13; the calibration spike (labelled fixture set → threshold for
-  revision 2, then Strict / Balanced / Relaxed); `swift test` for `Packages/Data` (the placeholder-conformance test
-  changed), the app build and SwiftLint, which need macOS. Verified here: Domain tests on Windows (Swift 6.4.2,
-  `-warnings-as-errors`), `check-domain-imports.sh`, `check-concrete-construction.sh`.
+- **Still open:** both performance tests on an iPhone 13 (now in [SPS-29](SPS-29.md)); the calibration spike (labelled
+  fixture set → threshold for revision 2, now [SPS-28](SPS-28.md); then Strict / Balanced / Relaxed, now [SPS-33](SPS-33.md));
+  `swift test` for `Packages/Data` (the placeholder-conformance test changed), the app build and SwiftLint, which need
+  macOS. Verified here: Domain tests on Windows (Swift 6.4.2, `-warnings-as-errors`), `check-domain-imports.sh`,
+  `check-concrete-construction.sh`.

@@ -3,13 +3,17 @@
 A native iOS app that finds near-duplicate photos in your library and helps you delete them.
 Everything runs **on device**: the app makes no network calls, and photos that exist only in iCloud are skipped rather than downloaded.
 
-> Status: the feature tickets SPS-2 to SPS-26 in the [backlog](docs/backlog/README.md) are implemented. Not yet usable on a
-> device: the similarity threshold is not calibrated, so every scan stops with "not calibrated" ([SPS-28](docs/backlog/SPS-28.md)).
-> Device QA is still open ([SPS-29](docs/backlog/SPS-29.md)).
+> Status: the feature tickets SPS-2 to SPS-26 in the [backlog](docs/backlog/README.md) are implemented, and the guard-rail
+> gaps are closed ([SPS-30](docs/backlog/SPS-30.md)). Not yet usable on a device: the similarity threshold is not
+> calibrated, so every scan stops with "not calibrated". The calibration tooling is merged; the labelled set and the
+> threshold need a physical iPhone ([SPS-28](docs/backlog/SPS-28.md)). Still open before the first App Store release:
+> Xcode 26 ([SPS-31](docs/backlog/SPS-31.md)), device QA ([SPS-29](docs/backlog/SPS-29.md)) and the submission
+> ([SPS-32](docs/backlog/SPS-32.md)).
 
 ## Requirements
 
-- macOS with Xcode 16.4+ (Swift 6)
+- macOS with Xcode 16.4+ (Swift 6); CI uses 16.4. The calibration extraction on a device
+  ([SPS-28](docs/backlog/SPS-28.md)) needs Xcode 26+ (Swift 6.2).
 - iOS 17.0+ device or simulator
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen) and [SwiftLint](https://github.com/realm/SwiftLint)
 
