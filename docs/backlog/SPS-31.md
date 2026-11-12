@@ -60,5 +60,9 @@ than a version bump. Getting Xcode 26 may also need a different runner image (`r
   CLAUDE.md and the `/ticket` skill now name "iPhone 17". The CI fallback to any iPhone is unchanged.
 - No Swift settings changed: `SWIFT_VERSION = 6.0`, `swift-tools-version: 6.0`, and Swift 6.2's opt-in modes
   (default `MainActor` isolation, approachable concurrency) stay off.
-- **Still open:** the first CI run on Xcode 26 (new diagnostics get fixed at their source in this ticket), and one look
-  at every screen in an iOS 26 Simulator for the new system design (needs a Mac). The full device pass is SPS-29.
+- **First Xcode 26 run (PR #28):** green with no source changes. Swift 6.2 and the iOS 26 SDK raised no compiler
+  warning in any package or the app; the only `warning:` lines are `appintentsmetadataprocessor` noise ("No
+  AppIntents.framework dependency found"), which is a tool message, not a build diagnostic. The device step compiled
+  `CalibrationFixtureExtractionTests.swift` for `arm64` iOS.
+- **Still open:** one look at every screen in an iOS 26 Simulator for the new system design (needs a Mac). The full
+  device pass is SPS-29.
