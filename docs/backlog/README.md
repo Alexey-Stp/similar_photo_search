@@ -130,7 +130,7 @@ labelled fixture set; every epic target above is measured on a device; the zero-
 |---|---|---|---|
 | [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do | SPS-12, SPS-16, SPS-17, SPS-26 |
 | [SPS-29](SPS-29.md) | Device QA and performance pass | To do | SPS-28 |
-| [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | To do | SPS-5 |
+| [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | Review | SPS-5 |
 
 ## Suggested order
 

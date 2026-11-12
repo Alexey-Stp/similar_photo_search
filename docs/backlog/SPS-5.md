@@ -28,6 +28,6 @@ not transmit". iCloud-only originals are skipped, never downloaded (SPS-9).
 - Guard rails: SwiftLint `custom_rules` in `.swiftlint.yml` (with a line-by-line fixture), `scripts/check-privacy-manifest.sh`
   (required-reason APIs from `scripts/required-reason-apis.txt`), `check-dependencies.sh`, `check-entitlements.sh`, `check-info-plist.sh`.
 - Using a new required-reason API (UserDefaults, file timestamps, disk space, boot time) means adding its entry to the manifest; CI asks for it.
-- Open: the `.swiftlint.yml` rules do not yet match direct Darwin socket calls. Add a rule plus `// expect:` lines in
-  `scripts/fixtures/NetworkViolations.swift` on a machine with SwiftLint, so `check-swiftlint-fixture.sh` proves it.
+- Direct Darwin socket and DNS calls are matched by the `no_socket_calls` rule since [SPS-30](SPS-30.md);
+  its `// expect:` lines are in `scripts/fixtures/NetworkViolations.swift`.
 - The manual checks are in [docs/qa/zero-network.md](../qa/zero-network.md). They must be re-run as part of SPS-14, SPS-24 and SPS-25.
