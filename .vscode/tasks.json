@@ -1,11 +1,13 @@
 {
     // Run with Cmd+Shift+P → "Tasks: Run Task", Cmd+Shift+B (build) or "Tasks: Run Test Task".
     // Every task calls scripts/dev/xcode.sh, which also works from a terminal (`scripts/dev/xcode.sh` lists commands).
-    // Change the simulator here; DEVICE_ID and DEVELOPMENT_TEAM can be set the same way for the device tasks.
+    // Change the simulator here (DEVICE_ID can be set the same way). The signing team for the device tasks comes from
+    // your gitignored .vscode/settings.json: "similarPhotos.developmentTeam": "<Team ID>".
     "version": "2.0.0",
     "options": {
         "env": {
-            "SIMULATOR": "iPhone 17"
+            "SIMULATOR": "iPhone 17",
+            "DEVELOPMENT_TEAM": "${config:similarPhotos.developmentTeam}"
         }
     },
     "presentation": {

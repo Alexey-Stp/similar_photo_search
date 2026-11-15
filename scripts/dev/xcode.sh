@@ -38,6 +38,8 @@ readonly BUNDLE_ID=com.similarphotos.SimilarPhotos
 readonly DERIVED_DATA=.build/DerivedData
 readonly RESULTS=.build/TestResults
 readonly SIMULATOR="${SIMULATOR:-iPhone 17}"
+# Lets xcodebuild create certificates and profiles and register a new iPhone (needs the Apple ID in Xcode → Accounts).
+readonly DEVICE_SIGNING=(-allowProvisioningUpdates -allowProvisioningDeviceRegistration)
 # The device-only suites SPS-29 runs with RUN_DEVICE_PERFORMANCE_TESTS=1.
 readonly DEVICE_PERF_SUITES=(
     DataTests/PhotoLibraryPerformanceTests
@@ -122,7 +124,7 @@ run_device() {
     local udid
     udid=$(device_udid)
     step "Building for device $udid"
-    xcb -configuration Debug -destination "platform=iOS,id=$udid" -allowProvisioningUpdates -quiet build
+    xcb -configuration Debug -destination "platform=iOS,id=$udid" "${DEVICE_SIGNING[@]}" -quiet build
     step "Installing and launching"
     xcrun devicectl device install app --device "$udid" "$DERIVED_DATA/Build/Products/Debug-iphoneos/SimilarPhotos.app"
     xcrun devicectl device process launch --device "$udid" --terminate-existing "$BUNDLE_ID"
@@ -154,7 +156,7 @@ device_perf() {
     step "Device performance tests on $udid; results: $bundle"
     # xcodebuild passes TEST_RUNNER_<NAME> to the test process as <NAME>.
     TEST_RUNNER_RUN_DEVICE_PERFORMANCE_TESTS=1 \
-        xcb -destination "platform=iOS,id=$udid" -allowProvisioningUpdates -resultBundlePath "$bundle" \
+        xcb -destination "platform=iOS,id=$udid" "${DEVICE_SIGNING[@]}" -resultBundlePath "$bundle" \
         "${only[@]}" test
     echo "Record the device model and iOS version with every number (SPS-29)."
 }
@@ -167,7 +169,7 @@ calibration_extract() {
     out="${bundle%.xcresult}-attachments"
     step "SPS-28 calibration extraction on $udid; results: $bundle"
     TEST_RUNNER_RUN_CALIBRATION_EXTRACTION=1 \
-        xcb -destination "platform=iOS,id=$udid" -allowProvisioningUpdates -resultBundlePath "$bundle" \
+        xcb -destination "platform=iOS,id=$udid" "${DEVICE_SIGNING[@]}" -resultBundlePath "$bundle" \
         -only-testing:DataTests/CalibrationFixtureExtractionTests test
     xcrun xcresulttool export attachments --path "$bundle" --output-path "$out"
     echo "Attachments exported to $out (manifest.json maps them to calibration-rev2.json)."
@@ -236,7 +238,7 @@ main() {
         build-release)
             generate
             udid=$(device_udid)
-            xcb -configuration Release -destination "platform=iOS,id=$udid" -allowProvisioningUpdates \
+            xcb -configuration Release -destination "platform=iOS,id=$udid" "${DEVICE_SIGNING[@]}" \
                 -quiet build ;;
         archive)
             generate
