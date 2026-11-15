@@ -195,7 +195,8 @@ size_check() {
     files=$( { git diff --name-only --diff-filter=d main...HEAD -- '*.swift'
                git diff --name-only --diff-filter=d --cached -- '*.swift'
                git diff --name-only --diff-filter=d -- '*.swift'
-               git ls-files --others --exclude-standard -- '*.swift'; } | sort -u)
+               git ls-files --others --exclude-standard -- '*.swift'; } | sort -u \
+             | while IFS= read -r file; do [[ -f "$file" ]] && echo "$file"; done || true)
     [[ -n "$files" ]] || { echo "No changed Swift files."; return; }
     # shellcheck disable=SC2086 # one path per line, no spaces in this repo's Swift paths
     awk 'length > 120 { print FILENAME ":" FNR ": line longer than 120 characters" }' $files
