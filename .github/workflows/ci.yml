@@ -10,7 +10,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  XCODE_VERSION: "16.4"
+  # App Store Connect accepts only Xcode 26+ builds (iOS 26 SDK). The macos-26 image ships it (SPS-31).
+  XCODE_VERSION: "26.6"
 
 jobs:
   # Docs-only changes (.claude/, docs/, root *.md) skip the macOS jobs below.
@@ -173,7 +174,7 @@ jobs:
     timeout-minutes: 60
     needs: [changes, lint]
     if: needs.changes.outputs.code == 'true'
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
@@ -199,7 +200,20 @@ jobs:
           xcodebuild -resolvePackageDependencies -project SimilarPhotos.xcodeproj -scheme SimilarPhotos
           bash scripts/check-dependencies.sh
 
-      # Runner images don't always ship an "iPhone 16" (or any iOS runtime) for the selected Xcode, so pick an
+      # Device-only test code (#if os(iOS) && !targetEnvironment(simulator)) is compiled by no other step, so a compile
+      # error in it fails here. Nothing is signed, installed or run.
+      - name: Build for a generic iOS device (device-only test code)
+        timeout-minutes: 20
+        run: |
+          xcodebuild build-for-testing \
+            -project SimilarPhotos.xcodeproj \
+            -scheme SimilarPhotos \
+            -destination 'generic/platform=iOS' \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            GCC_TREAT_WARNINGS_AS_ERRORS=YES \
+            CODE_SIGNING_ALLOWED=NO
+
+      # Runner images don't always ship an "iPhone 17" (or any iOS runtime) for the selected Xcode, so pick an
       # available iPhone simulator by UDID, create one if needed, and download the iOS platform as a last resort.
       - name: Pick iOS simulator
         run: |
@@ -208,7 +222,7 @@ jobs:
             xcrun simctl list devices available --json | jq -r '
               [.devices | to_entries[] | select(.key | contains("SimRuntime.iOS")) | .value[]
                | select(.name | startswith("iPhone"))]
-              | (map(select(.name == "iPhone 16")) + .) | first | .udid // empty'
+              | (map(select(.name == "iPhone 17")) + .) | first | .udid // empty'
           }
           udid=$(first_iphone)
           if [ -z "$udid" ]; then
@@ -223,7 +237,7 @@ jobs:
             [ -n "$runtime" ] || { echo "::error::No iOS simulator runtime available"; exit 1; }
             device_type=$(xcrun simctl list devicetypes --json \
               | jq -r '[.devicetypes[] | select(.name | startswith("iPhone"))]
-                      | (map(select(.name == "iPhone 16")) + reverse) | first | .identifier')
+                      | (map(select(.name == "iPhone 17")) + reverse) | first | .identifier')
             udid=$(xcrun simctl create "CI iPhone" "$device_type" "$runtime")
           fi
           echo "Using simulator $udid"

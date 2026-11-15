@@ -137,7 +137,7 @@ rejects over metadata or behaviour on iPad.
 | Ticket | Title | Status | Depends on |
 |---|---|---|---|
 | [SPS-30](SPS-30.md) | Close guard-rail gaps: socket lint rule and script self-tests | Done | SPS-5 |
-| [SPS-31](SPS-31.md) | Build and test with Xcode 26 and the iOS 26 SDK | To do | SPS-2 |
+| [SPS-31](SPS-31.md) | Build and test with Xcode 26 and the iOS 26 SDK | Review | SPS-2 |
 | [SPS-28](SPS-28.md) | Calibrate the similarity threshold and session gap on a labelled set | To do (tooling merged; device run open) | SPS-12, SPS-16, SPS-17, SPS-26 |
 | [SPS-29](SPS-29.md) | Device QA and performance pass | To do | SPS-28, SPS-31 |
 | [SPS-32](SPS-32.md) | First TestFlight build and App Store submission | To do | SPS-29, SPS-31 |
