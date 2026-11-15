@@ -1,0 +1,234 @@
+{
+    // Run with Cmd+Shift+P → "Tasks: Run Task", Cmd+Shift+B (build) or "Tasks: Run Test Task".
+    // Every task calls scripts/dev/xcode.sh, which also works from a terminal (`scripts/dev/xcode.sh` lists commands).
+    // Change the simulator here; DEVICE_ID and DEVELOPMENT_TEAM can be set the same way for the device tasks.
+    "version": "2.0.0",
+    "options": {
+        "env": {
+            "SIMULATOR": "iPhone 17"
+        }
+    },
+    "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+    },
+    "tasks": [
+        {
+            "label": "Project: Generate (xcodegen)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh generate",
+            "problemMatcher": []
+        },
+        {
+            "label": "Project: Open in Xcode",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh open",
+            "problemMatcher": []
+        },
+        {
+            "label": "App: Build (Simulator)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh build",
+            "group": { "kind": "build", "isDefault": true },
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "App: Run on Simulator",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh run-sim",
+            "group": "build",
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "App: Run on Device",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh run-device",
+            "group": "build",
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "App: Stream Simulator Logs",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh logs",
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "App: Reset Simulator Photos Permission",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh reset-photos",
+            "problemMatcher": []
+        },
+        {
+            "label": "Test: All (Simulator)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh test",
+            "group": { "kind": "test", "isDefault": true },
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "Test: Only… (Simulator)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh test-only '${input:testIdentifier}'",
+            "group": "test",
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "Test: Package (macOS host)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh test-package ${input:package}",
+            "group": "test",
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "Test: Device Performance (SPS-29)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh device-perf ${input:deviceSuite}",
+            "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "Device: Calibration Extraction (SPS-28)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh calibration-extract",
+            "problemMatcher": []
+        },
+        {
+            "label": "Device: Release Build (Instruments)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh build-release",
+            "problemMatcher": []
+        },
+        {
+            "label": "Release: Archive",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh archive",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: Guards",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh guards",
+            "problemMatcher": []
+        },
+        {
+            "label": "Check: SwiftLint (strict)",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh lint",
+            "problemMatcher": {
+                "owner": "swiftlint",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "Check: Line and File Lengths",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh size-check",
+            "problemMatcher": {
+                "owner": "size-check",
+                "fileLocation": ["relative", "${workspaceFolder}"],
+                "severity": "warning",
+                "pattern": {
+                    "regexp": "^([^:\\s]+\\.swift):(\\d+): (.*)$",
+                    "file": 1, "line": 2, "message": 3
+                }
+            }
+        },
+        {
+            "label": "Check: Everything CI Runs",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh ci",
+            "problemMatcher": {
+                "owner": "swift",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(/.+?):(\\d+):(\\d+): (error|warning): (.*)$",
+                    "file": 1, "line": 2, "column": 3, "severity": 4, "message": 5
+                }
+            }
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "scripts/dev/xcode.sh clean",
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testIdentifier",
+            "type": "promptString",
+            "description": "Target, suite or test, e.g. DomainTests/SessionSegmenterTests",
+            "default": "DomainTests"
+        },
+        {
+            "id": "package",
+            "type": "pickString",
+            "description": "Package to test with swift test",
+            "options": ["Domain", "Data"],
+            "default": "Domain"
+        },
+        {
+            "id": "deviceSuite",
+            "type": "pickString",
+            "description": "Device-only suite (needs a connected iPhone)",
+            "options": [
+                { "label": "All six suites", "value": "" },
+                "DataTests/PhotoLibraryPerformanceTests",
+                "DataTests/ImageLoadingPerformanceTests",
+                "DataTests/VisionFeaturePrintDeviceTests",
+                "DataTests/AnalysisCachePerformanceTests",
+                "DataTests/ClusteringPerformanceTests",
+                "DataTests/QualityScoringDeviceTests"
+            ],
+            "default": ""
+        }
+    ]
+}
