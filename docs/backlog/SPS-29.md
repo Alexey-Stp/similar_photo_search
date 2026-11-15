@@ -40,4 +40,8 @@ for anything bigger.
 Use Instruments (Allocations, Time Profiler, Hitches, Network) on a Release build. Write down the device model and iOS
 version with every number.
 
+`scripts/dev/xcode.sh device-perf` (VS Code task "Test: Device Performance (SPS-29)") runs the six device-only suites
+with `RUN_DEVICE_PERFORMANCE_TESTS=1` on the first paired iPhone and keeps the `.xcresult` in `.build/TestResults/`;
+`build-release` and `archive` make the Release build for Instruments and the archive for the privacy report.
+
 ## Implementation notes

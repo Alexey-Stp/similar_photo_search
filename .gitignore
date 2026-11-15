@@ -14,3 +14,6 @@ Packages/*/Info.plist
 # OS
 .DS_Store
 Thumbs.db
+
+# VS Code: personal settings stay local; tasks.json and extensions.json are shared
+.vscode/settings.json
