@@ -19,7 +19,7 @@
 #   guards               the architecture and privacy guard scripts that CI runs
 #   lint                 swiftlint --strict
 #   size-check           changed Swift files: lines over 120 characters and file lengths (CLAUDE.md)
-#   ci                   guards, lint, package tests and simulator tests, like CI
+#   ci                   guards, lint, package tests and simulator tests (not the self-tests or device build)
 #   logs                 stream the app's os.Logger output from the booted simulator
 #   reset-photos         reset the simulator's photo-library permission for the app (re-test onboarding)
 #   clean                delete the local DerivedData and test results
@@ -44,7 +44,7 @@ readonly DEVICE_PERF_SUITES=(
     DataTests/ImageLoadingPerformanceTests
     DataTests/VisionFeaturePrintDeviceTests
     DataTests/AnalysisCachePerformanceTests
-    DataTests/ClusteringPerformanceTests
+    DomainTests/ClusteringPerformanceTests
     DataTests/QualityScoringDeviceTests
 )
 
@@ -191,6 +191,7 @@ lint() {
 size_check() {
     local files
     files=$( { git diff --name-only --diff-filter=d main...HEAD -- '*.swift'
+               git diff --name-only --diff-filter=d --cached -- '*.swift'
                git diff --name-only --diff-filter=d -- '*.swift'
                git ls-files --others --exclude-standard -- '*.swift'; } | sort -u)
     [[ -n "$files" ]] || { echo "No changed Swift files."; return; }

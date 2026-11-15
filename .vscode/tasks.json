@@ -182,7 +182,7 @@
             }
         },
         {
-            "label": "Check: Everything CI Runs",
+            "label": "Check: Guards, Lint and Tests",
             "type": "shell",
             "command": "scripts/dev/xcode.sh ci",
             "problemMatcher": {
@@ -225,7 +225,7 @@
                 "DataTests/ImageLoadingPerformanceTests",
                 "DataTests/VisionFeaturePrintDeviceTests",
                 "DataTests/AnalysisCachePerformanceTests",
-                "DataTests/ClusteringPerformanceTests",
+                "DomainTests/ClusteringPerformanceTests",
                 "DataTests/QualityScoringDeviceTests"
             ],
             "default": ""

@@ -51,7 +51,7 @@ Vision feature prints and performance numbers must be checked on a **physical de
 
 [scripts/dev/xcode.sh](scripts/dev/xcode.sh) wraps the common commands, and [.vscode/tasks.json](.vscode/tasks.json)
 exposes each one as a task (`Tasks: Run Task`; `Cmd+Shift+B` builds for the simulator). Run the script without arguments
-for the full list.
+for the full list. It needs `jq`, which ships with macOS 15 and later (`brew install jq` on older systems).
 
 | Task | Command |
 |---|---|
@@ -62,11 +62,12 @@ for the full list.
 | Device-only performance tests ([SPS-29](docs/backlog/SPS-29.md)) | `scripts/dev/xcode.sh device-perf [DataTests/<Suite>]` |
 | Calibration fixture extraction ([SPS-28](docs/backlog/SPS-28.md)) | `scripts/dev/xcode.sh calibration-extract` |
 | Release build for Instruments / Release archive | `scripts/dev/xcode.sh build-release` / `archive` |
-| Guards, SwiftLint, line and file lengths, everything CI runs | `scripts/dev/xcode.sh guards` / `lint` / `size-check` / `ci` |
+| Guards, SwiftLint, line and file lengths; guards + lint + package and simulator tests | `scripts/dev/xcode.sh guards` / `lint` / `size-check` / `ci` |
 | App logs from the simulator; reset its Photos permission | `scripts/dev/xcode.sh logs` / `reset-photos` |
 
 `SIMULATOR` (default `iPhone 17`), `DEVICE_ID` (default: the first paired iPhone) and `DEVELOPMENT_TEAM` select the
-destination and signing. Build products and `.xcresult` bundles go to `.build/` (ignored). The device tasks need an
+destination and signing. `ci` doesn't cover everything CI does: the guard self-tests and the generic-device
+build-for-testing run only in CI. Build products and `.xcresult` bundles go to `.build/` (ignored). The device tasks need an
 iPhone with Developer Mode on and a signing team set up in Xcode.
 
 ## Architecture
