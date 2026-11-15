@@ -61,7 +61,22 @@ final class AppContainer: ViewModelFactory {
     /// Similarity thresholds per Vision revision, calibrated on the labelled fixture set (SPS-28). The values, their
     /// dataset size, precision, recall and date are documented on `ClusteringConfig.calibrated`, which the
     /// calibration test checks. With no threshold for a revision, a scan stops with "not calibrated".
-    static let clusteringConfig = ClusteringConfig.calibrated
+    ///
+    /// Debug builds only: until SPS-28 calibrates revision 2, they fall back to `provisionalDebugThreshold` so the app
+    /// can be tried on a real library. Release builds (TestFlight, App Store) never use it.
+    static let clusteringConfig: ClusteringConfig = {
+        var config = ClusteringConfig.calibrated
+        #if DEBUG
+        if config.threshold(forRevision: 2) == nil {
+            config.thresholds[2] = provisionalDebugThreshold
+        }
+        #endif
+        return config
+    }()
+
+    /// An **uncalibrated** revision-2 threshold for Debug builds, an educated guess for unit-length prints (distances
+    /// 0–2). Remove it once `ClusteringConfig.calibrated` has a revision-2 entry (SPS-28), which then wins anyway.
+    static let provisionalDebugThreshold: Float = 0.5
 
     /// Builds every service once.
     init() {
