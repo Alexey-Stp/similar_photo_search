@@ -5,6 +5,9 @@ import SwiftUI
 struct ClusterCardRow: View {
     let viewModel: ClusterListViewModel
     let clusterID: String
+    /// Opens the group's own page.
+    let onOpen: (String) -> Void
+    /// Opens the full-screen comparison.
     let onCompare: (String) -> Void
 
     var body: some View {
@@ -15,6 +18,7 @@ struct ClusterCardRow: View {
                 pixelSize: viewModel.pixelSize,
                 thumbnails: viewModel.thumbnails,
                 onToggle: { viewModel.toggle($0, in: clusterID) },
+                onOpen: { onOpen(clusterID) },
                 onCompare: { onCompare(clusterID) }
             )
             .equatable()

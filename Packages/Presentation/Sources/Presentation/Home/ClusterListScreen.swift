@@ -11,6 +11,9 @@ import SwiftUI
 /// - A floating bar has the summary, Smart Select All, Deselect All and Delete.
 struct ClusterListScreen: View {
     let viewModel: ClusterListViewModel
+    /// Opens a group's own page.
+    let onOpen: (String) -> Void
+    /// Opens a group's full-screen comparison.
     let onCompare: (String) -> Void
 
     @Environment(\.displayScale) private var displayScale
@@ -59,7 +62,7 @@ struct ClusterListScreen: View {
                 .padding(.top, 4)
             LazyVStack(spacing: 16) {
                 ForEach(viewModel.rows, id: \.self) { clusterID in
-                    ClusterCardRow(viewModel: viewModel, clusterID: clusterID, onCompare: onCompare)
+                    ClusterCardRow(viewModel: viewModel, clusterID: clusterID, onOpen: onOpen, onCompare: onCompare)
                 }
             }
             .scrollTargetLayout()
@@ -149,14 +152,14 @@ private struct ScrollInteractionTracking: ViewModifier {
 #Preview("Groups while scanning") {
     let list = ClusterListViewModel.preview()
     return NavigationStack {
-        ClusterListScreen(viewModel: list) { _ in }
+        ClusterListScreen(viewModel: list, onOpen: { _ in }, onCompare: { _ in })
     }
     .task { await list.scan.startScan() }
 }
 
 #Preview("Groups, dark, AX3") {
     NavigationStack {
-        ClusterListScreen(viewModel: .preview()) { _ in }
+        ClusterListScreen(viewModel: .preview(), onOpen: { _ in }, onCompare: { _ in })
     }
     .preferredColorScheme(.dark)
     .dynamicTypeSize(.accessibility3)

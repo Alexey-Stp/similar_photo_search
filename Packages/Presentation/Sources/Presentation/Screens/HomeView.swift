@@ -41,7 +41,7 @@ struct HomeDashboard: View {
                     if let list = factory?.clusterListViewModel, !list.rows.isEmpty {
                         HomeGroupsSection(
                             list: list,
-                            onCompare: { home.compare(clusterID: $0) },
+                            onOpen: { home.openGroup($0) },
                             onSeeAll: { home.review() }
                         )
                         .padding(.top, 8)
@@ -93,7 +93,13 @@ struct HomeDashboard: View {
         if let list = factory?.clusterListViewModel {
             switch route {
             case .clusters:
-                ClusterListScreen(viewModel: list) { home.compare(clusterID: $0) }
+                ClusterListScreen(
+                    viewModel: list,
+                    onOpen: { home.openGroup($0) },
+                    onCompare: { home.compare(clusterID: $0) }
+                )
+            case .group(let clusterID):
+                ClusterGroupScreen(viewModel: list, clusterID: clusterID) { home.compare(clusterID: $0) }
             }
         }
     }

@@ -7,6 +7,8 @@ import SwiftUI
 public enum HomeRoute: Hashable, Sendable {
     /// The groups of similar photos.
     case clusters
+    /// One group on its own page, with all its photos.
+    case group(String)
 }
 
 /// The full-screen comparison of one group, presented over the group list (SPS-22).
@@ -174,6 +176,12 @@ public final class HomeViewModel {
     public func review() {
         guard path.last != .clusters else { return }
         path.append(.clusters)
+    }
+
+    /// Opens one group's own page (a group tile on Home, a group in the list).
+    public func openGroup(_ clusterID: String) {
+        guard path.last != .group(clusterID) else { return }
+        path.append(.group(clusterID))
     }
 
     /// Opens the full-screen comparison of one group (the header of its card, or the VoiceOver action "Compare").

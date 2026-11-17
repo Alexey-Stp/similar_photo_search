@@ -790,6 +790,34 @@
         }
       }
     },
+    "group.collapse" : {
+      "comment" : "Group card button: shows the group's photos in one line again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show One Line" } }
+      }
+    },
+    "group.open.hint" : {
+      "comment" : "VoiceOver hint: opens the group's own page.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Opens this group with all its photos." } }
+      }
+    },
+    "group.showAll" : {
+      "comment" : "Group card button: shows every photo of the group.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Show All Photos" } }
+      }
+    },
+    "group.title" : {
+      "comment" : "Navigation title of one group's own page.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Group" } }
+      }
+    },
     "home.empty.message" : {
       "comment" : "Home, after a scan that found nothing: explanation.",
       "extractionState" : "manual",
@@ -797,11 +825,32 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "None of the photos in this scope look alike. Pull down to scan again." } }
       }
     },
+    "home.group.toFree %@" : {
+      "comment" : "Home group tile: what the group can free, for example “12 MB can be freed”.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ can be freed" } }
+      }
+    },
     "home.groups.seeAll" : {
       "comment" : "Home: opens the full group list with filters and the delete bar.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "See All" } }
+      }
+    },
+    "home.groups.sort.date" : {
+      "comment" : "Home sort switch: groups by date.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Date" } }
+      }
+    },
+    "home.groups.sort.size" : {
+      "comment" : "Home sort switch: groups by the size they can free.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Size" } }
       }
     },
     "home.groups.title" : {

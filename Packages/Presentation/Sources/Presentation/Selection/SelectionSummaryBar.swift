@@ -52,6 +52,7 @@ public struct SelectionSummaryBar: View {
                 .font(.subheadline.weight(.semibold))
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(-1)
                 .accessibilityAddTraits(.updatesFrequently)
             HStack(spacing: 8) {
                 buttons
@@ -99,16 +100,7 @@ public struct SelectionSummaryBar: View {
     @ViewBuilder private var deleteButton: some View {
         if let onDelete {
             Button(role: .destructive, action: onDelete) {
-                Label {
-                    Text("selection.delete.short", bundle: .module)
-                } icon: {
-                    Image(systemName: "trash")
-                }
-                .font(.body.weight(.semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .frame(minHeight: 48)
-                .background(Self.deleteRed, in: Capsule())
+                SelectionDeleteLabel()
             }
             .buttonStyle(.plain)
             .opacity(summary.photoCount == 0 ? 0.4 : 1)
@@ -120,6 +112,28 @@ public struct SelectionSummaryBar: View {
 
     /// Apple's accessible red (#d70015), the Increase Contrast value of systemRed.
     static let deleteRed = Color(red: 215 / 255, green: 0, blue: 21 / 255)
+}
+
+/// The red "Delete" pill of the floating delete bars: one line at its natural width, as tall as the bar's round
+/// buttons, never squeezed or wrapped by the summary next to it.
+struct SelectionDeleteLabel: View {
+    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 48
+
+    var body: some View {
+        Label {
+            Text("selection.delete.short", bundle: .module)
+        } icon: {
+            Image(systemName: "trash")
+        }
+        .font(.body.weight(.semibold))
+        .lineLimit(1)
+        .foregroundStyle(.white)
+        .padding(.horizontal, 20)
+        .frame(minHeight: max(height, 48))
+        .fixedSize()
+        .background(SelectionSummaryBar.deleteRed, in: Capsule())
+        .contentShape(Capsule())
+    }
 }
 
 /// A 48-point circle with an SF Symbol; the label's title is the VoiceOver label.
