@@ -16,10 +16,11 @@ struct PhotoComparisonScreen: View {
     /// Distance or predicted distance of a downward swipe that dismisses the screen.
     private static let dismissDistance: CGFloat = 120
 
-    /// The photo edge to edge on black, the glass top bar over it, and one floating glass toolbar at the bottom with
-    /// the filmstrip, the photo's details and the actions.
+    /// The photo edge to edge on black. Over it: the glass top bar with the filmstrip just below it, the photo's
+    /// details on a dark gradient at the bottom of the photo, and under those the actions in their own toolbar
+    /// anchored to the bottom edge.
     var body: some View {
-        GeometryReader { proxy in
+        GeometryReader { _ in
             ZStack {
                 if viewModel.isAvailable {
                     photos
@@ -31,11 +32,21 @@ struct PhotoComparisonScreen: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay(alignment: .top) {
-                ComparisonTopBar(viewModel: viewModel) { dismiss() }
+                VStack(spacing: 8) {
+                    ComparisonTopBar(viewModel: viewModel) { dismiss() }
+                    if viewModel.isAvailable {
+                        ComparisonFilmstrip(viewModel: viewModel)
+                            .glassBackground(in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                            .padding(.horizontal, 12)
+                    }
+                }
             }
-            .overlay(alignment: .bottom) {
-                if viewModel.isAvailable {
-                    bottomToolbar(maxPanelHeight: proxy.size.height * 0.45)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if viewModel.isAvailable, let focused = viewModel.focusedID {
+                    VStack(spacing: 0) {
+                        ComparisonPhotoDetails(viewModel: viewModel, assetID: focused)
+                        ComparisonActionBar(viewModel: viewModel, assetID: focused)
+                    }
                 }
             }
             .offset(y: dismissOffset)
@@ -69,25 +80,6 @@ struct PhotoComparisonScreen: View {
             viewModel.layoutChanged(canShowSideBySide: canShow)
         }
         .task(id: viewModel.memberIDs) { await viewModel.loadDetails() }
-    }
-
-    /// The filmstrip over the focused photo's details and actions, in one glass toolbar.
-    private func bottomToolbar(maxPanelHeight: CGFloat) -> some View {
-        VStack(spacing: 4) {
-            ComparisonFilmstrip(viewModel: viewModel)
-            if let focused = viewModel.focusedID {
-                ScrollView {
-                    ComparisonInfoPanel(viewModel: viewModel, assetID: focused)
-                }
-                .scrollBounceBehavior(.basedOnSize)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxHeight: maxPanelHeight)
-            }
-        }
-        .padding(.top, 8)
-        .glassBackground(in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .padding(.horizontal, 10)
-        .padding(.bottom, 4)
     }
 
     private var canShowSideBySide: Bool {

@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The strip of the group's photos at the top of the comparison's bottom toolbar. Tapping one shows it; the shown
-/// photo stays scrolled into view.
+/// The strip of the group's photos at the top of the comparison, just below the top bar. Tapping one shows it; the
+/// shown photo stays scrolled into view.
 struct ComparisonFilmstrip: View {
     let viewModel: PhotoComparisonViewModel
 
@@ -19,8 +19,8 @@ struct ComparisonFilmstrip: View {
                             .id(assetID)
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
             }
             .onChange(of: viewModel.focusedID, initial: true) { _, focused in
                 guard let focused else { return }

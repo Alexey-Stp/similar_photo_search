@@ -1,15 +1,12 @@
 import SwiftUI
 
-/// The focused photo's details (date, resolution, size, badges, why it ranks well) over a row of actions laid out
-/// like a tab bar: Keep Only, Mark / Unmark for deletion, Best and Delete Now. Lives in the comparison's bottom
-/// glass toolbar.
-struct ComparisonInfoPanel: View {
+/// The focused photo's details, floating over the bottom of the photo: the date, resolution and size, the status
+/// tags (Best, Will Be Deleted / Kept, Favorite, Edited, Live) and why it ranks well. White text on a dark gradient
+/// that fades out upwards, so it stays readable without covering the photo with a panel.
+struct ComparisonPhotoDetails: View {
     let viewModel: PhotoComparisonViewModel
     let assetID: String
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    /// The facts above the action buttons.
     var body: some View {
         let info = viewModel.info(for: assetID)
         VStack(alignment: .leading, spacing: 8) {
@@ -20,12 +17,16 @@ struct ComparisonInfoPanel: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            actions
-                .padding(.top, 4)
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 6)
+        .padding(.top, 48)
+        .padding(.bottom, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            LinearGradient(colors: [.clear, .black.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+                .allowsHitTesting(false)
+        )
+        .shadow(color: .black.opacity(0.4), radius: 2)
     }
 
     /// The date, then resolution and file size on one line.
@@ -73,7 +74,7 @@ struct ComparisonInfoPanel: View {
         }
     }
 
-    /// One tinted capsule with an icon and a short text.
+    /// One tinted capsule with an icon and a short text, on a dark base so it reads on any photo.
     private func badge(_ key: LocalizedStringKey, symbol: String, tint: Color) -> some View {
         Label {
             Text(key, bundle: .module)
@@ -83,17 +84,26 @@ struct ComparisonInfoPanel: View {
         .font(.caption.weight(.semibold))
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(tint.opacity(0.3), in: Capsule())
+        .background(tint.opacity(0.35), in: Capsule())
+        .background(.black.opacity(0.35), in: Capsule())
     }
+}
 
-    /// Keep Only, Mark / Unmark, Best and Delete Now as icon items with short labels; VoiceOver reads the full
-    /// titles. At accessibility text sizes the items stack in two rows.
-    private var actions: some View {
+/// The comparison's own bottom toolbar, anchored to the bottom edge and separate from the details above it: Keep
+/// Only, Mark / Unmark for deletion, Best and Delete Now as icons with short labels (VoiceOver reads the full
+/// titles). At accessibility text sizes the items stack in two rows.
+struct ComparisonActionBar: View {
+    let viewModel: PhotoComparisonViewModel
+    let assetID: String
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
         let isMissing = viewModel.isMissing(assetID)
         let isSelected = viewModel.isSelected(assetID)
         let isBest = viewModel.isBest(assetID)
         let columns = dynamicTypeSize.isAccessibilitySize ? 2 : 4
-        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: columns), spacing: 4) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: columns), spacing: 4) {
             BarItem(titleKey: "compare.tab.keepOnly", systemImage: "checkmark.circle") {
                 viewModel.keepOnly(assetID)
             }
@@ -119,6 +129,15 @@ struct ComparisonInfoPanel: View {
             .accessibilityHint(Text("compare.action.deleteNow.hint", bundle: .module))
         }
         .disabled(isMissing)
+        .padding(.horizontal, 8)
+        .padding(.top, 6)
+        .frame(maxWidth: .infinity)
+        .background {
+            Rectangle()
+                .fill(.bar)
+                .overlay(alignment: .top) { Divider() }
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 }
 
