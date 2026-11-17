@@ -34,4 +34,12 @@ struct HomeSummaryTests {
         let lowerBound = HomeSummary(groupCount: 1, photoCount: 2, reclaimableBytes: 6_000_000, isLowerBound: true)
         #expect(lowerBound.reclaimableText?.hasPrefix("At least") == true)
     }
+
+    @Test func heroSizeIsTheSizeAlone() throws {
+        #expect(HomeSummary(groupCount: 1, photoCount: 2).reclaimableSizeText == nil)
+        let summary = HomeSummary(groupCount: 1, photoCount: 2, reclaimableBytes: 6_000_000)
+        let size = try #require(summary.reclaimableSizeText)
+        #expect(size == Int64(6_000_000).formatted(.byteCount(style: .file)))
+        #expect(summary.reclaimableText?.contains(size) == true)
+    }
 }

@@ -1,9 +1,10 @@
 import Domain
 import SwiftUI
 
-/// One group: a header (date, count, "Review recommended") that opens the comparison, and a horizontal strip of
-/// thumbnails with the **Best** badge on the kept photo and a checkmark and dimming on the photos selected for
-/// deletion. Tapping a thumbnail toggles it.
+/// One group, photo first: every photo in a grid that fills the card's width (the suggested keeper first, with the
+/// **Best** badge), then a footer with the date, the count, the group's total size and the size selected for
+/// deletion, which opens the comparison. Photos selected for deletion are dimmed and carry a red checkmark.
+/// Tapping a photo toggles it.
 ///
 /// `Equatable` on its content, so the list re-renders a card only when its own data changed. The selection is read
 /// from the cluster's own `ClusterSelectionState`, so a toggle re-renders only this card.
@@ -15,48 +16,71 @@ struct ClusterCardView: View, Equatable {
     let onToggle: (String) -> Void
     let onCompare: () -> Void
 
+    @ScaledMetric(relativeTo: .body) private var minimumTile: CGFloat = 96
+
     /// Equal when the content, the selection object and the size are; the closures are ignored.
     nonisolated static func == (lhs: ClusterCardView, rhs: ClusterCardView) -> Bool {
         lhs.card == rhs.card && lhs.state === rhs.state && lhs.pixelSize == rhs.pixelSize
     }
 
-    /// The header above the thumbnail strip.
+    /// The photos above the footer.
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 8) {
-                    ForEach(Array(card.photos.enumerated()), id: \.element.id) { index, photo in
-                        thumbnail(photo, position: index + 1)
-                    }
-                }
-            }
+        VStack(alignment: .leading, spacing: 8) {
+            grid
+            footer
         }
-        .padding()
-        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .padding(12)
+        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
         .sensoryFeedback(.selection, trigger: state.selectedIDs)
         .accessibilityElement(children: .contain)
     }
 
-    /// Date, count and chips; tapping it opens the comparison.
-    private var header: some View {
+    /// All photos, the keeper first, in as many square columns as fit.
+    private var grid: some View {
+        let positions = Dictionary(uniqueKeysWithValues: card.photos.enumerated().map { ($1.id, $0 + 1) })
+        let keeper = card.photos.first { $0.id == state.keeperID }
+        let ordered = (keeper.map { [$0] } ?? []) + card.photos.filter { $0.id != keeper?.id }
+        return LazyVGrid(columns: [GridItem(.adaptive(minimum: minimumTile), spacing: 6)], spacing: 6) {
+            ForEach(ordered) { photo in
+                thumbnail(photo, position: positions[photo.id] ?? 1)
+            }
+        }
+    }
+
+    /// Date, count, sizes and chips; tapping it opens the comparison.
+    private var footer: some View {
         Button(action: onCompare) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .center, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
                     if let date = card.date {
                         Text(ClusterCardModel.headerDateText(date))
                             .font(.headline)
                     }
-                    Text("clusters.row.photos \(card.photos.count)", bundle: .module)
+                    countAndSize
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    if let selected = card.bytes(of: state.selectedIDs), selected > 0 {
+                        Label {
+                            Text("clusters.row.toDelete \(Self.format(selected))", bundle: .module)
+                                .foregroundStyle(.primary)
+                        } icon: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.red)
+                                .accessibilityHidden(true)
+                        }
+                        .font(.subheadline.weight(.semibold))
+                    }
                     chips
+                        .padding(.top, 6)
                 }
-                Spacer(minLength: 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(.tertiary)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
+            .padding(.horizontal, 4)
+            .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -64,10 +88,22 @@ struct ClusterCardView: View, Equatable {
         .accessibilityHint(Text("clusters.header.hint", bundle: .module))
     }
 
+    /// "4 photos · 18 MB", or the count alone while sizes load.
+    private var countAndSize: Text {
+        let count = Text("clusters.row.photos \(card.photos.count)", bundle: .module)
+        guard let total = card.totalBytes else { return count }
+        return count + Text(verbatim: " · ") + Text(Self.format(total))
+    }
+
+    /// A size in bytes as "18 MB" (locale dependent).
+    static func format(_ bytes: Int64) -> String {
+        bytes.formatted(.byteCount(style: .file))
+    }
+
     @ViewBuilder private var chips: some View {
         if card.needsReview || card.isExactDuplicate {
             ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) { chipLabels }
+                HStack(spacing: 6) { chipLabels }
                 VStack(alignment: .leading, spacing: 4) { chipLabels }
             }
         }
@@ -86,29 +122,32 @@ struct ClusterCardView: View, Equatable {
         }
     }
 
-    /// One thumbnail with its overlays, VoiceOver label and actions; tapping it toggles the photo.
+    /// One square photo with its overlays, VoiceOver label and actions; tapping it toggles the photo.
     private func thumbnail(_ photo: ClusterCardModel.Photo, position: Int) -> some View {
         let isSelected = state.isSelected(photo.id)
         let isBest = state.keeperID == photo.id
-        let side = ClusterListViewModel.thumbnailSide
         return Button {
             onToggle(photo.id)
         } label: {
-            AsyncThumbnail(assetID: photo.id, pixelSize: pixelSize, isMissing: photo.isMissing, loader: thumbnails)
-                .frame(width: side, height: side)
+            Color.clear
+                .aspectRatio(1, contentMode: .fit)
+                .overlay {
+                    AsyncThumbnail(
+                        assetID: photo.id,
+                        pixelSize: pixelSize,
+                        isMissing: photo.isMissing,
+                        loader: thumbnails
+                    )
+                }
                 .overlay {
                     if isSelected {
-                        Color.black.opacity(0.35)
+                        Color.black.opacity(0.4)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(alignment: .bottomTrailing) {
                     if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.white, .red)
-                            .font(.title3)
-                            .padding(4)
+                        SelectionCheck()
                     }
                 }
                 .overlay(alignment: .topLeading) {
@@ -116,6 +155,7 @@ struct ClusterCardView: View, Equatable {
                         BestBadge()
                     }
                 }
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(photo.isMissing)
@@ -129,40 +169,5 @@ struct ClusterCardView: View, Equatable {
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityAction(named: Text("clusters.action.toggle", bundle: .module)) { onToggle(photo.id) }
         .accessibilityAction(named: Text("clusters.action.compare", bundle: .module)) { onCompare() }
-    }
-}
-
-/// The "Best" badge on the suggested keeper.
-private struct BestBadge: View {
-    /// A green capsule with "Best".
-    var body: some View {
-        Text("clusters.badge.best", bundle: .module)
-            .font(.caption2.weight(.semibold))
-            .lineLimit(1)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .foregroundStyle(.white)
-            .background(.green, in: Capsule())
-            .padding(4)
-            .accessibilityHidden(true)
-    }
-}
-
-/// A small coloured label in the card header.
-private struct ClusterChip: View {
-    let text: Text
-    let systemImage: String
-    let tint: Color
-
-    /// The icon and text in the tint colour.
-    var body: some View {
-        Label {
-            text
-        } icon: {
-            Image(systemName: systemImage)
-                .accessibilityHidden(true)
-        }
-        .font(.caption)
-        .foregroundStyle(tint)
     }
 }
