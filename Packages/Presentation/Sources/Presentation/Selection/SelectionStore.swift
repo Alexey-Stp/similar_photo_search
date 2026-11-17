@@ -284,7 +284,7 @@ public final class SelectionStore {
     }
 
     /// Publishes the summary of `selected` if it changed.
-    private func updateSummary(for selected: [String]) {
+    func updateSummary(for selected: [String]) {
         let new = makeSummary(for: selected)
         if summary != new {
             summary = new

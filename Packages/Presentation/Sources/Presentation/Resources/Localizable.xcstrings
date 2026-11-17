@@ -1161,11 +1161,32 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Kept %@" } }
       }
     },
+    "home.storage.kept.atLeast %@" : {
+      "comment" : "Storage bar legend when some sizes are unavailable: at least this much is kept.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kept at least %@" } }
+      }
+    },
     "home.storage.toDelete %@" : {
       "comment" : "Storage bar legend: size of the photos selected for deletion.",
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "To delete %@" } }
+      }
+    },
+    "home.storage.toDelete.atLeast %@" : {
+      "comment" : "Storage bar legend when some sizes are unavailable: at least this much is selected for deletion.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "To delete at least %@" } }
+      }
+    },
+    "home.storage.unavailable" : {
+      "comment" : "Storage bar legend when sizes were looked up but none is available.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sizes unavailable" } }
       }
     },
     "home.summary.groups %lld" : {

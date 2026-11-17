@@ -95,10 +95,15 @@ struct HomeDashboard: View {
                 ClusterListScreen(
                     viewModel: list,
                     onOpen: { home.openGroup($0) },
-                    onCompare: { home.compare(clusterID: $0) }
+                    onCompare: { home.compare(clusterID: $0) },
+                    isDialogActive: home.path.last == route && home.comparison == nil
                 )
             case .group(let clusterID):
-                ClusterGroupScreen(viewModel: list, clusterID: clusterID) { home.compare(clusterID: $0) }
+                ClusterGroupScreen(
+                    viewModel: list,
+                    clusterID: clusterID,
+                    isDialogActive: home.path.last == route && home.comparison == nil
+                ) { home.compare(clusterID: $0) }
             }
         }
     }

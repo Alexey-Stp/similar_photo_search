@@ -8,15 +8,22 @@ import SwiftUI
 struct ClusterGroupScreen: View {
     let viewModel: ClusterListViewModel
     let onCompare: (String) -> Void
+    /// Whether this page is on top and presents "Delete every photo of this group?" (not under the comparison).
+    var isDialogActive = true
 
     @State private var clusterID: String
-    @State private var membersBeforeDeletion: [String] = []
     @State private var deletionRequest: ClusterListViewModel.DeletionRequest?
     @ScaledMetric(relativeTo: .body) private var minimumTile: CGFloat = 104
 
-    init(viewModel: ClusterListViewModel, clusterID: String, onCompare: @escaping (String) -> Void) {
+    init(
+        viewModel: ClusterListViewModel,
+        clusterID: String,
+        isDialogActive: Bool = true,
+        onCompare: @escaping (String) -> Void
+    ) {
         self.viewModel = viewModel
         self.onCompare = onCompare
+        self.isDialogActive = isDialogActive
         _clusterID = State(initialValue: clusterID)
     }
 
@@ -34,14 +41,16 @@ struct ClusterGroupScreen: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
-        .deleteAllConfirmation(viewModel)
-        .sheet(
-            item: $deletionRequest,
-            onDismiss: followRenamedGroup,
-            content: { request in
-                DeletionSheet(request: request) { deletionRequest = nil }
+        .deleteAllConfirmation(viewModel, isActive: isDialogActive)
+        .sheet(item: $deletionRequest) { request in
+            DeletionSheet(request: request) { deletionRequest = nil }
+        }
+        .onChange(of: memberIDs) { previous, current in
+            // A deletion here or in Compare renamed or removed the group: follow its survivors.
+            if current.isEmpty, !previous.isEmpty {
+                followRenamedGroup(from: previous)
             }
-        )
+        }
     }
 
     private func content(card: ClusterCardModel, state: ClusterSelectionState) -> some View {
@@ -103,7 +112,6 @@ struct ClusterGroupScreen: View {
                 tint: .red,
                 badge: selected.count
             ) {
-                membersBeforeDeletion = card.photos.map(\.id)
                 viewModel.selection.estimateSizes(of: selected)
                 deletionRequest = ClusterListViewModel.DeletionRequest(assetIDs: selected)
             }
@@ -115,12 +123,17 @@ struct ClusterGroupScreen: View {
         .accessibilityElement(children: .contain)
     }
 
-    /// After a deletion that renamed or removed the group, show the group that holds the survivors, if any.
-    private func followRenamedGroup() {
-        defer { membersBeforeDeletion = [] }
+    /// The members of the group shown, empty once it is gone.
+    private var memberIDs: [String] {
+        viewModel.selection.state(for: clusterID)?.memberIDs ?? []
+    }
+
+    /// After a deletion that renamed the group (its naming photo was deleted), show the group that holds the
+    /// survivors; keep the current ID when it still exists.
+    private func followRenamedGroup(from previous: [String]) {
         guard viewModel.selection.state(for: clusterID) == nil else { return }
         let selection = viewModel.selection
-        if let survivor = membersBeforeDeletion.lazy.compactMap({ selection.clusterID(containing: $0) }).first {
+        if let survivor = previous.lazy.compactMap({ selection.clusterID(containing: $0) }).first {
             clusterID = survivor
         }
     }

@@ -15,6 +15,9 @@ struct ClusterListScreen: View {
     let onOpen: (String) -> Void
     /// Opens a group's full-screen comparison.
     let onCompare: (String) -> Void
+    /// Whether this screen is on top and presents "Delete every photo of this group?" (not while a group page or
+    /// the comparison covers it).
+    var isDialogActive = true
 
     @Environment(\.displayScale) private var displayScale
     @State private var topRowID: String?
@@ -35,7 +38,7 @@ struct ClusterListScreen: View {
                 viewModel.requestDeletion()
             }
         }
-        .deleteAllConfirmation(viewModel)
+        .deleteAllConfirmation(viewModel, isActive: isDialogActive)
         .sheet(item: deletionBinding) { request in
             DeletionSheet(request: request) { viewModel.deletionRequest = nil }
         }

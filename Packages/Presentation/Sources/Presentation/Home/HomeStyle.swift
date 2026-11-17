@@ -81,8 +81,9 @@ struct HomeStatTile: View {
 }
 
 /// A storage-style bar of the photos in groups, like Settings › iPhone Storage: the share selected for deletion in
-/// red, the rest (kept) in grey, with a one-line legend. A neutral track and "Calculating sizes…" while sizes load, at
-/// the same height, so the card doesn't move when they arrive.
+/// red, the rest (kept) in grey, with a one-line legend. A neutral track and "Calculating sizes…" while sizes load,
+/// "Sizes unavailable" once they were looked up but none is known, at the same height, so the card doesn't move.
+/// When some sizes are unavailable the legend says "at least".
 struct StorageBar: View {
     let sizes: GroupSizes?
 
@@ -114,16 +115,19 @@ struct StorageBar: View {
 
     @ViewBuilder private func legend(_ known: GroupSizes?) -> some View {
         if let known {
+            let toDelete = ClusterCardView.format(known.selectedBytes)
+            let kept = ClusterCardView.format(known.totalBytes - known.selectedBytes)
             HStack(spacing: 16) {
-                item(.red, Text(
-                    "home.storage.toDelete \(ClusterCardView.format(known.selectedBytes))",
-                    bundle: .module
-                ))
-                item(.gray, Text(
-                    "home.storage.kept \(ClusterCardView.format(known.totalBytes - known.selectedBytes))",
-                    bundle: .module
-                ))
+                if known.unavailableCount > 0 {
+                    item(.red, Text("home.storage.toDelete.atLeast \(toDelete)", bundle: .module))
+                    item(.gray, Text("home.storage.kept.atLeast \(kept)", bundle: .module))
+                } else {
+                    item(.red, Text("home.storage.toDelete \(toDelete)", bundle: .module))
+                    item(.gray, Text("home.storage.kept \(kept)", bundle: .module))
+                }
             }
+        } else if let sizes, sizes.isComplete {
+            Text("home.storage.unavailable", bundle: .module)
         } else {
             Text("home.storage.calculating", bundle: .module)
         }
