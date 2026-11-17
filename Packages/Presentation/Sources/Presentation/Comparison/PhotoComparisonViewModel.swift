@@ -23,8 +23,8 @@ public final class PhotoComparisonViewModel {
         case secondary
     }
 
-    /// The group compared.
-    public let clusterID: String
+    /// The group compared. Follows the group when a deletion renames it (`deleteNowFinished()`).
+    public internal(set) var clusterID: String
     /// The photo the user moved to (pager page or left pane); `nil` until they do, then the Best photo is shown.
     public var currentID: String? {
         didSet {
@@ -58,6 +58,8 @@ public final class PhotoComparisonViewModel {
     @ObservationIgnored let screenImages: any ScreenImageLoading
     @ObservationIgnored let edits: any PhotoEditStatusProviding
     @ObservationIgnored var loadedMembers: [String] = []
+    /// The members when "Delete Now" started, to find the group again if the deletion renamed it.
+    @ObservationIgnored var membersBeforeDeleteNow: [String] = []
 
     /// Creates the view model.
     /// - Parameters:

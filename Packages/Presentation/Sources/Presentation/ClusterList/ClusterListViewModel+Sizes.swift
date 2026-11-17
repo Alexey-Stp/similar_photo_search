@@ -10,15 +10,18 @@ public struct GroupSizes: Hashable, Sendable {
     public var selectedBytes: Int64
     /// Whether every photo's size has been looked up (unavailable sizes count as looked up).
     public var isComplete: Bool
+    /// Photos whose size is unavailable; while above zero, the totals are lower bounds.
+    public var unavailableCount: Int
 
     /// No photos.
     public static let zero = GroupSizes(totalBytes: 0, selectedBytes: 0, isComplete: true)
 
     /// Creates sizes.
-    public init(totalBytes: Int64, selectedBytes: Int64, isComplete: Bool) {
+    public init(totalBytes: Int64, selectedBytes: Int64, isComplete: Bool, unavailableCount: Int = 0) {
         self.totalBytes = totalBytes
         self.selectedBytes = selectedBytes
         self.isComplete = isComplete
+        self.unavailableCount = unavailableCount
     }
 }
 
@@ -34,7 +37,9 @@ extension ClusterListViewModel {
                 if state.isSelected(id) {
                     sizes.selectedBytes += size
                 }
-            } else if !unavailableSizes.contains(id) {
+            } else if unavailableSizes.contains(id) {
+                sizes.unavailableCount += 1
+            } else {
                 sizes.isComplete = false
             }
         }
@@ -48,6 +53,7 @@ extension ClusterListViewModel {
             result.totalBytes += sizes.totalBytes
             result.selectedBytes += sizes.selectedBytes
             result.isComplete = result.isComplete && sizes.isComplete
+            result.unavailableCount += sizes.unavailableCount
         }
     }
 }

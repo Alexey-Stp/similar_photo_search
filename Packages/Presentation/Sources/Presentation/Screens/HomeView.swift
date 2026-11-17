@@ -53,6 +53,10 @@ struct HomeDashboard: View {
                 .padding()
             }
             .modifier(HomeGroupDialogs(home: home, list: factory?.clusterListViewModel))
+            .onChange(of: home.scan.clusterRevision, initial: true) {
+                // Dates and sizes of the groups load even while no row is listed (an empty filter).
+                factory?.clusterListViewModel.clustersChanged()
+            }
             .refreshable { await home.refresh() }
             .onAppear { home.scan.scanScreenAppeared() }
             .onDisappear { home.scan.scanScreenDisappeared() }
@@ -119,12 +123,17 @@ struct HomeDashboard: View {
         }
     }
 
-    /// The size of all photos in groups ("1.4 GB"), once every size is known.
+    /// The size of all photos in groups ("1.4 GB"), once every size has been looked up; "At least 1.4 GB" when
+    /// some sizes are unavailable.
     private var totalSizeText: String? {
         guard let sizes = factory?.clusterListViewModel.allGroupsSizes, sizes.isComplete, sizes.totalBytes > 0 else {
             return nil
         }
-        return sizes.totalBytes.formatted(.byteCount(style: .file))
+        let size = sizes.totalBytes.formatted(.byteCount(style: .file))
+        guard sizes.unavailableCount == 0 else {
+            return String(localized: "home.stat.totalSize.atLeast \(size)", bundle: .module)
+        }
+        return size
     }
 
     private var scopeButton: some ToolbarContent {
@@ -156,6 +165,21 @@ private struct HomeGroupDialogs: ViewModifier {
             } else {
                 content
             }
+        }
+        .alert(
+            Text("home.startOver.failed.title", bundle: .module),
+            isPresented: $home.didStartOverFail
+        ) {
+            Button {
+                Task { await home.startOver() }
+            } label: {
+                Text("home.retry", bundle: .module)
+            }
+            Button(role: .cancel) {} label: {
+                Text("deletion.review.cancel", bundle: .module)
+            }
+        } message: {
+            Text("home.startOver.failed.message", bundle: .module)
         }
         .confirmationDialog(
             Text("home.startOver.title", bundle: .module),

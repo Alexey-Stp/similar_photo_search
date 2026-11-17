@@ -68,9 +68,13 @@ struct PhotoComparisonScreen: View {
         } message: {
             Text("clusters.deleteAll.message", bundle: .module)
         }
-        .sheet(item: $viewModel.deleteNowRequest) { request in
-            DeletionSheet(request: request) { viewModel.deleteNowRequest = nil }
-        }
+        .sheet(
+            item: $viewModel.deleteNowRequest,
+            onDismiss: { viewModel.deleteNowFinished() },
+            content: { request in
+                DeletionSheet(request: request) { viewModel.deleteNowRequest = nil }
+            }
+        )
         .onChange(of: canShowSideBySide, initial: true) { _, canShow in
             viewModel.layoutChanged(canShowSideBySide: canShow)
         }

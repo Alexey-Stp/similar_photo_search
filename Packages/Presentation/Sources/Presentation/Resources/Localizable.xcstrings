@@ -670,6 +670,13 @@
         }
       }
     },
+    "deletion.review.lowerBound" : {
+      "comment" : "Caption under the size in the deletion review when some sizes are unavailable, so the figure is a minimum.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "At least — some sizes are unavailable" } }
+      }
+    },
     "deletion.review.note" : {
       "comment" : "Note in the deletion review.",
       "extractionState" : "manual",
@@ -972,6 +979,20 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Over" } }
       }
     },
+    "home.startOver.failed.message" : {
+      "comment" : "Alert message when Start Over could not clear the saved results.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The saved results could not be cleared, so nothing was changed." } }
+      }
+    },
+    "home.startOver.failed.title" : {
+      "comment" : "Alert title when Start Over could not clear the saved results.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn’t Start Over" } }
+      }
+    },
     "home.startOver.hint" : {
       "comment" : "VoiceOver hint for Start Over.",
       "extractionState" : "manual",
@@ -1012,6 +1033,13 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Total Size" } }
+      }
+    },
+    "home.stat.totalSize.atLeast %@" : {
+      "comment" : "Home Total Size tile when some sizes are unavailable, for example “At least 1.4 GB”.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "At least %@" } }
       }
     },
     "home.title" : {

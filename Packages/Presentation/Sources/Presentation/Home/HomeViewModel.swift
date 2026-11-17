@@ -61,6 +61,8 @@ public final class HomeViewModel {
     public private(set) var hasStoredResults = false
     /// Whether "Start over?" is being asked.
     public var isConfirmingStartOver = false
+    /// Whether clearing the stored results failed, so "Start Over" changed nothing and can be retried.
+    public var didStartOverFail = false
 
     @ObservationIgnored private let results: any ClusterRepository
     @ObservationIgnored private let libraryChanges: any LibraryChangeObserving
@@ -149,11 +151,18 @@ public final class HomeViewModel {
     }
 
     /// "Start Over", once confirmed: forgets the stored results, the groups shown and every choice, then scans the
-    /// library again from the start with the full scanning state. Deletes no photo.
+    /// library again from the start with the full scanning state. Deletes no photo. If the stored results can't be
+    /// removed, nothing else changes and `didStartOverFail` offers a retry.
     public func startOver() async {
         isConfirmingStartOver = false
+        didStartOverFail = false
         let stored = await results.storedResults()
-        try? await results.apply(upserted: [], removedSessionIDs: Set(stored.map(\.sessionID)))
+        do {
+            try await results.apply(upserted: [], removedSessionIDs: Set(stored.map(\.sessionID)))
+        } catch {
+            didStartOverFail = true
+            return
+        }
         hasStoredResults = false
         path = []
         comparison = nil

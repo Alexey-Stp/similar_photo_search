@@ -65,12 +65,18 @@ struct DeletionReviewView: View {
         }
     }
 
-    /// "214 MB" in large rounded type over "38 photos to delete" and "From 9 groups"; the count alone while the
-    /// size is unknown. VoiceOver reads the summary sentence.
+    /// "214 MB" in large rounded type (with "At least — some sizes are unavailable" when it is a lower bound) over
+    /// "38 photos to delete" and "From 9 groups"; the count alone while the size is unknown. VoiceOver reads the
+    /// summary sentence, which says "at least" itself.
     private func header(_ summary: DeletionSummary) -> some View {
         VStack(spacing: 4) {
             if let bytes = summary.estimatedBytes {
                 HomeHeroNumber(text: bytes.formatted(.byteCount(style: .file)))
+                if summary.isLowerBound {
+                    Text("deletion.review.lowerBound", bundle: .module)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
             }
             Text("deletion.review.strip \(summary.photoCount)", bundle: .module)
                 .font(.headline)

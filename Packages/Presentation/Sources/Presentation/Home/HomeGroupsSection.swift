@@ -29,7 +29,6 @@ struct HomeGroupsSection: View {
                 }
             }
         }
-        .onChange(of: list.scan.clusterRevision, initial: true) { list.clustersChanged() }
         .onChange(of: displayScale, initial: true) { list.displayScaleChanged(displayScale) }
     }
 }

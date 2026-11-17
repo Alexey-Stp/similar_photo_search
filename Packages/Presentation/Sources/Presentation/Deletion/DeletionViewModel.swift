@@ -71,8 +71,9 @@ public final class DeletionViewModel {
 
     /// Count and estimated size: "38 photos, about 214 MB will be deleted".
     public var summary: DeletionSummary {
-        // Read the store's summary first, so the review updates when sizes arrive.
+        // Read the store's summary and extra sizes first, so the review updates when sizes arrive.
         _ = scan.selection.summary
+        _ = scan.selection.extraSizesRevision
         return scan.selection.summary(of: assetIDs)
     }
 

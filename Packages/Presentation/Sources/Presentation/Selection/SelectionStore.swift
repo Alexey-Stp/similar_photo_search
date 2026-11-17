@@ -41,10 +41,13 @@ public final class SelectionStore {
 
     /// The user's choices by cluster ID, kept even while the cluster is gone (session-long).
     @ObservationIgnored var overrides: [String: Override] = [:]
-    @ObservationIgnored private var knownSizes: [String: Int64] = [:]
-    @ObservationIgnored private var unavailableSizes: Set<String> = []
+    /// Changes when sizes of photos that are not selected arrive (`estimateSizes(of:)`), so a summary of them updates.
+    public internal(set) var extraSizesRevision = 0
+
+    @ObservationIgnored var knownSizes: [String: Int64] = [:]
+    @ObservationIgnored var unavailableSizes: Set<String> = []
     @ObservationIgnored private var sizeTask: Task<Void, Never>?
-    private let sizes: any AssetSizeEstimator
+    let sizes: any AssetSizeEstimator
 
     /// Creates an empty store.
     /// - Parameter sizes: Estimates file sizes for the summary; called off the main actor, only for selected photos
