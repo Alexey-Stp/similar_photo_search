@@ -109,7 +109,7 @@ and the list never jumps under the user's finger; full VoiceOver, Dark Mode and 
 | [SPS-20](SPS-20.md) | Home / scan dashboard | Done | SPS-14 |
 | [SPS-21](SPS-21.md) | Cluster list with efficient thumbnail loading | Done | SPS-18, SPS-20 |
 | [SPS-22](SPS-22.md) | Photo comparison screen | Done | SPS-18, SPS-21 |
-| [SPS-35](SPS-35.md) | Photo-first redesign: Home, groups, comparison, deletion and app icon | Done | SPS-20, SPS-21, SPS-22, SPS-25 |
+| [SPS-35](SPS-35.md) | Photo-first redesign: Home, groups, comparison, deletion and app icon | Review | SPS-20, SPS-21, SPS-22, SPS-25 |
 
 ### Epic SPS-23 — Deletion
 
@@ -154,7 +154,7 @@ Rows are in working order: SPS-31 needs no device, and the SPS-28 device run nee
 | 3 | ~~SPS-14, SPS-16, SPS-10~~ |
 | 4 | ~~SPS-17, SPS-18, SPS-20, SPS-21~~ |
 | 5 | ~~SPS-22, SPS-24, SPS-25~~, hardening (moved to SPS-29) |
-| 6 | ~~SPS-30~~, SPS-31, ~~SPS-35~~, SPS-28 (device run; tooling merged), then SPS-29 |
+| 6 | ~~SPS-30~~, SPS-31, SPS-35 (redesign, in review), SPS-28 (device run; tooling merged), then SPS-29 |
 | 7 | SPS-32 (TestFlight and App Review) |
 | Later | SPS-33, SPS-34 (optional) |
 

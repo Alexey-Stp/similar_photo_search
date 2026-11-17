@@ -62,7 +62,8 @@ struct OnboardingView: View {
                 .accessibilityHint(Text("onboarding.next.hint", bundle: .module))
             }
         }
-        .buttonStyle(HomeInkButtonStyle())
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
         .disabled(model.isWorking)
         .padding()
     }
@@ -89,13 +90,14 @@ struct OnboardingView: View {
 /// One onboarding page. Scrolls, so long localized text at accessibility sizes is never clipped.
 private struct OnboardingPageView: View {
     let page: OnboardingPage
+    @ScaledMetric(relativeTo: .largeTitle) private var symbolSize: CGFloat = 64
 
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 symbols
                 Text(LocalizedStringKey(page.titleKey), bundle: .module)
-                    .font(.system(.title, design: .rounded, weight: .heavy))
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 Text(LocalizedStringKey(page.bodyKey), bundle: .module)
@@ -111,7 +113,17 @@ private struct OnboardingPageView: View {
     }
 
     private var symbols: some View {
-        HeroSymbol(systemName: page.symbol, badge: page.secondarySymbol)
+        HStack(spacing: 16) {
+            Image(systemName: page.symbol)
+            if let secondary = page.secondarySymbol {
+                Image(systemName: secondary)
+            }
+        }
+        // Grow with Dynamic Type, but cap it so the text still fits at AX sizes.
+        .font(.system(size: min(symbolSize, 96)))
+        .foregroundStyle(.tint)
+        .padding(.top, 32)
+        .accessibilityHidden(true)
     }
 }
 

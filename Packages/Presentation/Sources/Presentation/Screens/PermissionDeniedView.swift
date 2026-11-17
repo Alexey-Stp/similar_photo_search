@@ -7,9 +7,12 @@ struct PermissionDeniedView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                HeroSymbol(systemName: "lock.shield")
+                Image(systemName: "lock.shield")
+                    .font(.system(.largeTitle))
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
                 Text("permissionDenied.title", bundle: .module)
-                    .font(.system(.title, design: .rounded, weight: .heavy))
+                    .font(.title.bold())
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 Text("permissionDenied.message", bundle: .module)
@@ -20,8 +23,9 @@ struct PermissionDeniedView: View {
                     viewModel.openSettings()
                 } label: {
                     Text("permissionDenied.openSettings", bundle: .module)
+                        .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(HomeInkButtonStyle())
+                .buttonStyle(.borderedProminent)
                 .accessibilityHint(Text("permissionDenied.openSettings.hint", bundle: .module))
             }
             .padding()

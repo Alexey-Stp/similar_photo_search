@@ -5,18 +5,14 @@ import SwiftUI
 struct HomeIdleCard: View {
     let onStart: () -> Void
 
-    @ScaledMetric(relativeTo: .largeTitle) private var symbolSide: CGFloat = 72
-
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "square.on.square")
-                .font(.title)
-                .foregroundStyle(.background)
-                .frame(width: symbolSide, height: symbolSide)
-                .background(.primary, in: Circle())
+                .font(.largeTitle)
+                .foregroundStyle(.tint)
                 .accessibilityHidden(true)
             Text("home.idle.title", bundle: .module)
-                .font(.system(.title, design: .rounded, weight: .bold))
+                .font(.title2.bold())
                 .multilineTextAlignment(.center)
             Text("home.idle.message", bundle: .module)
                 .font(.body)
@@ -79,69 +75,29 @@ struct HomeScanningCard: View {
     }
 }
 
-/// Groups to review. With a known size, the size selected for deletion leads as a large figure ("214 MB", "Can be
-/// freed") above tiles with the group count, the photo count and the size of all photos in groups; otherwise "12
-/// groups of similar photos found" and "38 photos in these groups". Then Review and Start Over.
+/// Groups to review: "12 groups of similar photos found", "38 photos in these groups", "About 214 MB can be freed".
 struct HomeResultsCard: View {
     let summary: HomeSummary
-    /// The size of all photos in groups ("1.4 GB"), once known.
-    var totalSizeText: String?
     let onReview: () -> Void
-    var onStartOver: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            if let size = summary.reclaimableSizeText {
-                hero(size: size)
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { stats }
-                    VStack(spacing: 8) { stats }
-                }
-            } else {
-                counts
-                if let totalSizeText {
-                    HomeStatTile(text: totalSizeText, titleKey: "home.stat.totalSize")
+        VStack(spacing: 12) {
+            VStack(spacing: 6) {
+                Text("scan.groupsFound \(summary.groupCount)", bundle: .module)
+                    .font(.title2.bold())
+                Text("home.photosInGroups \(summary.photoCount)", bundle: .module)
+                    .foregroundStyle(.secondary)
+                if let reclaimable = summary.reclaimableText {
+                    Text(reclaimable)
+                        .font(.headline)
+                        .foregroundStyle(.tint)
                 }
             }
+            .multilineTextAlignment(.center)
+            .accessibilityElement(children: .combine)
             HomePrimaryButton(titleKey: "home.review", hintKey: "home.review.hint", action: onReview)
-            if let onStartOver {
-                HomeStartOverButton(action: onStartOver)
-            }
         }
         .homeCard()
-    }
-
-    /// The size as a large figure; VoiceOver reads the whole sentence ("About 214 MB can be freed").
-    private func hero(size: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HomeHeroNumber(text: size)
-            Text(summary.isLowerBound ? "home.reclaimable.caption.atLeast" : "home.reclaimable.caption",
-                 bundle: .module)
-                .font(.headline)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(summary.reclaimableText ?? size))
-    }
-
-    @ViewBuilder private var stats: some View {
-        HomeStatTile(value: summary.groupCount, titleKey: "home.stat.groups")
-        HomeStatTile(value: summary.photoCount, titleKey: "home.stat.photos")
-        if let totalSizeText {
-            HomeStatTile(text: totalSizeText, titleKey: "home.stat.totalSize")
-        }
-    }
-
-    /// The counts as sentences, while no size is known.
-    private var counts: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("scan.groupsFound \(summary.groupCount)", bundle: .module)
-                .font(.system(.title2, design: .rounded, weight: .bold))
-            Text("home.photosInGroups \(summary.photoCount)", bundle: .module)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
     }
 }
 
@@ -156,10 +112,15 @@ struct HomeEmptyCard: View {
                 .foregroundStyle(.green)
                 .accessibilityHidden(true)
             Text("scan.noGroups", bundle: .module)
-                .font(.system(.title2, design: .rounded, weight: .bold))
+                .font(.title2.bold())
             Text("home.empty.message", bundle: .module)
                 .foregroundStyle(.secondary)
-            HomePrimaryButton(titleKey: "home.scanAgain", hintKey: "scan.start.hint", action: onScanAgain)
+            Button(action: onScanAgain) {
+                Text("home.scanAgain", bundle: .module)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityHint(Text("scan.start.hint", bundle: .module))
         }
         .multilineTextAlignment(.center)
         .homeCard()
@@ -180,11 +141,16 @@ struct HomeErrorCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             } icon: {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
                     .accessibilityHidden(true)
             }
+            .foregroundStyle(.red)
             .frame(maxWidth: .infinity, alignment: .leading)
-            HomePrimaryButton(titleKey: "home.retry", hintKey: "scan.start.hint", action: onRetry)
+            Button(action: onRetry) {
+                Text("home.retry", bundle: .module)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityHint(Text("scan.start.hint", bundle: .module))
             if summary.groupCount > 0 {
                 Text("scan.groupsFound \(summary.groupCount)", bundle: .module)
                     .font(.headline)
@@ -222,7 +188,7 @@ struct SkippedSummaryButton: View {
     }
 }
 
-/// The prominent full-width button of a card: an ink pill (`HomeInkButtonStyle`).
+/// The prominent full-width button of a card.
 struct HomePrimaryButton: View {
     let titleKey: LocalizedStringKey
     let hintKey: LocalizedStringKey
@@ -231,14 +197,15 @@ struct HomePrimaryButton: View {
     var body: some View {
         Button(action: action) {
             Text(titleKey, bundle: .module)
+                .frame(maxWidth: .infinity)
         }
-        .buttonStyle(HomeInkButtonStyle())
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
         .accessibilityHint(Text(hintKey, bundle: .module))
     }
 }
 
-/// A notice line with an orange icon, such as "Paused to cool down". The text stays `.primary`: orange text on
-/// the card is about 2:1 in Light mode.
+/// An orange notice line with an icon, such as "Paused to cool down".
 struct HomeNotice: View {
     let key: LocalizedStringKey
     let systemImage: String
@@ -246,12 +213,11 @@ struct HomeNotice: View {
     var body: some View {
         Label {
             Text(key, bundle: .module)
-                .foregroundStyle(.primary)
         } icon: {
             Image(systemName: systemImage)
-                .foregroundStyle(.orange)
                 .accessibilityHidden(true)
         }
         .font(.subheadline)
+        .foregroundStyle(.orange)
     }
 }

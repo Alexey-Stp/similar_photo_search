@@ -16,19 +16,16 @@ struct PhotoComparisonScreen: View {
     /// Distance or predicted distance of a downward swipe that dismisses the screen.
     private static let dismissDistance: CGFloat = 120
 
-    /// Photos full height under the floating top bar and filmstrip, then the info panel as a rounded sheet, on
-    /// black.
+    /// Top bar, photos, filmstrip and info panel on black.
     var body: some View {
         GeometryReader { proxy in
             VStack(spacing: 0) {
+                ComparisonTopBar(viewModel: viewModel) { dismiss() }
                 if viewModel.isAvailable {
                     photos
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .simultaneousGesture(dismissDrag)
-                        .overlay(alignment: .bottom) {
-                            ComparisonFilmstrip(viewModel: viewModel)
-                                .padding(.bottom, 12)
-                        }
+                    ComparisonFilmstrip(viewModel: viewModel)
                     if let focused = viewModel.focusedID {
                         ScrollView {
                             ComparisonInfoPanel(viewModel: viewModel, assetID: focused)
@@ -36,17 +33,10 @@ struct PhotoComparisonScreen: View {
                         .scrollBounceBehavior(.basedOnSize)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxHeight: proxy.size.height * 0.4)
-                        .background(
-                            Color(white: 0.11),
-                            in: UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32, style: .continuous)
-                        )
                     }
                 } else {
                     groupGone
                 }
-            }
-            .overlay(alignment: .top) {
-                ComparisonTopBar(viewModel: viewModel) { dismiss() }
             }
             .offset(y: dismissOffset)
         }
@@ -67,9 +57,6 @@ struct PhotoComparisonScreen: View {
             }
         } message: {
             Text("clusters.deleteAll.message", bundle: .module)
-        }
-        .sheet(item: $viewModel.deleteNowRequest) { request in
-            DeletionSheet(request: request) { viewModel.deleteNowRequest = nil }
         }
         .onChange(of: canShowSideBySide, initial: true) { _, canShow in
             viewModel.layoutChanged(canShowSideBySide: canShow)
@@ -180,7 +167,7 @@ private struct ComparisonPagerPage: View {
     }
 }
 
-/// Close, the position ("2 of 5") and the side-by-side switch, as glass controls floating over the photo.
+/// Close, the position ("2 of 5") and the side-by-side switch.
 private struct ComparisonTopBar: View {
     @Bindable var viewModel: PhotoComparisonViewModel
     let onClose: () -> Void
@@ -189,40 +176,32 @@ private struct ComparisonTopBar: View {
     var body: some View {
         HStack {
             Button(action: onClose) {
-                Label {
-                    Text("compare.close", bundle: .module)
-                } icon: {
-                    Image(systemName: "xmark")
-                }
+                Image(systemName: "xmark")
+                    .font(.headline)
+                    .frame(minWidth: 44, minHeight: 44)
             }
-            .buttonStyle(GlassCircleButtonStyle())
+            .accessibilityLabel(Text("compare.close", bundle: .module))
             Spacer()
             if let focused = viewModel.focusedID, let position = viewModel.positionText(of: focused) {
                 Text(position)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.headline)
                     .monospacedDigit()
-                    .padding(.horizontal, 14)
-                    .frame(minHeight: 36)
-                    .glassBackground(in: Capsule())
                     .accessibilityAddTraits(.isHeader)
             }
             Spacer()
             if viewModel.canShowSideBySide, viewModel.memberIDs.count > 1 {
                 Toggle(isOn: $viewModel.prefersSideBySide) {
-                    Label {
-                        Text("compare.sideBySide", bundle: .module)
-                    } icon: {
-                        Image(systemName: "rectangle.split.2x1")
-                    }
+                    Image(systemName: "rectangle.split.2x1")
+                        .frame(minWidth: 44, minHeight: 44)
                 }
-                .toggleStyle(GlassCircleToggleStyle())
+                .toggleStyle(.button)
+                .accessibilityLabel(Text("compare.sideBySide", bundle: .module))
             } else {
                 Color.clear.frame(width: 44, height: 44)
                     .accessibilityHidden(true)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.top, 8)
+        .padding(.horizontal, 8)
         .foregroundStyle(.white)
     }
 }

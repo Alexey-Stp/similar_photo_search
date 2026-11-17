@@ -162,13 +162,6 @@
         }
       }
     },
-    "clusters.row.toDelete %@" : {
-      "comment" : "Group card: size of the photos of this group selected for deletion, for example “12 MB to delete”.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ to delete" } }
-      }
-    },
     "clusters.sort" : {
       "comment" : "Section title in the sort menu of the group list.",
       "extractionState" : "manual",
@@ -201,21 +194,7 @@
       "comment" : "Comparison: button that selects the shown photo for deletion.",
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Mark for Deletion" } }
-      }
-    },
-    "compare.action.deleteNow" : {
-      "comment" : "Comparison button: deletes the shown photo now (after the review and the system alert).",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Now" } }
-      }
-    },
-    "compare.action.deleteNow.hint" : {
-      "comment" : "VoiceOver hint for Delete Now.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Deletes this photo now. iOS asks you to confirm, and it can be recovered from Recently Deleted for 30 days." } }
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } }
       }
     },
     "compare.action.focus" : {
@@ -706,13 +685,6 @@
         }
       }
     },
-    "deletion.review.systemNote" : {
-      "comment" : "Under the delete button of the review: the system alert still follows.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "iOS asks you to confirm before anything is deleted." } }
-      }
-    },
     "deletion.review.title" : {
       "comment" : "Title of the deletion review.",
       "extractionState" : "manual",
@@ -790,20 +762,6 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "None of the photos in this scope look alike. Pull down to scan again." } }
       }
     },
-    "home.groups.seeAll" : {
-      "comment" : "Home: opens the full group list with filters and the delete bar.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "See All" } }
-      }
-    },
-    "home.groups.title" : {
-      "comment" : "Home: heading of the groups listed under the summary card.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Groups" } }
-      }
-    },
     "home.idle.message" : {
       "comment" : "Home, never scanned: what a scan does.",
       "extractionState" : "manual",
@@ -832,13 +790,6 @@
         }
       }
     },
-    "home.privacy.footer" : {
-      "comment" : "Footer under the Home card: the scan never leaves the device.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Everything happens on this iPhone." } }
-      }
-    },
     "home.reclaimable %@" : {
       "comment" : "Home results: estimated size of the photos selected for deletion. The argument is a size such as \"214 MB\".",
       "extractionState" : "manual",
@@ -851,20 +802,6 @@
       "extractionState" : "manual",
       "localizations" : {
         "en" : { "stringUnit" : { "state" : "translated", "value" : "At least %@ can be freed" } }
-      }
-    },
-    "home.reclaimable.caption" : {
-      "comment" : "Caption under the large reclaimable size on Home, for example under “214 MB”.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Can be freed" } }
-      }
-    },
-    "home.reclaimable.caption.atLeast" : {
-      "comment" : "Caption under the large reclaimable size on Home when some sizes are unknown, so the figure is a minimum.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "At least this much can be freed" } }
       }
     },
     "home.retry" : {
@@ -956,62 +893,6 @@
             }
           }
         }
-      }
-    },
-    "home.startOver" : {
-      "comment" : "Home button: forgets the groups found and the choices made, then scans again.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Over" } }
-      }
-    },
-    "home.startOver.confirm" : {
-      "comment" : "Destructive button of the Start Over dialog.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start Over" } }
-      }
-    },
-    "home.startOver.hint" : {
-      "comment" : "VoiceOver hint for Start Over.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clears the groups found and your choices, then scans your library again." } }
-      }
-    },
-    "home.startOver.message" : {
-      "comment" : "Message of the Start Over dialog.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "The groups found and your choices are cleared, and your library is scanned again. No photos are deleted." } }
-      }
-    },
-    "home.startOver.title" : {
-      "comment" : "Title of the Start Over dialog.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Start over?" } }
-      }
-    },
-    "home.stat.groups" : {
-      "comment" : "Caption under the number of groups in a Home stat tile.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Groups" } }
-      }
-    },
-    "home.stat.photos" : {
-      "comment" : "Caption under the number of photos in all groups in a Home stat tile.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Photos" } }
-      }
-    },
-    "home.stat.totalSize" : {
-      "comment" : "Caption under the size of all photos in groups in a Home stat tile.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Total Size" } }
       }
     },
     "home.title" : {
@@ -1649,13 +1530,6 @@
             }
           }
         }
-      }
-    },
-    "selection.delete.short" : {
-      "comment" : "Short label of the delete button in the floating selection bar; VoiceOver reads the full \u201cDelete 38 photos (214 MB)\u201d.",
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } }
       }
     },
     "selection.deselectAll" : {

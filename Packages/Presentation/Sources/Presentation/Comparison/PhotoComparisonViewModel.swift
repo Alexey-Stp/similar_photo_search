@@ -47,8 +47,6 @@ public final class PhotoComparisonViewModel {
     public internal(set) var notFoundIDs: Set<String> = []
     /// Whether "Delete every photo of this group?" is asked.
     public var isConfirmingDeleteAll = false
-    /// "Delete Now" for one photo, until its deletion flow (review, then the system alert) closes.
-    public var deleteNowRequest: ClusterListViewModel.DeletionRequest?
     /// The zoom of the pager's current page (reset on every page change).
     public let pagerZoom = ZoomState()
     /// The zoom both panes share side by side.

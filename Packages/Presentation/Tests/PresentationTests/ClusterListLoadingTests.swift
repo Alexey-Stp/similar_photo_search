@@ -70,8 +70,7 @@ struct ClusterListLoadingTests {
         let first = Set(harness.thumbnails.prefetched.last ?? [])
         #expect(first.count == 22, "Rows 0…10, two photos each")
         #expect(first.contains("G10b") && !first.contains("G11a"))
-        let side = ClusterListViewModel.thumbnailSide * 2
-        #expect(harness.thumbnails.prefetchSizes.last == CGSize(width: side, height: side))
+        #expect(harness.thumbnails.prefetchSizes.last == CGSize(width: 176, height: 176))
 
         harness.list.rowAppeared("G15a")
         await harness.list.waitForLoads()

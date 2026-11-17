@@ -47,7 +47,7 @@ public final class ClusterListViewModel {
     }
 
     /// Thumbnails are this many points wide and high.
-    public static let thumbnailSide: CGFloat = 112
+    public static let thumbnailSide: CGFloat = 88
     /// How many rows above and below the last row that appeared are prefetched.
     public static let prefetchRadius = 10
 
@@ -68,8 +68,6 @@ public final class ClusterListViewModel {
     public internal(set) var photoDates: [String: Date] = [:]
     /// Members that no longer exist in the library (deleted outside the app); their cells show a placeholder.
     public internal(set) var missingAssetIDs: Set<String> = []
-    /// Changes whenever file sizes arrive, so views that show sizes (`sizes(of:)`, the cards) update.
-    public internal(set) var sizesRevision = 0
     /// The group waiting for "Delete every photo of this group?" to be confirmed.
     public var pendingDeleteAllClusterID: String?
     /// The last delete request, until the deletion flow handles it.
@@ -139,15 +137,11 @@ public final class ClusterListViewModel {
         let photos = state.memberIDs.map { id in
             ClusterCardModel.Photo(id: id, date: photoDates[id], isMissing: missingAssetIDs.contains(id))
         }
-        _ = sizesRevision
-        let known = state.memberIDs.compactMap { id in memberSizes[id].map { (id, $0) } }
         return ClusterCardModel(
             id: clusterID,
             photos: photos,
             isExactDuplicate: state.suggestion.cluster.isExactDuplicate,
-            needsReview: state.needsReview,
-            photoSizes: Dictionary(uniqueKeysWithValues: known),
-            sizesComplete: state.memberIDs.allSatisfy { memberSizes[$0] != nil || unavailableSizes.contains($0) }
+            needsReview: state.needsReview
         )
     }
 

@@ -169,7 +169,6 @@ extension ClusterListViewModel {
                 unavailableSizes.insert(id)
             }
         }
-        sizesRevision += 1
         applySizeOrderIfIdle()
     }
 
