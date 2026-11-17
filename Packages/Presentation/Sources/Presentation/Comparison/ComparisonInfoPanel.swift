@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Facts about the focused photo (date, resolution, size, badges, why it ranks well) and the actions on it:
-/// "Keep This One", Delete / Keep, and "Mark as Best".
+/// The focused photo's details (date, resolution, size, badges, why it ranks well) over a row of actions laid out
+/// like a tab bar: Keep Only, Mark / Unmark for deletion, Best and Delete Now. Lives in the comparison's bottom
+/// glass toolbar.
 struct ComparisonInfoPanel: View {
     let viewModel: PhotoComparisonViewModel
     let assetID: String
@@ -11,17 +12,19 @@ struct ComparisonInfoPanel: View {
     /// The facts above the action buttons.
     var body: some View {
         let info = viewModel.info(for: assetID)
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             facts(info)
             badges(info)
             if !info.reasonTexts.isEmpty {
                 Text(info.reasonTexts.joined(separator: " · "))
-                    .font(.subheadline)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             actions
+                .padding(.top, 4)
         }
-        .padding()
+        .padding(.horizontal, 16)
+        .padding(.bottom, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -83,97 +86,39 @@ struct ComparisonInfoPanel: View {
         .background(tint.opacity(0.3), in: Capsule())
     }
 
-    /// "Keep This One" as the ink pill, then Mark for Deletion / Keep, Mark as Best and Delete Now as round icon
-    /// buttons (their titles are the VoiceOver labels). At accessibility text sizes they stack and show their
-    /// titles.
+    /// Keep Only, Mark / Unmark, Best and Delete Now as icon items with short labels; VoiceOver reads the full
+    /// titles. At accessibility text sizes the items stack in two rows.
     private var actions: some View {
         let isMissing = viewModel.isMissing(assetID)
         let isSelected = viewModel.isSelected(assetID)
-        let isLarge = dynamicTypeSize.isAccessibilitySize
-        let layout = isLarge
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-            : AnyLayout(HStackLayout(spacing: 8))
-        return layout {
-            Button {
+        let isBest = viewModel.isBest(assetID)
+        let columns = dynamicTypeSize.isAccessibilitySize ? 2 : 4
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: columns), spacing: 4) {
+            BarItem(titleKey: "compare.tab.keepOnly", systemImage: "checkmark.circle") {
                 viewModel.keepOnly(assetID)
-            } label: {
-                Label {
-                    Text("compare.action.keepOnly", bundle: .module)
-                } icon: {
-                    Image(systemName: "checkmark")
-                }
             }
-            .buttonStyle(HomeInkButtonStyle())
+            .accessibilityLabel(Text("compare.action.keepOnly", bundle: .module))
             .accessibilityHint(Text("compare.action.keepOnly.hint", bundle: .module))
-            Button(role: isSelected ? nil : .destructive) {
+            BarItem(
+                titleKey: isSelected ? "compare.tab.unmark" : "compare.tab.mark",
+                systemImage: isSelected ? "arrow.uturn.backward" : "minus.circle"
+            ) {
                 viewModel.toggle(assetID)
-            } label: {
-                Label {
-                    let key: LocalizedStringKey = isSelected ? "compare.action.keep" : "compare.action.delete"
-                    Text(key, bundle: .module)
-                } icon: {
-                    Image(systemName: isSelected ? "arrow.uturn.backward" : "checkmark.circle")
-                }
             }
-            .buttonStyle(PanelRoundButtonStyle(tint: isSelected ? .primary : Self.deleteTint, showsTitle: isLarge))
+            .accessibilityLabel(Text(isSelected ? "compare.action.keep" : "compare.action.delete", bundle: .module))
             .sensoryFeedback(.selection, trigger: isSelected)
-            Button {
+            BarItem(titleKey: "compare.tab.best", systemImage: isBest ? "star.fill" : "star", tint: .yellow) {
                 viewModel.markAsBest(assetID)
-            } label: {
-                Label {
-                    Text("compare.action.markBest", bundle: .module)
-                } icon: {
-                    Image(systemName: viewModel.isBest(assetID) ? "star.fill" : "star")
-                }
             }
-            .buttonStyle(PanelRoundButtonStyle(tint: .yellow, showsTitle: isLarge))
-            .disabled(viewModel.isBest(assetID))
-            Button(role: .destructive) {
+            .disabled(isBest)
+            .accessibilityLabel(Text("compare.action.markBest", bundle: .module))
+            BarItem(titleKey: "compare.tab.delete", systemImage: "trash.fill", tint: .red) {
                 viewModel.deleteNow(assetID)
-            } label: {
-                Label {
-                    Text("compare.action.deleteNow", bundle: .module)
-                } icon: {
-                    Image(systemName: "trash.fill")
-                }
             }
-            .buttonStyle(PanelRoundButtonStyle(
-                tint: .white,
-                fill: SelectionSummaryBar.deleteRed,
-                showsTitle: isLarge
-            ))
+            .accessibilityLabel(Text("compare.action.deleteNow", bundle: .module))
             .accessibilityHint(Text("compare.action.deleteNow.hint", bundle: .module))
         }
         .disabled(isMissing)
-    }
-
-    /// Apple's dark-mode accessible red (#ff6961): the trash icon on the panel's grey fill.
-    static let deleteTint = Color(red: 1, green: 105 / 255, blue: 97 / 255)
-}
-
-/// A 50-point round button on the panel's grey fill with a tinted icon; a pill with the title at accessibility
-/// text sizes.
-private struct PanelRoundButtonStyle: ButtonStyle {
-    let tint: Color
-    var fill = Color(white: 0.2)
-    let showsTitle: Bool
-    @Environment(\.isEnabled) private var isEnabled
-
-    func makeBody(configuration: Configuration) -> some View {
-        Group {
-            if showsTitle {
-                configuration.label.labelStyle(.titleAndIcon)
-            } else {
-                configuration.label.labelStyle(.iconOnly)
-            }
-        }
-        .font(.body.weight(.semibold))
-        .foregroundStyle(tint)
-        .padding(.horizontal, showsTitle ? 18 : 0)
-        .frame(minWidth: 50, minHeight: 50)
-        .background(fill, in: Capsule())
-        .opacity(isEnabled ? (configuration.isPressed ? 0.6 : 1) : 0.4)
-        .contentShape(Capsule())
     }
 }
 

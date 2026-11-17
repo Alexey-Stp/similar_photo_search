@@ -70,6 +70,7 @@ struct ClusterListScreen: View {
             .padding(.top, 8)
             footer
         }
+        .contentMargins(.bottom, 24, for: .scrollContent)
         .scrollPosition(id: $topRowID, anchor: .top)
         .modifier(ScrollInteractionTracking { viewModel.interactionChanged(isInteracting: $0) })
         .overlay {

@@ -24,19 +24,6 @@ struct BestBadge: View {
     }
 }
 
-/// The red checkmark on a photo selected for deletion, ringed in white so it reads on any photo.
-struct SelectionCheck: View {
-    var body: some View {
-        Image(systemName: "checkmark.circle.fill")
-            .symbolRenderingMode(.palette)
-            .foregroundStyle(.white, .red)
-            .font(.title2)
-            .background(Circle().fill(.white).padding(1))
-            .padding(6)
-            .accessibilityHidden(true)
-    }
-}
-
 /// A small label in the card footer: a tinted icon and the word in `.primary` on a quiet capsule. Orange and blue
 /// text on the card fall below 4.5:1 in Light mode, so only the icon carries the tint.
 struct ClusterChip: View {

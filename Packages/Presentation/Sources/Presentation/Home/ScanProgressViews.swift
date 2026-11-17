@@ -7,6 +7,8 @@ struct ProgressRing: View {
     let fraction: Double
     /// The text in the middle, for example "42 %".
     let label: String
+    /// While the results are saved after 100 %: a spinner replaces the percentage.
+    var isFinishing = false
 
     @ScaledMetric(relativeTo: .largeTitle) private var diameter: CGFloat = 184
     @ScaledMetric(relativeTo: .largeTitle) private var lineWidth: CGFloat = 16
@@ -21,12 +23,17 @@ struct ProgressRing: View {
                 .stroke(.tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: fraction)
-            Text(label)
-                .font(.system(.largeTitle, design: .rounded, weight: .heavy))
-                .monospacedDigit()
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .padding(lineWidth)
+            if isFinishing {
+                ProgressView()
+                    .controlSize(.large)
+            } else {
+                Text(label)
+                    .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .padding(lineWidth)
+            }
         }
         .frame(width: diameter, height: diameter)
     }

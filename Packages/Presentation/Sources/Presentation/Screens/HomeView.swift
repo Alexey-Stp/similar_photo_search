@@ -30,10 +30,6 @@ struct HomeDashboard: View {
         NavigationStack(path: $home.path) {
             ScrollView {
                 VStack(spacing: 16) {
-                    if home.isRefreshing {
-                        ScanProgressBar(scan: home.scan)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    }
                     stateCard
                     if home.viewState != .idle, let headline = home.summary.skipped.headline {
                         SkippedSummaryButton(headline: headline) { isShowingSkipped = true }
@@ -60,9 +56,12 @@ struct HomeDashboard: View {
             .refreshable { await home.refresh() }
             .onAppear { home.scan.scanScreenAppeared() }
             .onDisappear { home.scan.scanScreenDisappeared() }
-            .navigationTitle(Text("home.title", bundle: .module))
+            .navigationTitle(isScanningInFull ? Text(verbatim: "") : Text("home.title", bundle: .module))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(isScanningInFull ? .inline : .automatic)
+            #endif
             .navigationDestination(for: HomeRoute.self, destination: destination)
-            .toolbar { scopeButton }
+            .toolbar { moreMenu }
             .sheet(isPresented: $isShowingScope) {
                 ScopeSelectionSheet { isShowingScope = false }
             }
@@ -113,9 +112,10 @@ struct HomeDashboard: View {
         case .results(let summary):
             HomeResultsCard(
                 summary: summary,
-                totalSizeText: totalSizeText,
-                onReview: { home.review() },
-                onStartOver: { home.isConfirmingStartOver = true }
+                sizes: factory?.clusterListViewModel.allGroupsSizes,
+                scannedCount: home.scan.progress?.total,
+                refreshText: refreshText,
+                onReview: { home.review() }
             )
         case .empty:
             HomeEmptyCard { Task { await home.startScan() } }
@@ -129,31 +129,51 @@ struct HomeDashboard: View {
         }
     }
 
-    /// The size of all photos in groups ("1.4 GB"), once every size has been looked up; "At least 1.4 GB" when
-    /// some sizes are unavailable.
-    private var totalSizeText: String? {
-        guard let sizes = factory?.clusterListViewModel.allGroupsSizes, sizes.isComplete, sizes.totalBytes > 0 else {
-            return nil
-        }
-        let size = sizes.totalBytes.formatted(.byteCount(style: .file))
-        guard sizes.unavailableCount == 0 else {
-            return String(localized: "home.stat.totalSize.atLeast \(size)", bundle: .module)
-        }
-        return size
+    /// Whether the full scanning state is shown (the large title is hidden then, the ring says it all).
+    private var isScanningInFull: Bool {
+        if case .scanning = home.viewState { return true }
+        return false
     }
 
-    private var scopeButton: some ToolbarContent {
+    /// "Checking for new photos… 42 %" while a silent refresh runs.
+    private var refreshText: String? {
+        guard home.isRefreshing else { return nil }
+        return String(localized: "home.refreshing \(home.scan.percentText)", bundle: .module)
+    }
+
+    /// One "…" menu in the navigation bar: Scan Scope and, after a scan, Start Over (asks first), away from Review.
+    private var moreMenu: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
-            Button {
-                isShowingScope = true
+            Menu {
+                Button {
+                    isShowingScope = true
+                } label: {
+                    Label {
+                        Text("home.scope", bundle: .module)
+                    } icon: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
+                }
+                if home.hasPreviousScan, !home.scan.isScanning {
+                    Divider()
+                    Button(role: .destructive) {
+                        home.isConfirmingStartOver = true
+                    } label: {
+                        Label {
+                            Text("home.startOver", bundle: .module)
+                        } icon: {
+                            Image(systemName: "arrow.counterclockwise")
+                        }
+                    }
+                }
             } label: {
                 Label {
-                    Text("home.scope", bundle: .module)
+                    Text("home.more", bundle: .module)
                 } icon: {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
+                    Image(systemName: "ellipsis.circle")
                 }
             }
-            .accessibilityHint(Text("home.scope.hint", bundle: .module))
+            .accessibilityHint(Text("home.more.hint", bundle: .module))
         }
     }
 }

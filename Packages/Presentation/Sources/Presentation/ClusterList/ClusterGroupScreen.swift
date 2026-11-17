@@ -62,22 +62,12 @@ struct ClusterGroupScreen: View {
                         )
                     }
                 }
-                Button {
-                    onCompare(clusterID)
-                } label: {
-                    Label {
-                        Text("clusters.action.compare", bundle: .module)
-                    } icon: {
-                        Image(systemName: "rectangle.split.2x1")
-                    }
-                }
-                .buttonStyle(HomeInkButtonStyle())
-                .accessibilityHint(Text("clusters.header.hint", bundle: .module))
             }
             .padding()
         }
+        .contentMargins(.bottom, 24, for: .scrollContent)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            deleteBar(card: card, state: state)
+            bottomBar(card: card)
         }
     }
 
@@ -99,39 +89,29 @@ struct ClusterGroupScreen: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// "2 photos · 12 MB" selected in this group, and Delete for exactly those photos.
-    private func deleteBar(card: ClusterCardModel, state: ClusterSelectionState) -> some View {
-        let selected = card.photos.map(\.id).filter(state.isSelected)
-        let bytes = card.bytes(of: Set(selected))
-        return HStack(spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("deletion.review.strip \(selected.count)", bundle: .module)
-                    .font(.subheadline.weight(.semibold))
-                if let bytes, bytes > 0 {
-                    Text(ClusterCardView.format(bytes))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
+    /// Compare, and Delete (with the count) for exactly the photos selected in this group.
+    private func bottomBar(card: ClusterCardModel) -> some View {
+        let selected = card.photos.map(\.id).filter { viewModel.selection.isSelected($0) }
+        return HStack(spacing: 0) {
+            BarItem(titleKey: "clusters.action.compare", systemImage: "rectangle.split.2x1") {
+                onCompare(clusterID)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Button(role: .destructive) {
+            .accessibilityHint(Text("clusters.header.hint", bundle: .module))
+            BarItem(
+                titleKey: "selection.delete.short",
+                systemImage: "trash.fill",
+                tint: .red,
+                badge: selected.count
+            ) {
                 membersBeforeDeletion = card.photos.map(\.id)
                 viewModel.selection.estimateSizes(of: selected)
                 deletionRequest = ClusterListViewModel.DeletionRequest(assetIDs: selected)
-            } label: {
-                SelectionDeleteLabel()
             }
-            .buttonStyle(.plain)
-            .opacity(selected.isEmpty ? 0.4 : 1)
             .disabled(selected.isEmpty)
+            .accessibilityLabel(Text("deletion.review.confirm \(selected.count)", bundle: .module))
             .accessibilityHint(Text("selection.delete.hint", bundle: .module))
         }
-        .padding(.leading, 18)
-        .padding(.trailing, 8)
-        .padding(.vertical, 8)
-        .glassBackground(in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
+        .floatingBar()
         .accessibilityElement(children: .contain)
     }
 

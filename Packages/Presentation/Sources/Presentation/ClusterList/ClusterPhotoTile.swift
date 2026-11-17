@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// One square photo of a group: the thumbnail, dimmed with a red checkmark while selected for deletion, the **Best**
-/// badge on the keeper. Tapping it toggles the photo. Used by the group card and the group's own page.
+/// One square photo of a group. A photo selected for deletion is quietly dimmed and greyed out (no badge on every
+/// photo); the keeper is highlighted with a green ring and the **Best** badge. Tapping it toggles the photo. Used by
+/// the group card and the group's own page.
 struct ClusterPhotoTile: View {
     let photo: ClusterCardModel.Photo
     /// 1-based position in the group, for VoiceOver.
@@ -13,6 +14,8 @@ struct ClusterPhotoTile: View {
     let thumbnails: any ThumbnailLoading
     let onToggle: (String) -> Void
     let onCompare: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let isSelected = state.isSelected(photo.id)
@@ -30,17 +33,20 @@ struct ClusterPhotoTile: View {
                         loader: thumbnails
                     )
                 }
+                .saturation(isSelected ? 0 : 1)
                 .overlay {
                     if isSelected {
-                        Color.black.opacity(0.4)
+                        Color.black.opacity(0.5)
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(alignment: .bottomTrailing) {
-                    if isSelected {
-                        SelectionCheck()
+                .overlay {
+                    if isBest {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(.green, lineWidth: 3)
                     }
                 }
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isSelected)
                 .overlay(alignment: .topLeading) {
                     if isBest {
                         BestBadge()

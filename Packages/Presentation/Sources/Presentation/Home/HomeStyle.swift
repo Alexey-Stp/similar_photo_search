@@ -80,24 +80,63 @@ struct HomeStatTile: View {
     }
 }
 
-/// "Start Over": forgets the groups found and the choices made, then scans again (after a confirmation).
-struct HomeStartOverButton: View {
-    let action: () -> Void
+/// A storage-style bar of the photos in groups, like Settings › iPhone Storage: the share selected for deletion in
+/// red, the rest (kept) in grey, with a one-line legend. A neutral track and "Calculating sizes…" while sizes load, at
+/// the same height, so the card doesn't move when they arrive.
+struct StorageBar: View {
+    let sizes: GroupSizes?
 
     var body: some View {
-        Button(action: action) {
-            Label {
-                Text("home.startOver", bundle: .module)
-            } icon: {
-                Image(systemName: "arrow.counterclockwise")
+        let known = sizes.flatMap { $0.isComplete && $0.totalBytes > 0 ? $0 : nil }
+        let share = known.map { min(1, Double($0.selectedBytes) / Double($0.totalBytes)) } ?? 0
+        VStack(alignment: .leading, spacing: 8) {
+            GeometryReader { proxy in
+                HStack(spacing: share > 0 && share < 1 ? 2 : 0) {
+                    Rectangle()
+                        .fill(.red)
+                        .frame(width: proxy.size.width * share)
+                    Rectangle()
+                        .fill(known == nil ? AnyShapeStyle(.fill.tertiary) : AnyShapeStyle(Color.gray))
+                }
             }
-            .font(.body.weight(.semibold))
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .contentShape(Rectangle())
+            .frame(height: 10)
+            .clipShape(Capsule())
+            .animation(.easeOut(duration: 0.25), value: share)
+            .accessibilityHidden(true)
+            legend(known)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        .buttonStyle(.plain)
-        .foregroundStyle(.primary)
-        .accessibilityHint(Text("home.startOver.hint", bundle: .module))
+        .accessibilityElement(children: .combine)
+    }
+
+    @ViewBuilder private func legend(_ known: GroupSizes?) -> some View {
+        if let known {
+            HStack(spacing: 16) {
+                item(.red, Text(
+                    "home.storage.toDelete \(ClusterCardView.format(known.selectedBytes))",
+                    bundle: .module
+                ))
+                item(.gray, Text(
+                    "home.storage.kept \(ClusterCardView.format(known.totalBytes - known.selectedBytes))",
+                    bundle: .module
+                ))
+            }
+        } else {
+            Text("home.storage.calculating", bundle: .module)
+        }
+    }
+
+    private func item(_ color: Color, _ text: Text) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
+            text
+        }
     }
 }
 

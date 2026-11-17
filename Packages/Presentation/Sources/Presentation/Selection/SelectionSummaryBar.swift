@@ -1,16 +1,15 @@
 import Domain
 import SwiftUI
 
-/// Bottom bar with the global "Smart Select All" and "Deselect All" actions and what would be deleted right now
-/// ("38 photos, about 214 MB will be deleted"), and with `onDelete` the "Delete N photos (X MB)" button, disabled
-/// while nothing is selected. It never deletes anything itself: `onDelete` starts the deletion flow (SPS-25).
+/// Floating bottom bar with the global Smart Select and Deselect actions and, with `onDelete`, Delete with the number
+/// of selected photos as a badge, disabled while nothing is selected. It never deletes anything itself: `onDelete`
+/// starts the deletion flow (SPS-25).
 ///
 /// Reads only the store's totals, so toggling a photo re-renders this bar and that photo's cluster, nothing else.
 public struct SelectionSummaryBar: View {
     private let store: SelectionStore
     private let excluded: Set<String>
     private let onDelete: (() -> Void)?
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Creates the bar for a store.
     /// - Parameters:
@@ -41,122 +40,96 @@ public struct SelectionSummaryBar: View {
         return String(localized: "selection.delete \(summary.photoCount) \(size)", bundle: .module)
     }
 
-    /// The summary, the bulk actions and, with `onDelete`, the delete button, in a floating glass bar. At
-    /// accessibility text sizes the actions move under the summary.
+    /// A floating glass bar laid out like a tab bar: Smart Select, Deselect and, with `onDelete`, Delete with the
+    /// count as a badge. Short labels only; VoiceOver reads the full summary ("38 photos, about 214 MB will be
+    /// deleted") and the full delete title ("Delete 38 photos (214 MB)").
     public var body: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
-            : AnyLayout(HStackLayout(spacing: 8))
-        return layout {
-            Text(summary.text)
-                .font(.subheadline.weight(.semibold))
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .layoutPriority(-1)
-                .accessibilityAddTraits(.updatesFrequently)
-            HStack(spacing: 8) {
-                buttons
-                deleteButton
+        HStack(spacing: 0) {
+            BarItem(titleKey: "selection.bar.smart", systemImage: "sparkles") {
+                store.selectSmartAll()
+            }
+            .accessibilityLabel(Text("selection.smartSelectAll", bundle: .module))
+            .accessibilityHint(Text("selection.smartSelectAll.hint", bundle: .module))
+            BarItem(titleKey: "selection.bar.deselect", systemImage: "xmark.circle") {
+                store.deselectAll()
+            }
+            .disabled(store.selectedCount == 0)
+            .accessibilityLabel(Text("selection.deselectAll", bundle: .module))
+            .accessibilityHint(Text("selection.deselectAll.hint", bundle: .module))
+            if let onDelete {
+                BarItem(
+                    titleKey: "selection.delete.short",
+                    systemImage: "trash.fill",
+                    tint: .red,
+                    badge: summary.photoCount,
+                    action: onDelete
+                )
+                .disabled(summary.photoCount == 0)
+                .accessibilityLabel(Text(Self.deleteTitle(for: summary)))
+                .accessibilityHint(Text("selection.delete.hint", bundle: .module))
             }
         }
-        .padding(.leading, 18)
-        .padding(.trailing, 8)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .glassBackground(in: RoundedRectangle(cornerRadius: 32, style: .continuous))
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
+        .floatingBar()
         .accessibilityElement(children: .contain)
-    }
-
-    @ViewBuilder private var buttons: some View {
-        Button {
-            store.selectSmartAll()
-        } label: {
-            Label {
-                Text("selection.smartSelectAll", bundle: .module)
-            } icon: {
-                Image(systemName: "sparkles")
-            }
-        }
-        .buttonStyle(BarIconButtonStyle())
-        .accessibilityHint(Text("selection.smartSelectAll.hint", bundle: .module))
-        Button {
-            store.deselectAll()
-        } label: {
-            Label {
-                Text("selection.deselectAll", bundle: .module)
-            } icon: {
-                Image(systemName: "xmark")
-            }
-        }
-        .buttonStyle(BarIconButtonStyle())
-        .disabled(store.selectedCount == 0)
-        .accessibilityHint(Text("selection.deselectAll.hint", bundle: .module))
-    }
-
-    /// "Delete" with a trash icon on Apple's accessible red (white text 5.4:1); VoiceOver reads the full title,
-    /// "Delete 38 photos (214 MB)".
-    @ViewBuilder private var deleteButton: some View {
-        if let onDelete {
-            Button(role: .destructive, action: onDelete) {
-                SelectionDeleteLabel()
-            }
-            .buttonStyle(.plain)
-            .opacity(summary.photoCount == 0 ? 0.4 : 1)
-            .disabled(summary.photoCount == 0)
-            .accessibilityLabel(Text(Self.deleteTitle(for: summary)))
-            .accessibilityHint(Text("selection.delete.hint", bundle: .module))
-        }
+        .accessibilityLabel(Text(summary.text))
     }
 
     /// Apple's accessible red (#d70015), the Increase Contrast value of systemRed.
     static let deleteRed = Color(red: 215 / 255, green: 0, blue: 21 / 255)
 }
 
-/// The red "Delete" pill of the floating delete bars: one line at its natural width, as tall as the bar's round
-/// buttons, never squeezed or wrapped by the summary next to it.
-struct SelectionDeleteLabel: View {
-    @ScaledMetric(relativeTo: .body) private var height: CGFloat = 48
-
-    var body: some View {
-        Label {
-            Text("selection.delete.short", bundle: .module)
-        } icon: {
-            Image(systemName: "trash")
-        }
-        .font(.body.weight(.semibold))
-        .lineLimit(1)
-        .foregroundStyle(.white)
-        .padding(.horizontal, 20)
-        .frame(minHeight: max(height, 48))
-        .fixedSize()
-        .background(SelectionSummaryBar.deleteRed, in: Capsule())
-        .contentShape(Capsule())
+extension View {
+    /// The look of the floating bottom bars: glass, rounded, inset from the screen edges.
+    func floatingBar() -> some View {
+        padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity)
+            .glassBackground(in: RoundedRectangle(cornerRadius: 30, style: .continuous))
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
     }
 }
 
-/// A 48-point circle with an SF Symbol; the label's title is the VoiceOver label.
-private struct BarIconButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        BarIconLabel(label: configuration.label, isPressed: configuration.isPressed)
-    }
-}
+/// One item of a floating bar, like a tab bar item: an SF Symbol over a short label, an optional count badge on the
+/// symbol. The icon carries the tint; the label stays `.primary`, so it reads on the glass.
+struct BarItem: View {
+    let titleKey: LocalizedStringKey
+    let systemImage: String
+    var tint: Color = .primary
+    var badge = 0
+    let action: () -> Void
 
-private struct BarIconLabel<Content: View>: View {
-    let label: Content
-    let isPressed: Bool
     @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
-        label
-            .labelStyle(.iconOnly)
-            .font(.body.weight(.semibold))
-            .foregroundStyle(.primary)
-            .frame(width: 48, height: 48)
-            .background(.fill.secondary, in: Circle())
-            .opacity(isEnabled ? (isPressed ? 0.6 : 1) : 0.35)
-            .contentShape(Circle())
+        Button(action: action) {
+            VStack(spacing: 3) {
+                Image(systemName: systemImage)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(tint)
+                    .frame(height: 26)
+                    .overlay(alignment: .topTrailing) {
+                        if badge > 0 {
+                            Text(badge, format: .number)
+                                .font(.caption2.weight(.bold))
+                                .monospacedDigit()
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 5)
+                                .frame(minWidth: 18, minHeight: 18)
+                                .background(SelectionSummaryBar.deleteRed, in: Capsule())
+                                .offset(x: 14, y: -6)
+                        }
+                    }
+                Text(titleKey, bundle: .module)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, minHeight: 50)
+            .contentShape(Rectangle())
+            .opacity(isEnabled ? 1 : 0.35)
+        }
+        .buttonStyle(.plain)
     }
 }
 

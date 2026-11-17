@@ -28,8 +28,9 @@ struct HomeIdleCard: View {
     }
 }
 
-/// A scan the user started: progress ring, count, ETA, throttling notices, the live group counter with
-/// "Review Now", and Cancel.
+/// A scan the user started: progress ring, count, ETA, throttling notice, the live group counter with "Review Now",
+/// and Cancel. Every row keeps its height while the scan runs (an empty ETA, notice or counter row stays reserved),
+/// so the card never jumps. At 100 %, while the results are saved, the ring spins and says "Finishing…".
 struct HomeScanningCard: View {
     let scan: ScanViewModel
     let foundSoFar: Int
@@ -37,111 +38,135 @@ struct HomeScanningCard: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            VStack(spacing: 12) {
-                ProgressRing(fraction: scan.progress?.fractionCompleted ?? 0, label: scan.percentText)
-                Text("scan.scanning", bundle: .module)
+            VStack(spacing: 8) {
+                ProgressRing(
+                    fraction: scan.progress?.fractionCompleted ?? 0,
+                    label: scan.percentText,
+                    isFinishing: scan.isFinishing
+                )
+                Text(scan.isFinishing ? "scan.finishing" : "scan.scanning", bundle: .module)
                     .font(.headline)
                 Text(scan.countText)
                     .font(.subheadline)
                     .monospacedDigit()
-                if let eta = scan.etaText {
-                    Text(eta)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
+                Text(scan.etaText ?? " ")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .opacity(scan.etaText == nil ? 0 : 1)
             }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Text("scan.scanning", bundle: .module))
+            .accessibilityLabel(Text(scan.isFinishing ? "scan.finishing" : "scan.scanning", bundle: .module))
             .accessibilityValue(Text(scan.accessibilityProgressText))
             .accessibilityAddTraits(.updatesFrequently)
 
-            if scan.isPausedToCoolDown {
-                HomeNotice(key: "scan.pausedToCoolDown", systemImage: "thermometer.high")
-            } else if scan.isSlowedByLowPowerMode {
-                HomeNotice(key: "scan.lowPowerMode", systemImage: "battery.25percent")
-            }
-            if foundSoFar > 0 {
-                Text("scan.groupsSoFar \(foundSoFar)", bundle: .module)
-                    .font(.headline)
-                    .accessibilityAddTraits(.updatesFrequently)
-                HomePrimaryButton(titleKey: "home.reviewNow", hintKey: "home.reviewNow.hint", action: onReview)
-            }
+            notice
+            Text("scan.groupsSoFar \(foundSoFar)", bundle: .module)
+                .font(.headline)
+                .monospacedDigit()
+                .accessibilityAddTraits(.updatesFrequently)
+            HomePrimaryButton(titleKey: "home.reviewNow", hintKey: "home.reviewNow.hint", action: onReview)
+                .disabled(foundSoFar == 0)
             Button(role: .cancel) {
                 scan.cancelScan()
             } label: {
                 Text("scan.cancel", bundle: .module)
-                    .frame(maxWidth: .infinity)
+                    .font(.body.weight(.semibold))
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
             .accessibilityHint(Text("scan.cancel.hint", bundle: .module))
         }
         .homeCard()
     }
+
+    /// The cool-down or Low Power notice; its line stays reserved while there is none.
+    @ViewBuilder private var notice: some View {
+        if scan.isPausedToCoolDown {
+            HomeNotice(key: "scan.pausedToCoolDown", systemImage: "thermometer.high")
+        } else if scan.isSlowedByLowPowerMode {
+            HomeNotice(key: "scan.lowPowerMode", systemImage: "battery.25percent")
+        } else {
+            HomeNotice(key: "scan.lowPowerMode", systemImage: "battery.25percent")
+                .hidden()
+                .accessibilityHidden(true)
+        }
+    }
 }
 
-/// Groups to review. With a known size, the size selected for deletion leads as a large figure ("214 MB", "Can be
-/// freed") above tiles with the group count, the photo count and the size of all photos in groups; otherwise "12
-/// groups of similar photos found" and "38 photos in these groups". Then Review and Start Over.
+/// Groups to review, in a few calm lines: what can be freed as a large figure, a storage-style bar of the photos in
+/// groups (to delete / kept) with its legend, one summary line ("12 groups · 87 photos · 18,000 scanned", or the
+/// silent refresh's progress in the same place), and Review. Placeholders keep every row's height while sizes load.
 struct HomeResultsCard: View {
     let summary: HomeSummary
-    /// The size of all photos in groups ("1.4 GB"), once known.
-    var totalSizeText: String?
+    /// Sizes of the photos in groups, once looked up.
+    var sizes: GroupSizes?
+    /// Photos the last scan went through.
+    var scannedCount: Int?
+    /// The silent refresh's progress line ("Checking for new photos… 42 %"), while it runs.
+    var refreshText: String?
     let onReview: () -> Void
-    var onStartOver: (() -> Void)?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            if let size = summary.reclaimableSizeText {
-                hero(size: size)
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { stats }
-                    VStack(spacing: 8) { stats }
-                }
-            } else {
-                counts
-                if let totalSizeText {
-                    HomeStatTile(text: totalSizeText, titleKey: "home.stat.totalSize")
-                }
-            }
+        VStack(alignment: .leading, spacing: 16) {
+            hero
+            StorageBar(sizes: sizes)
+            summaryLine
             HomePrimaryButton(titleKey: "home.review", hintKey: "home.review.hint", action: onReview)
-            if let onStartOver {
-                HomeStartOverButton(action: onStartOver)
-            }
         }
         .homeCard()
     }
 
-    /// The size as a large figure; VoiceOver reads the whole sentence ("About 214 MB can be freed").
-    private func hero(size: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HomeHeroNumber(text: size)
+    /// "214 MB" over "Can be freed"; a placeholder of the same size while it is estimated. VoiceOver reads the
+    /// sentence ("About 214 MB can be freed").
+    private var hero: some View {
+        let size = summary.reclaimableSizeText
+            ?? (summary.selectedPhotoCount == 0 ? Int64(0).formatted(.byteCount(style: .file)) : nil)
+        return VStack(alignment: .leading, spacing: 2) {
+            HomeHeroNumber(text: size ?? "000 MB")
+                .redacted(reason: size == nil ? .placeholder : [])
             Text(summary.isLowerBound ? "home.reclaimable.caption.atLeast" : "home.reclaimable.caption",
                  bundle: .module)
                 .font(.headline)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(Text(summary.reclaimableText ?? size))
-    }
-
-    @ViewBuilder private var stats: some View {
-        HomeStatTile(value: summary.groupCount, titleKey: "home.stat.groups")
-        HomeStatTile(value: summary.photoCount, titleKey: "home.stat.photos")
-        if let totalSizeText {
-            HomeStatTile(text: totalSizeText, titleKey: "home.stat.totalSize")
-        }
-    }
-
-    /// The counts as sentences, while no size is known.
-    private var counts: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("scan.groupsFound \(summary.groupCount)", bundle: .module)
-                .font(.system(.title2, design: .rounded, weight: .bold))
-            Text("home.photosInGroups \(summary.photoCount)", bundle: .module)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(summary.reclaimableText ?? size ?? ""))
+    }
+
+    /// One line: the counts, or the refresh's progress while it runs (same height either way).
+    private var summaryLine: some View {
+        Group {
+            if let refreshText {
+                Label {
+                    Text(refreshText)
+                } icon: {
+                    ProgressView()
+                        .controlSize(.mini)
+                }
+            } else {
+                Text(countsText)
+            }
+        }
+        .font(.subheadline)
+        .foregroundStyle(.secondary)
+        .monospacedDigit()
+        .lineLimit(2)
+        .frame(maxWidth: .infinity, minHeight: 20, alignment: .leading)
+        .accessibilityAddTraits(refreshText == nil ? [] : .updatesFrequently)
+    }
+
+    /// "12 groups · 87 photos · 18,000 scanned".
+    private var countsText: String {
+        var parts = [
+            String(localized: "home.summary.groups \(summary.groupCount)", bundle: .module),
+            String(localized: "clusters.row.photos \(summary.photoCount)", bundle: .module)
+        ]
+        if let scannedCount, scannedCount > 0 {
+            parts.append(String(localized: "home.summary.scanned \(scannedCount.formatted())", bundle: .module))
+        }
+        return parts.joined(separator: " · ")
     }
 }
 
