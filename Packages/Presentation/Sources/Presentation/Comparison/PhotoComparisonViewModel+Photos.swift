@@ -119,4 +119,11 @@ extension PhotoComparisonViewModel {
             notFoundIDs = notFound
         }
     }
+
+    /// "Delete Now": deletes this one photo through the deletion flow (its review sheet, then the system alert),
+    /// whether or not it is selected. Nothing is deleted until the user confirms both.
+    public func deleteNow(_ assetID: String) {
+        guard deleteNowRequest == nil, memberIDs.contains(assetID), !isMissing(assetID) else { return }
+        deleteNowRequest = ClusterListViewModel.DeletionRequest(assetIDs: [assetID])
+    }
 }

@@ -12,15 +12,16 @@ struct ComparisonFilmstrip: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 6) {
+                LazyHStack(spacing: 8) {
                     ForEach(viewModel.memberIDs, id: \.self) { assetID in
                         cell(assetID)
                             .id(assetID)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(8)
             }
+            .glassBackground(in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .padding(.horizontal, 12)
             .onChange(of: viewModel.focusedID, initial: true) { _, focused in
                 guard let focused else { return }
                 withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
@@ -29,6 +30,7 @@ struct ComparisonFilmstrip: View {
             }
         }
         .frame(height: side + 16)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     /// One thumbnail: framed when shown, dimmed with a checkmark when selected, starred when Best.
@@ -47,10 +49,10 @@ struct ComparisonFilmstrip: View {
             )
             .frame(width: side, height: side)
             .opacity(isSelected ? 0.55 : 1)
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .strokeBorder(.white, lineWidth: isShown ? 2 : 0)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .strokeBorder(.white, lineWidth: isShown ? 3 : 0)
             }
             .overlay(alignment: .bottomTrailing) {
                 if isSelected {
@@ -65,7 +67,8 @@ struct ComparisonFilmstrip: View {
                     Image(systemName: "star.fill")
                         .font(.caption2)
                         .foregroundStyle(.yellow)
-                        .padding(3)
+                        .shadow(color: .black.opacity(0.8), radius: 1)
+                        .padding(4)
                 }
             }
         }

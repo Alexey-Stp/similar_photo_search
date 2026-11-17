@@ -15,8 +15,9 @@ struct HomeView: View {
     }
 }
 
-/// The scan dashboard: one card for the current state (idle, scanning, results, empty, error), the skipped-photos
-/// line, pull-to-refresh, the "Scan scope" toolbar button and, under limited access, a banner at the top.
+/// The scan dashboard: one card for the current state (idle, scanning, results, empty, error), the groups found
+/// listed below it, the skipped-photos line, pull-to-refresh, the "Scan scope" toolbar button and, under limited
+/// access, a banner at the top.
 struct HomeDashboard: View {
     @Bindable var home: HomeViewModel
     let permission: PermissionViewModel
@@ -37,9 +38,21 @@ struct HomeDashboard: View {
                     if home.viewState != .idle, let headline = home.summary.skipped.headline {
                         SkippedSummaryButton(headline: headline) { isShowingSkipped = true }
                     }
+                    if let list = factory?.clusterListViewModel, !list.rows.isEmpty {
+                        HomeGroupsSection(
+                            list: list,
+                            onCompare: { home.compare(clusterID: $0) },
+                            onSeeAll: { home.review() }
+                        )
+                        .padding(.top, 8)
+                    }
+                    if home.viewState != .idle {
+                        HomePrivacyFooter()
+                    }
                 }
                 .padding()
             }
+            .modifier(HomeGroupDialogs(home: home, list: factory?.clusterListViewModel))
             .refreshable { await home.refresh() }
             .onAppear { home.scan.scanScreenAppeared() }
             .onDisappear { home.scan.scanScreenDisappeared() }
@@ -88,7 +101,12 @@ struct HomeDashboard: View {
         case .scanning(_, let foundSoFar):
             HomeScanningCard(scan: home.scan, foundSoFar: foundSoFar) { home.review() }
         case .results(let summary):
-            HomeResultsCard(summary: summary) { home.review() }
+            HomeResultsCard(
+                summary: summary,
+                totalSizeText: totalSizeText,
+                onReview: { home.review() },
+                onStartOver: { home.isConfirmingStartOver = true }
+            )
         case .empty:
             HomeEmptyCard { Task { await home.startScan() } }
         case .error(let message):
@@ -99,6 +117,14 @@ struct HomeDashboard: View {
                 onReview: { home.review() }
             )
         }
+    }
+
+    /// The size of all photos in groups ("1.4 GB"), once every size is known.
+    private var totalSizeText: String? {
+        guard let sizes = factory?.clusterListViewModel.allGroupsSizes, sizes.isComplete, sizes.totalBytes > 0 else {
+            return nil
+        }
+        return sizes.totalBytes.formatted(.byteCount(style: .file))
     }
 
     private var scopeButton: some ToolbarContent {
@@ -113,6 +139,36 @@ struct HomeDashboard: View {
                 }
             }
             .accessibilityHint(Text("home.scope.hint", bundle: .module))
+        }
+    }
+}
+
+/// Home's dialogs: "Start over?" and, while Home is on top, "Delete every photo of this group?" for the groups
+/// listed on it.
+private struct HomeGroupDialogs: ViewModifier {
+    @Bindable var home: HomeViewModel
+    let list: ClusterListViewModel?
+
+    func body(content: Content) -> some View {
+        Group {
+            if let list {
+                content.deleteAllConfirmation(list, isActive: home.path.isEmpty && home.comparison == nil)
+            } else {
+                content
+            }
+        }
+        .confirmationDialog(
+            Text("home.startOver.title", bundle: .module),
+            isPresented: $home.isConfirmingStartOver,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) {
+                Task { await home.startOver() }
+            } label: {
+                Text("home.startOver.confirm", bundle: .module)
+            }
+        } message: {
+            Text("home.startOver.message", bundle: .module)
         }
     }
 }

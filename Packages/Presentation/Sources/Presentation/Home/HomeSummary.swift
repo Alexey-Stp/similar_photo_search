@@ -48,10 +48,14 @@ public struct HomeSummary: Sendable, Hashable {
         )
     }
 
+    /// The size alone, "214 MB", for the large figure on Home; `nil` when there is no size to show.
+    public var reclaimableSizeText: String? {
+        reclaimableBytes?.formatted(.byteCount(style: .file))
+    }
+
     /// "About 214 MB can be freed", or `nil` when there is no size to show.
     public var reclaimableText: String? {
-        guard let reclaimableBytes else { return nil }
-        let size = reclaimableBytes.formatted(.byteCount(style: .file))
+        guard let size = reclaimableSizeText else { return nil }
         if isLowerBound {
             return String(localized: "home.reclaimable.atLeast \(size)", bundle: .module)
         }

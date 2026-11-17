@@ -59,6 +59,8 @@ public final class HomeViewModel {
     public private(set) var isRefreshingSilently = false
     /// Whether stored results of an earlier scan were loaded at launch.
     public private(set) var hasStoredResults = false
+    /// Whether "Start over?" is being asked.
+    public var isConfirmingStartOver = false
 
     @ObservationIgnored private let results: any ClusterRepository
     @ObservationIgnored private let libraryChanges: any LibraryChangeObserving
@@ -144,6 +146,19 @@ public final class HomeViewModel {
     public func refresh() async {
         guard !scan.isScanning else { return }
         await startScan(silently: hasPreviousScan)
+    }
+
+    /// "Start Over", once confirmed: forgets the stored results, the groups shown and every choice, then scans the
+    /// library again from the start with the full scanning state. Deletes no photo.
+    public func startOver() async {
+        isConfirmingStartOver = false
+        let stored = await results.storedResults()
+        try? await results.apply(upserted: [], removedSessionIDs: Set(stored.map(\.sessionID)))
+        hasStoredResults = false
+        path = []
+        comparison = nil
+        scan.clearResults()
+        await startScan(silently: false)
     }
 
     /// "Review" or "Review now": opens the group list (the scan goes on).

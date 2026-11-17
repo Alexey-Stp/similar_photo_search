@@ -7,12 +7,9 @@ struct RestrictedAccessView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Image(systemName: "hand.raised")
-                    .font(.system(.largeTitle))
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
+                HeroSymbol(systemName: "hand.raised")
                 Text("restricted.title", bundle: .module)
-                    .font(.title.bold())
+                    .font(.system(.title, design: .rounded, weight: .heavy))
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 Text("restricted.message", bundle: .module)

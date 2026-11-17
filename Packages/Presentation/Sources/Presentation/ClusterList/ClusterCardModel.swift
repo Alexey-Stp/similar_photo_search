@@ -29,13 +29,37 @@ public struct ClusterCardModel: Hashable, Sendable, Identifiable {
     public let isExactDuplicate: Bool
     /// Whether the group is flagged "Review recommended".
     public let needsReview: Bool
+    /// Estimated file sizes in bytes of the members whose size is known.
+    public let photoSizes: [String: Int64]
+    /// Whether every member's size has been looked up (some may be unavailable).
+    public let sizesComplete: Bool
 
     /// Creates a card.
-    public init(id: String, photos: [Photo], isExactDuplicate: Bool, needsReview: Bool) {
+    public init(
+        id: String,
+        photos: [Photo],
+        isExactDuplicate: Bool,
+        needsReview: Bool,
+        photoSizes: [String: Int64] = [:],
+        sizesComplete: Bool = false
+    ) {
         self.id = id
         self.photos = photos
         self.isExactDuplicate = isExactDuplicate
         self.needsReview = needsReview
+        self.photoSizes = photoSizes
+        self.sizesComplete = sizesComplete
+    }
+
+    /// The size of all members, or `nil` until every size has been looked up.
+    public var totalBytes: Int64? {
+        sizesComplete ? photoSizes.values.reduce(0, +) : nil
+    }
+
+    /// The size of the members in `selected`, or `nil` until every size has been looked up.
+    public func bytes(of selected: Set<String>) -> Int64? {
+        guard sizesComplete else { return nil }
+        return selected.reduce(0) { $0 + (photoSizes[$1] ?? 0) }
     }
 
     /// The date shown in the header: when the newest photo was taken.
