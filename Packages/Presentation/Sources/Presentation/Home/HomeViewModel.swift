@@ -7,6 +7,8 @@ import SwiftUI
 public enum HomeRoute: Hashable, Sendable {
     /// The groups of similar photos.
     case clusters
+    /// One group on its own page, with all its photos.
+    case group(String)
 }
 
 /// The full-screen comparison of one group, presented over the group list (SPS-22).
@@ -59,6 +61,10 @@ public final class HomeViewModel {
     public private(set) var isRefreshingSilently = false
     /// Whether stored results of an earlier scan were loaded at launch.
     public private(set) var hasStoredResults = false
+    /// Whether "Start over?" is being asked.
+    public var isConfirmingStartOver = false
+    /// Whether clearing the stored results failed, so "Start Over" changed nothing and can be retried.
+    public var didStartOverFail = false
 
     @ObservationIgnored private let results: any ClusterRepository
     @ObservationIgnored private let libraryChanges: any LibraryChangeObserving
@@ -146,10 +152,36 @@ public final class HomeViewModel {
         await startScan(silently: hasPreviousScan)
     }
 
+    /// "Start Over", once confirmed: forgets the stored results, the groups shown and every choice, then scans the
+    /// library again from the start with the full scanning state. Deletes no photo. If the stored results can't be
+    /// removed, nothing else changes and `didStartOverFail` offers a retry.
+    public func startOver() async {
+        isConfirmingStartOver = false
+        didStartOverFail = false
+        let stored = await results.storedResults()
+        do {
+            try await results.apply(upserted: [], removedSessionIDs: Set(stored.map(\.sessionID)))
+        } catch {
+            didStartOverFail = true
+            return
+        }
+        hasStoredResults = false
+        path = []
+        comparison = nil
+        scan.clearResults()
+        await startScan(silently: false)
+    }
+
     /// "Review" or "Review now": opens the group list (the scan goes on).
     public func review() {
         guard path.last != .clusters else { return }
         path.append(.clusters)
+    }
+
+    /// Opens one group's own page (a group tile on Home, a group in the list).
+    public func openGroup(_ clusterID: String) {
+        guard path.last != .group(clusterID) else { return }
+        path.append(.group(clusterID))
     }
 
     /// Opens the full-screen comparison of one group (the header of its card, or the VoiceOver action "Compare").

@@ -15,8 +15,9 @@ struct HomeView: View {
     }
 }
 
-/// The scan dashboard: one card for the current state (idle, scanning, results, empty, error), the skipped-photos
-/// line, pull-to-refresh, the "Scan scope" toolbar button and, under limited access, a banner at the top.
+/// The scan dashboard: one card for the current state (idle, scanning, results, empty, error), the groups found
+/// listed below it, the skipped-photos line, pull-to-refresh, the "Scan scope" toolbar button and, under limited
+/// access, a banner at the top.
 struct HomeDashboard: View {
     @Bindable var home: HomeViewModel
     let permission: PermissionViewModel
@@ -29,23 +30,38 @@ struct HomeDashboard: View {
         NavigationStack(path: $home.path) {
             ScrollView {
                 VStack(spacing: 16) {
-                    if home.isRefreshing {
-                        ScanProgressBar(scan: home.scan)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    }
                     stateCard
                     if home.viewState != .idle, let headline = home.summary.skipped.headline {
                         SkippedSummaryButton(headline: headline) { isShowingSkipped = true }
                     }
+                    if let list = factory?.clusterListViewModel, !list.rows.isEmpty {
+                        HomeGroupsSection(
+                            list: list,
+                            onOpen: { home.openGroup($0) },
+                            onSeeAll: { home.review() }
+                        )
+                        .padding(.top, 8)
+                    }
+                    if home.viewState != .idle {
+                        HomePrivacyFooter()
+                    }
                 }
                 .padding()
+            }
+            .modifier(HomeGroupDialogs(home: home, list: factory?.clusterListViewModel))
+            .onChange(of: home.scan.clusterRevision, initial: true) {
+                // Dates and sizes of the groups load even while no row is listed (an empty filter).
+                factory?.clusterListViewModel.clustersChanged()
             }
             .refreshable { await home.refresh() }
             .onAppear { home.scan.scanScreenAppeared() }
             .onDisappear { home.scan.scanScreenDisappeared() }
-            .navigationTitle(Text("home.title", bundle: .module))
+            .navigationTitle(isScanningInFull ? Text(verbatim: "") : Text("home.title", bundle: .module))
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(isScanningInFull ? .inline : .automatic)
+            #endif
             .navigationDestination(for: HomeRoute.self, destination: destination)
-            .toolbar { scopeButton }
+            .toolbar { moreMenu }
             .sheet(isPresented: $isShowingScope) {
                 ScopeSelectionSheet { isShowingScope = false }
             }
@@ -76,7 +92,18 @@ struct HomeDashboard: View {
         if let list = factory?.clusterListViewModel {
             switch route {
             case .clusters:
-                ClusterListScreen(viewModel: list) { home.compare(clusterID: $0) }
+                ClusterListScreen(
+                    viewModel: list,
+                    onOpen: { home.openGroup($0) },
+                    onCompare: { home.compare(clusterID: $0) },
+                    isDialogActive: home.path.last == route && home.comparison == nil
+                )
+            case .group(let clusterID):
+                ClusterGroupScreen(
+                    viewModel: list,
+                    clusterID: clusterID,
+                    isDialogActive: home.path.last == route && home.comparison == nil
+                ) { home.compare(clusterID: $0) }
             }
         }
     }
@@ -88,7 +115,13 @@ struct HomeDashboard: View {
         case .scanning(_, let foundSoFar):
             HomeScanningCard(scan: home.scan, foundSoFar: foundSoFar) { home.review() }
         case .results(let summary):
-            HomeResultsCard(summary: summary) { home.review() }
+            HomeResultsCard(
+                summary: summary,
+                sizes: factory?.clusterListViewModel.allGroupsSizes,
+                scannedCount: home.scan.progress?.total,
+                refreshText: refreshText,
+                onReview: { home.review() }
+            )
         case .empty:
             HomeEmptyCard { Task { await home.startScan() } }
         case .error(let message):
@@ -101,18 +134,96 @@ struct HomeDashboard: View {
         }
     }
 
-    private var scopeButton: some ToolbarContent {
+    /// Whether the full scanning state is shown (the large title is hidden then, the ring says it all).
+    private var isScanningInFull: Bool {
+        if case .scanning = home.viewState { return true }
+        return false
+    }
+
+    /// "Checking for new photos… 42 %" while a silent refresh runs.
+    private var refreshText: String? {
+        guard home.isRefreshing else { return nil }
+        return String(localized: "home.refreshing \(home.scan.percentText)", bundle: .module)
+    }
+
+    /// One "…" menu in the navigation bar: Scan Scope and, after a scan, Start Over (asks first), away from Review.
+    private var moreMenu: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
-            Button {
-                isShowingScope = true
+            Menu {
+                Button {
+                    isShowingScope = true
+                } label: {
+                    Label {
+                        Text("home.scope", bundle: .module)
+                    } icon: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
+                }
+                if home.hasPreviousScan, !home.scan.isScanning {
+                    Divider()
+                    Button(role: .destructive) {
+                        home.isConfirmingStartOver = true
+                    } label: {
+                        Label {
+                            Text("home.startOver", bundle: .module)
+                        } icon: {
+                            Image(systemName: "arrow.counterclockwise")
+                        }
+                    }
+                }
             } label: {
                 Label {
-                    Text("home.scope", bundle: .module)
+                    Text("home.more", bundle: .module)
                 } icon: {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
+                    Image(systemName: "ellipsis.circle")
                 }
             }
-            .accessibilityHint(Text("home.scope.hint", bundle: .module))
+            .accessibilityHint(Text("home.more.hint", bundle: .module))
+        }
+    }
+}
+
+/// Home's dialogs: "Start over?" and, while Home is on top, "Delete every photo of this group?" for the groups
+/// listed on it.
+private struct HomeGroupDialogs: ViewModifier {
+    @Bindable var home: HomeViewModel
+    let list: ClusterListViewModel?
+
+    func body(content: Content) -> some View {
+        Group {
+            if let list {
+                content.deleteAllConfirmation(list, isActive: home.path.isEmpty && home.comparison == nil)
+            } else {
+                content
+            }
+        }
+        .alert(
+            Text("home.startOver.failed.title", bundle: .module),
+            isPresented: $home.didStartOverFail
+        ) {
+            Button {
+                Task { await home.startOver() }
+            } label: {
+                Text("home.retry", bundle: .module)
+            }
+            Button(role: .cancel) {} label: {
+                Text("deletion.review.cancel", bundle: .module)
+            }
+        } message: {
+            Text("home.startOver.failed.message", bundle: .module)
+        }
+        .confirmationDialog(
+            Text("home.startOver.title", bundle: .module),
+            isPresented: $home.isConfirmingStartOver,
+            titleVisibility: .visible
+        ) {
+            Button(role: .destructive) {
+                Task { await home.startOver() }
+            } label: {
+                Text("home.startOver.confirm", bundle: .module)
+            }
+        } message: {
+            Text("home.startOver.message", bundle: .module)
         }
     }
 }

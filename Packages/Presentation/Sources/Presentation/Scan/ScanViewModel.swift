@@ -74,10 +74,13 @@ public final class ScanViewModel {
 
     /// Starts a scan with the saved scope and session gap. A running scan is replaced.
     public func startScan() async {
-        let saved = await preferences.load()
+        // Claim the generation and stop the previous scan's consumers before awaiting, so nothing it still sends
+        // (for example after "Start Over" cleared the groups) is applied while the preferences load.
         scanGeneration += 1
         let generation = scanGeneration
         stopConsuming()
+        let saved = await preferences.load()
+        guard generation == scanGeneration else { return }
         rowOrder.scanStarted()
         isScanning = true
         progress = ScanProgress()

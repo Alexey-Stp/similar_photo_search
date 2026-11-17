@@ -16,26 +16,37 @@ struct PhotoComparisonScreen: View {
     /// Distance or predicted distance of a downward swipe that dismisses the screen.
     private static let dismissDistance: CGFloat = 120
 
-    /// Top bar, photos, filmstrip and info panel on black.
+    /// The photo edge to edge on black. Over it: the glass top bar with the filmstrip just below it, the photo's
+    /// details on a dark gradient at the bottom of the photo, and under those the actions in their own toolbar
+    /// anchored to the bottom edge.
     var body: some View {
-        GeometryReader { proxy in
-            VStack(spacing: 0) {
-                ComparisonTopBar(viewModel: viewModel) { dismiss() }
+        GeometryReader { _ in
+            ZStack {
                 if viewModel.isAvailable {
                     photos
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .ignoresSafeArea()
                         .simultaneousGesture(dismissDrag)
-                    ComparisonFilmstrip(viewModel: viewModel)
-                    if let focused = viewModel.focusedID {
-                        ScrollView {
-                            ComparisonInfoPanel(viewModel: viewModel, assetID: focused)
-                        }
-                        .scrollBounceBehavior(.basedOnSize)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(maxHeight: proxy.size.height * 0.4)
-                    }
                 } else {
                     groupGone
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .overlay(alignment: .top) {
+                VStack(spacing: 8) {
+                    ComparisonTopBar(viewModel: viewModel) { dismiss() }
+                    if viewModel.isAvailable {
+                        ComparisonFilmstrip(viewModel: viewModel)
+                            .glassBackground(in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                            .padding(.horizontal, 12)
+                    }
+                }
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if viewModel.isAvailable, let focused = viewModel.focusedID {
+                    VStack(spacing: 0) {
+                        ComparisonPhotoDetails(viewModel: viewModel, assetID: focused)
+                        ComparisonActionBar(viewModel: viewModel, assetID: focused)
+                    }
                 }
             }
             .offset(y: dismissOffset)
@@ -58,6 +69,13 @@ struct PhotoComparisonScreen: View {
         } message: {
             Text("clusters.deleteAll.message", bundle: .module)
         }
+        .sheet(
+            item: $viewModel.deleteNowRequest,
+            onDismiss: { viewModel.deleteNowFinished() },
+            content: { request in
+                DeletionSheet(request: request) { viewModel.deleteNowRequest = nil }
+            }
+        )
         .onChange(of: canShowSideBySide, initial: true) { _, canShow in
             viewModel.layoutChanged(canShowSideBySide: canShow)
         }
@@ -167,7 +185,7 @@ private struct ComparisonPagerPage: View {
     }
 }
 
-/// Close, the position ("2 of 5") and the side-by-side switch.
+/// Close, the position ("2 of 5") and the side-by-side switch, as glass controls floating over the photo.
 private struct ComparisonTopBar: View {
     @Bindable var viewModel: PhotoComparisonViewModel
     let onClose: () -> Void
@@ -176,32 +194,40 @@ private struct ComparisonTopBar: View {
     var body: some View {
         HStack {
             Button(action: onClose) {
-                Image(systemName: "xmark")
-                    .font(.headline)
-                    .frame(minWidth: 44, minHeight: 44)
+                Label {
+                    Text("compare.close", bundle: .module)
+                } icon: {
+                    Image(systemName: "xmark")
+                }
             }
-            .accessibilityLabel(Text("compare.close", bundle: .module))
+            .buttonStyle(GlassCircleButtonStyle())
             Spacer()
             if let focused = viewModel.focusedID, let position = viewModel.positionText(of: focused) {
                 Text(position)
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
                     .monospacedDigit()
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 36)
+                    .glassBackground(in: Capsule())
                     .accessibilityAddTraits(.isHeader)
             }
             Spacer()
             if viewModel.canShowSideBySide, viewModel.memberIDs.count > 1 {
                 Toggle(isOn: $viewModel.prefersSideBySide) {
-                    Image(systemName: "rectangle.split.2x1")
-                        .frame(minWidth: 44, minHeight: 44)
+                    Label {
+                        Text("compare.sideBySide", bundle: .module)
+                    } icon: {
+                        Image(systemName: "rectangle.split.2x1")
+                    }
                 }
-                .toggleStyle(.button)
-                .accessibilityLabel(Text("compare.sideBySide", bundle: .module))
+                .toggleStyle(GlassCircleToggleStyle())
             } else {
                 Color.clear.frame(width: 44, height: 44)
                     .accessibilityHidden(true)
             }
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
         .foregroundStyle(.white)
     }
 }

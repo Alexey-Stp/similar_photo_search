@@ -77,7 +77,7 @@ claude.ai artifacts of the project owner.
 
 ## Implementation notes
 
-Implemented on branch `SPS-35`, in review as a pull request. The look was **not** checked on a device or in the
+Implemented on branch `SPS-35` and merged through its pull request. The look was **not** checked on a device or in the
 Simulator: the Simulator's Vision finds no groups in test photos, so the group screens could not be reached there.
 Verified by the Presentation tests (178 passing), `swiftlint --strict` and a full app build.
 

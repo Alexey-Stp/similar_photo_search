@@ -15,6 +15,8 @@ public struct HomeSummary: Sendable, Hashable {
     public let isLowerBound: Bool
     /// The photos the last scan left out.
     public let skipped: SkippedPhotosSummary
+    /// Photos selected for deletion.
+    public let selectedPhotoCount: Int
 
     /// Creates a summary.
     public init(
@@ -22,13 +24,15 @@ public struct HomeSummary: Sendable, Hashable {
         photoCount: Int,
         reclaimableBytes: Int64? = nil,
         isLowerBound: Bool = false,
-        skipped: SkippedPhotosSummary = SkippedPhotosSummary()
+        skipped: SkippedPhotosSummary = SkippedPhotosSummary(),
+        selectedPhotoCount: Int = 0
     ) {
         self.groupCount = groupCount
         self.photoCount = photoCount
         self.reclaimableBytes = reclaimableBytes
         self.isLowerBound = isLowerBound
         self.skipped = skipped
+        self.selectedPhotoCount = selectedPhotoCount
     }
 
     /// The summary of a selection store and the last scan's skips.
@@ -44,14 +48,19 @@ public struct HomeSummary: Sendable, Hashable {
             photoCount: photoCount,
             reclaimableBytes: bytes,
             isLowerBound: bytes != nil && deletion.isLowerBound,
-            skipped: SkippedPhotosSummary(counts: skipped)
+            skipped: SkippedPhotosSummary(counts: skipped),
+            selectedPhotoCount: deletion.photoCount
         )
+    }
+
+    /// The size alone, "214 MB", for the large figure on Home; `nil` when there is no size to show.
+    public var reclaimableSizeText: String? {
+        reclaimableBytes?.formatted(.byteCount(style: .file))
     }
 
     /// "About 214 MB can be freed", or `nil` when there is no size to show.
     public var reclaimableText: String? {
-        guard let reclaimableBytes else { return nil }
-        let size = reclaimableBytes.formatted(.byteCount(style: .file))
+        guard let size = reclaimableSizeText else { return nil }
         if isLowerBound {
             return String(localized: "home.reclaimable.atLeast \(size)", bundle: .module)
         }

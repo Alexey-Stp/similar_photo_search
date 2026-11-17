@@ -23,8 +23,8 @@ public final class PhotoComparisonViewModel {
         case secondary
     }
 
-    /// The group compared.
-    public let clusterID: String
+    /// The group compared. Follows the group when a deletion renames it (`deleteNowFinished()`).
+    public internal(set) var clusterID: String
     /// The photo the user moved to (pager page or left pane); `nil` until they do, then the Best photo is shown.
     public var currentID: String? {
         didSet {
@@ -47,6 +47,8 @@ public final class PhotoComparisonViewModel {
     public internal(set) var notFoundIDs: Set<String> = []
     /// Whether "Delete every photo of this group?" is asked.
     public var isConfirmingDeleteAll = false
+    /// "Delete Now" for one photo, until its deletion flow (review, then the system alert) closes.
+    public var deleteNowRequest: ClusterListViewModel.DeletionRequest?
     /// The zoom of the pager's current page (reset on every page change).
     public let pagerZoom = ZoomState()
     /// The zoom both panes share side by side.
@@ -56,6 +58,8 @@ public final class PhotoComparisonViewModel {
     @ObservationIgnored let screenImages: any ScreenImageLoading
     @ObservationIgnored let edits: any PhotoEditStatusProviding
     @ObservationIgnored var loadedMembers: [String] = []
+    /// The members when "Delete Now" started, to find the group again if the deletion renamed it.
+    @ObservationIgnored var membersBeforeDeleteNow: [String] = []
 
     /// Creates the view model.
     /// - Parameters:

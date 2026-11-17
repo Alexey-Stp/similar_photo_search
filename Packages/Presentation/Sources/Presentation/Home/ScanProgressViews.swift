@@ -7,9 +7,11 @@ struct ProgressRing: View {
     let fraction: Double
     /// The text in the middle, for example "42 %".
     let label: String
+    /// While the results are saved after 100 %: a spinner replaces the percentage.
+    var isFinishing = false
 
-    @ScaledMetric(relativeTo: .largeTitle) private var diameter: CGFloat = 132
-    @ScaledMetric(relativeTo: .largeTitle) private var lineWidth: CGFloat = 12
+    @ScaledMetric(relativeTo: .largeTitle) private var diameter: CGFloat = 184
+    @ScaledMetric(relativeTo: .largeTitle) private var lineWidth: CGFloat = 16
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -21,12 +23,17 @@ struct ProgressRing: View {
                 .stroke(.tint, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
                 .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: fraction)
-            Text(label)
-                .font(.title2.bold())
-                .monospacedDigit()
-                .minimumScaleFactor(0.5)
-                .lineLimit(1)
-                .padding(lineWidth)
+            if isFinishing {
+                ProgressView()
+                    .controlSize(.large)
+            } else {
+                Text(label)
+                    .font(.system(.largeTitle, design: .rounded, weight: .heavy))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.5)
+                    .lineLimit(1)
+                    .padding(lineWidth)
+            }
         }
         .frame(width: diameter, height: diameter)
     }
@@ -78,8 +85,8 @@ extension View {
     /// The rounded card every Home state is drawn in.
     func homeCard() -> some View {
         frame(maxWidth: .infinity)
-            .padding()
-            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(20)
+            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
     }
 }
 

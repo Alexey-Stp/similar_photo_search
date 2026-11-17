@@ -119,4 +119,25 @@ extension PhotoComparisonViewModel {
             notFoundIDs = notFound
         }
     }
+
+    /// "Delete Now": deletes this one photo through the deletion flow (its review sheet, then the system alert),
+    /// whether or not it is selected. Nothing is deleted until the user confirms both.
+    public func deleteNow(_ assetID: String) {
+        guard deleteNowRequest == nil, memberIDs.contains(assetID), !isMissing(assetID) else { return }
+        membersBeforeDeleteNow = memberIDs
+        selection.estimateSizes(of: [assetID])
+        deleteNowRequest = ClusterListViewModel.DeletionRequest(assetIDs: [assetID])
+    }
+
+    /// The "Delete Now" flow closed. Deleting the photo that names the group gives it a new ID; the comparison then
+    /// follows the group that holds the survivors, so it keeps showing them instead of "no longer available".
+    public func deleteNowFinished() {
+        deleteNowRequest = nil
+        defer { membersBeforeDeleteNow = [] }
+        guard state == nil else { return }
+        if let survivor = membersBeforeDeleteNow.lazy.compactMap({ self.selection.clusterID(containing: $0) }).first {
+            clusterID = survivor
+            currentID = nil
+        }
+    }
 }
